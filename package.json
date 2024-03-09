@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "tsx watch ./src/index.ts",
+    "start": "tsx ./src/index.ts",
+    "watch": "tsx watch ./src/index.ts",
     "audit": "better-npm-audit audit",
     "format": "prettier --write .",
     "lint": "eslint \"src/**/*.ts\"",

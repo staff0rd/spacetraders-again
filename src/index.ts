@@ -1,8 +1,9 @@
 import { DefaultApiFactory } from '../api'
 import { program } from 'commander'
 import { faker } from '@faker-js/faker'
-
+import chalk from 'chalk'
 import winston from 'winston'
+const print = console.log
 
 const logger = winston.createLogger({
   level: 'info',
@@ -40,6 +41,23 @@ program
       console.log(result.data)
       await new Promise((r) => setTimeout(r, 300_000))
     }
+  })
+
+program
+  .command('leaderboards')
+  .description('Display leaderboards')
+  .action(async () => {
+    const result = await DefaultApiFactory().getStatus()
+    // eslint-disable-next-line no-console
+    print(chalk.underline.inverse('Leaderboards\n'))
+    print(chalk.underline('Most credits\n'))
+    result.data.leaderboards.mostCredits.forEach((x, i) =>
+      print(`${(i + 1 + '.').toLocaleString().padEnd(3)} ${x.credits.toLocaleString().padEnd(15)} ${x.agentSymbol}`),
+    )
+    print(chalk.underline('\nMost submitted charts\n'))
+    result.data.leaderboards.mostSubmittedCharts.forEach((x, i) =>
+      print(`${(i + 1 + '.').toLocaleString().padEnd(3)} ${x.chartCount.toLocaleString().padEnd(8)} ${x.agentSymbol}`),
+    )
   })
 
 program
