@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "tsx ./src/index.ts",
+    "start": "tsx ./src/index.ts -- leaderboards",
     "watch": "tsx watch ./src/index.ts",
     "audit": "better-npm-audit audit",
     "format": "prettier --write .",
@@ -20,9 +20,12 @@
   "type": "module",
   "dependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@influxdata/influxdb-client": "^1.33.2",
+    "@influxdata/influxdb-client-apis": "^1.33.2",
     "axios": "^1.6.7",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
+    "dotenv": "^16.4.5",
     "tsx": "^4.7.1",
     "typescript": "^5.4.2",
     "winston": "^3.12.0"

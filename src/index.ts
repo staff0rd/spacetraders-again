@@ -1,9 +1,12 @@
 import { DefaultApiFactory } from '../api'
 import { program } from 'commander'
 import { faker } from '@faker-js/faker'
-import chalk from 'chalk'
 import winston from 'winston'
-const print = console.log
+import { leaderboards } from './leaderboards'
+import { print } from './print'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const logger = winston.createLogger({
   level: 'info',
@@ -35,6 +38,7 @@ program
   .command('start')
   .description('Start runner')
   .action(async () => {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const result = await DefaultApiFactory().getStatus()
       // eslint-disable-next-line no-console
@@ -47,17 +51,7 @@ program
   .command('leaderboards')
   .description('Display leaderboards')
   .action(async () => {
-    const result = await DefaultApiFactory().getStatus()
-    // eslint-disable-next-line no-console
-    print(chalk.underline.inverse('Leaderboards\n'))
-    print(chalk.underline('Most credits\n'))
-    result.data.leaderboards.mostCredits.forEach((x, i) =>
-      print(`${(i + 1 + '.').toLocaleString().padEnd(3)} ${x.credits.toLocaleString().padEnd(15)} ${x.agentSymbol}`),
-    )
-    print(chalk.underline('\nMost submitted charts\n'))
-    result.data.leaderboards.mostSubmittedCharts.forEach((x, i) =>
-      print(`${(i + 1 + '.').toLocaleString().padEnd(3)} ${x.chartCount.toLocaleString().padEnd(8)} ${x.agentSymbol}`),
-    )
+    await leaderboards()
   })
 
 program
@@ -68,7 +62,7 @@ program
     try {
       const result = await DefaultApiFactory().register({ faction: 'COSMIC', symbol })
 
-      console.log(result.data.data)
+      print(result.data.data)
     } catch (e) {
       logger.error(`Failed with ${e.code}`, e.data, e)
     }
