@@ -5,6 +5,7 @@ import winston from 'winston'
 import { leaderboards } from './leaderboards'
 import { print } from './print'
 import dotenv from 'dotenv'
+import { setupQueues } from './queue'
 
 dotenv.config()
 
@@ -38,13 +39,8 @@ program
   .command('start')
   .description('Start runner')
   .action(async () => {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const result = await DefaultApiFactory().getStatus()
-      // eslint-disable-next-line no-console
-      console.log(result.data)
-      await new Promise((r) => setTimeout(r, 300_000))
-    }
+    setupQueues()
+    await new Promise(() => {})
   })
 
 program
