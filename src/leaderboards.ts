@@ -1,9 +1,8 @@
-import { DefaultApiFactory } from '../api'
-import chalk from 'chalk'
-import { print } from './print'
 import { InfluxDB, Point } from '@influxdata/influxdb-client'
-import { getConfig } from './config'
 import { hostname } from 'os'
+import { DefaultApiFactory } from '../api'
+import { getConfig } from './config'
+import { logger } from './logging/configure-logging'
 
 export async function leaderboards() {
   const { url, token, org, bucket } = getConfig().influx
@@ -11,18 +10,18 @@ export async function leaderboards() {
   writeApi.useDefaultTags({ location: hostname() })
   const result = await DefaultApiFactory().getStatus()
 
-  print(chalk.underline.inverse('Leaderboards\n'))
+  logger.info('Leaderboards')
 
-  print(chalk.underline('Most credits\n'))
+  logger.info('Most credits', result.data.leaderboards.mostCredits)
   result.data.leaderboards.mostCredits.forEach((x, i) => {
     writeApi.writePoint(new Point('most-credits').tag('agent', x.agentSymbol).floatField('credits', x.credits))
-    print(`${`${i + 1}.`.toLocaleString().padEnd(3)} ${x.credits.toLocaleString().padEnd(15)} ${x.agentSymbol}`)
+    logger.info(`${`${i + 1}.`.toLocaleString().padEnd(3)} ${x.credits.toLocaleString().padEnd(15)} ${x.agentSymbol}`)
   })
 
-  print(chalk.underline('\nMost submitted charts\n'))
+  logger.info('Most submitted charts')
   result.data.leaderboards.mostSubmittedCharts.forEach((x, i) => {
     writeApi.writePoint(new Point('most-submitted-charts').tag('agent', x.agentSymbol).floatField('chart-count', x.chartCount))
-    print(`${`${i + 1}.`.toLocaleString().padEnd(3)} ${x.chartCount.toLocaleString().padEnd(8)} ${x.agentSymbol}`)
+    logger.info(`${`${i + 1}.`.toLocaleString().padEnd(3)} ${x.chartCount.toLocaleString().padEnd(8)} ${x.agentSymbol}`)
   })
 
   await writeApi.close()

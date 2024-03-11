@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "tsx watch ./src/index.ts -- start",
+    "start": "tsx ./src/index.ts",
     "watch": "tsx watch ./src/index.ts",
     "audit": "better-npm-audit audit",
     "format": "prettier --write .",
@@ -20,6 +20,7 @@
   "type": "module",
   "dependencies": {
     "@bull-board/express": "^5.14.2",
+    "@datalust/winston-seq": "^2.0.0",
     "@faker-js/faker": "^8.4.1",
     "@influxdata/influxdb-client": "^1.33.2",
     "@influxdata/influxdb-client-apis": "^1.33.2",

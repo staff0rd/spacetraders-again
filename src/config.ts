@@ -5,4 +5,10 @@ export const getConfig = () => ({
     org: process.env.INFLUX_ORG!,
     bucket: process.env.INFLUX_BUCKET!,
   },
+  redis: {
+    host: process.env.REDIS_HOST!,
+  },
+  logging: {
+    host: process.env.SEQ_HOST!,
+  },
 })

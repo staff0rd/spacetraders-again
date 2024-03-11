@@ -1,44 +1,18 @@
-import { DefaultApiFactory } from '../api'
-import { program } from 'commander'
 import { faker } from '@faker-js/faker'
-import winston from 'winston'
+import { program } from 'commander'
+
+import { DefaultApiFactory } from '../api'
 import { leaderboards } from './leaderboards'
-import { print } from './print'
-import dotenv from 'dotenv'
+import { logger } from './logging/configure-logging'
+import { logError } from './logging/log-error'
 import { setupQueues } from './queue'
-
-dotenv.config()
-
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  defaultMeta: { service: 'user-service' },
-  transports: [
-    //
-    // - Write all logs with importance level of `error` or less to `error.log`
-    // - Write all logs with importance level of `info` or less to `combined.log`
-    //
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
-})
-
-//
-// If we're not in production then log to the `console` with the format:
-// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
-//
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.simple(),
-    }),
-  )
-}
+logger.info('Application startup')
 
 program
   .command('start')
   .description('Start runner')
   .action(async () => {
+    logger.info('Starting runner')
     setupQueues()
     await new Promise(() => {})
   })
@@ -55,12 +29,14 @@ program
   .description('Create a new agent')
   .action(async () => {
     const symbol = `${faker.hacker.noun()}§`
-    try {
-      const result = await DefaultApiFactory().register({ faction: 'COSMIC', symbol })
 
-      print(result.data.data)
-    } catch (e) {
-      logger.error(`Failed with ${e.code}`, e.data, e)
+    try {
+      logger.info('Registering')
+      const result = await DefaultApiFactory().register({ faction: 'COSMIC', symbol })
+      logger.info('Succesfully registered', result.data.data)
+    } catch (err) {
+      logError(err)
+      throw err
     }
   })
 

@@ -1,13 +1,15 @@
 import { Queue, Worker } from 'bullmq'
-import { print } from '../print'
 import IORedis from 'ioredis'
+import { getConfig } from '../config'
 import { leaderboards } from '../leaderboards'
-import chalk from 'chalk'
+import { logger } from '../logging/configure-logging'
+import { logError } from '../logging/log-error'
 import { configureDashboard } from './configure-dashboard'
 
-const connection = new IORedis('', { maxRetriesPerRequest: null })
-
 export const setupQueues = async () => {
+  const config = getConfig()
+  const connection = new IORedis(6379, config.redis.host, { maxRetriesPerRequest: null })
+
   const leaderboardsQueue = new Queue('leaderboards', { connection })
 
   configureDashboard([leaderboardsQueue])
@@ -20,15 +22,20 @@ export const setupQueues = async () => {
   const worker = new Worker<null>(
     'leaderboards',
     async () => {
-      await leaderboards()
+      try {
+        await leaderboards()
+      } catch (err) {
+        logError(err)
+        throw err
+      }
     },
     { connection },
   )
 
   if (worker.isRunning()) {
-    print(chalk.green('Leaderboards worker is running'))
+    logger.info('Leaderboards worker is running')
   } else {
     worker.run()
-    print(chalk.yellow('Started leaderboards worker'))
+    logger.info('Started leaderboards worker')
   }
 }

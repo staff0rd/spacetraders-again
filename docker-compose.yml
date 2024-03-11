@@ -1,6 +1,15 @@
 version: '3.8'
 name: spacetraders-again
 services:
+  spacetradersagain:
+    image: spacetradersagain
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000
   influxdb:
     ports:
       - 8086:8086
@@ -44,6 +53,16 @@ services:
       - REDIS_HOSTS=local:redis:6379 # note: this has to be the port the redis container exposes.
     ports:
       - '8081:8081'
+  seq:
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+    volumes:
+      - $PWD/data/seq:/data
+    ports:
+      - 5341:80
+      - 5341:5341
+    image: datalust/seq
 volumes:
   grafana_storage: {}
   redis_storage: {}
