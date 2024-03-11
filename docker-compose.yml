@@ -7,9 +7,15 @@ services:
       context: .
       dockerfile: ./Dockerfile
     environment:
-      NODE_ENV: production
+      REDIS_HOST: redis
+      SEQ_HOST: seq
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: '${INFLUX_TOKEN}'
+      INFLUX_ORG: my-org
+      INFLUX_BUCKET: my-bucket
     ports:
       - 3000:3000
+    command: npm start -- start
   influxdb:
     ports:
       - 8086:8086
@@ -61,7 +67,6 @@ services:
       - $PWD/data/seq:/data
     ports:
       - 5341:80
-      - 5341:5341
     image: datalust/seq
 volumes:
   grafana_storage: {}
