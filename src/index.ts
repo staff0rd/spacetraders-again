@@ -3,16 +3,16 @@ import { program } from 'commander'
 
 import { DefaultApiFactory } from '../api'
 import { leaderboards } from './leaderboards'
-import { logger } from './logging/configure-logging'
+import { log } from './logging/configure-logging'
 import { logError } from './logging/log-error'
-import { setupQueues } from './queue'
-logger.info('Application startup')
+import { setupQueues } from './queue/configure-queues'
+log.info('app', 'Startup')
 
 program
   .command('start')
   .description('Start runner')
   .action(async () => {
-    logger.info('Starting runner')
+    log.info('app', 'Starting runner')
     setupQueues()
     await new Promise(() => {})
   })
@@ -21,7 +21,7 @@ program
   .command('leaderboards')
   .description('Display leaderboards')
   .action(async () => {
-    await leaderboards()
+    await leaderboards('leaderboards-command')
   })
 
 program
@@ -30,12 +30,13 @@ program
   .action(async () => {
     const symbol = `${faker.hacker.noun()}§`
 
+    const label = 'new-agent'
     try {
-      logger.info('Registering')
+      log.info(label, 'Registering')
       const result = await DefaultApiFactory().register({ faction: 'COSMIC', symbol })
-      logger.info('Succesfully registered', result.data.data)
+      log.info(label, JSON.stringify(result.data.data))
     } catch (err) {
-      logError(err)
+      logError(label, err)
       throw err
     }
   })

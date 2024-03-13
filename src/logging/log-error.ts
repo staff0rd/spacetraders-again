@@ -1,12 +1,12 @@
 import { AxiosError } from 'axios'
-import { logger } from './configure-logging'
+import { log } from './configure-logging'
 
-export const logError = async (err: unknown) => {
+export const logError = async (label: string, err: unknown) => {
   if (err instanceof AxiosError) {
-    logger.error(`Failed with ${err.code}, ${err.message}`, err)
+    log.error(label, `Failed with ${err.code}, ${err.message}`, { error: err })
   }
   if (err instanceof Error) {
-    logger.error(`Failed with ${err.message}`, err)
+    log.error(label, `Failed with ${err.message}`, { error: err })
   }
-  logger.error('Unknown error', err)
+  log.error(label, 'Unknown error', { error: err })
 }

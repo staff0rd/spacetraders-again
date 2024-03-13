@@ -7,7 +7,7 @@ import { getConfig } from '../config'
 dotenv.config()
 const config = getConfig()
 
-const consoleFormat = winston.format.printf(({ level, message, timestamp }) => {
+const consoleFormat = winston.format.printf(({ message, timestamp, category, level }) => {
   const levelUpper = level.toUpperCase()
   switch (levelUpper) {
     case 'INFO':
@@ -25,16 +25,17 @@ const consoleFormat = winston.format.printf(({ level, message, timestamp }) => {
     default:
       break
   }
-  return `[${timestamp}] ${level} ${message}`
+  return `${timestamp} ${level} ${chalk.grey(category)} ${message}`
 })
 
-export const logger = winston.createLogger({
+const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
     /* This is required to get errors to log with stack traces. See https://github.com/winstonjs/winston/issues/1498 */
     winston.format.errors({ stack: true }),
     winston.format.json(),
     winston.format.timestamp({ format: 'HH:mm:ss' }),
+    winston.format.label(),
   ),
   defaultMeta: { service: 'user-service' },
   transports: [
@@ -53,3 +54,9 @@ export const logger = winston.createLogger({
     }),
   ],
 })
+
+export const log = {
+  info: (category: string, message: string, ...meta: unknown[]) => logger.info(message, { category }, ...meta),
+  warn: (category: string, message: string, ...meta: unknown[]) => logger.warn(message, { category }, ...meta),
+  error: (category: string, message: string, ...meta: unknown[]) => logger.error(message, { category }, ...meta),
+}

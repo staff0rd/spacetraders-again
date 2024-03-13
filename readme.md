@@ -11,13 +11,13 @@
 2. Configure `INFLUX_TOKEN` in `.env`:
 
    ```bash
-   docker exec spacetraders-again-influxdb-1 influx auth create --org my-org --all-access
+   npm run influx:add-token
    ```
 
-3. Add influx user:
+3. Add influx user for connecting via web ui
 
    ```bash
-   docker exec spacetraders-again-influxdb-1 influx user create -n staff0rd -p mypassword -o my-org
+   npm run influx:add-user
    ```
 
 4. Connect influxdb to grafana

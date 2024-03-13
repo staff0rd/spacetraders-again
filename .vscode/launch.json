@@ -1,11 +1,17 @@
 {
-    "configurations": [
-        {
-            "name": "Docker Node.js Launch",
-            "type": "docker",
-            "request": "launch",
-            "preLaunchTask": "docker-run: debug",
-            "platform": "node"
-        }
-    ]
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "node",
+      "console": "integratedTerminal",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "start",
+        "--",
+        "start"
+      ],
+      "env": {}
+    },
+  ]
 }

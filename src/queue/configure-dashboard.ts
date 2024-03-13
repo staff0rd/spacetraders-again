@@ -1,10 +1,9 @@
-import { Queue } from 'bullmq'
-import { ExpressAdapter } from '@bull-board/express'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
+import { ExpressAdapter } from '@bull-board/express'
+import { Queue } from 'bullmq'
 import express from 'express'
-import chalk from 'chalk'
-import { logger } from '../logging/configure-logging'
+import { log } from '../logging/configure-logging'
 
 export const configureDashboard = (queues: Queue[]) => {
   const serverAdapter = new ExpressAdapter()
@@ -21,6 +20,6 @@ export const configureDashboard = (queues: Queue[]) => {
 
   // other configurations of your server
   app.listen(3000, () => {
-    logger.info('For the Queue UI, open http://localhost:3000/admin/queues')
+    log.info('app', 'For the Queue UI, open http://localhost:3000/admin/queues')
   })
 }
