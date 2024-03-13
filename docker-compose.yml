@@ -1,7 +1,11 @@
 version: '3.8'
 name: spacetraders-again
 services:
-  spacetradersagain:
+  app:
+    depends_on:
+      - redis
+      - influxdb
+      - seq
     image: spacetradersagain
     build:
       context: .
@@ -63,6 +67,8 @@ services:
     restart: unless-stopped
     environment:
       - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINUSERNAME=stafford
+      - SEQ_FIRSTRUN_ADMINPASSWORDHASH=${SEQ_PASSWORD}
     volumes:
       - $PWD/data/seq:/data
     ports:

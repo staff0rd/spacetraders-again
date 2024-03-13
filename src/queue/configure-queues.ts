@@ -16,6 +16,7 @@ export const addRepeatableJob = async (queue: Queue, name: string, pattern: stri
     log.warn(category, `Removing invalid job: ${job.name}, ${job.pattern}`)
     await queue.removeRepeatableByKey(job.key)
   })
+  queue.add(name, null, { repeat: { pattern } })
 }
 
 export const setupQueues = async () => {
