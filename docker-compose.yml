@@ -16,6 +16,7 @@ services:
     ports:
       - 3000:3000
     command: npm start -- start
+    profiles: ['prod']
   influxdb:
     ports:
       - 8086:8086
@@ -51,7 +52,6 @@ services:
   redis-commander:
     depends_on:
       - redis
-    container_name: redis-commander
     hostname: redis-commander
     image: rediscommander/redis-commander:latest
     restart: always
