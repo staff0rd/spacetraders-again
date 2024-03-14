@@ -1,10 +1,8 @@
 import { SeqTransport } from '@datalust/winston-seq'
 import chalk from 'chalk'
-import dotenv from 'dotenv'
 import winston from 'winston'
 import { getConfig } from '../config'
 
-dotenv.config()
 const config = getConfig()
 
 const consoleFormat = winston.format.printf(({ message, timestamp, category, level }) => {

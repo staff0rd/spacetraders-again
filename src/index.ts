@@ -1,11 +1,11 @@
 import { faker } from '@faker-js/faker'
 import { program } from 'commander'
-
 import { DefaultApiFactory } from '../api'
-import { leaderboards } from './leaderboards'
+import { getStatus } from './features/status/get-status'
 import { log } from './logging/configure-logging'
 import { logError } from './logging/log-error'
 import { setupQueues } from './queue/configure-queues'
+
 log.info('app', 'Startup')
 
 program
@@ -18,10 +18,10 @@ program
   })
 
 program
-  .command('leaderboards')
-  .description('Display leaderboards')
+  .command('status')
+  .description('Get status')
   .action(async () => {
-    await leaderboards('leaderboards-command')
+    await getStatus('status-command')
   })
 
 program

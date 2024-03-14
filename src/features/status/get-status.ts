@@ -1,14 +1,17 @@
 import { InfluxDB, Point } from '@influxdata/influxdb-client'
 import { hostname } from 'os'
-import { DefaultApiFactory } from '../api'
-import { getConfig } from './config'
-import { log } from './logging/configure-logging'
+import { DefaultApiFactory } from '../../../api'
+import { getConfig } from '../../config'
+import { log } from '../../logging/configure-logging'
 
-export async function leaderboards(context: string) {
+export async function getStatus(context: string) {
   const { url, token, org, bucket } = getConfig().influx
   const writeApi = new InfluxDB({ url, token }).getWriteApi(org, bucket, 'ms')
   writeApi.useDefaultTags({ location: hostname() })
+
   const result = await DefaultApiFactory().getStatus()
+
+  //await findOrCreateStatus(result.data.resetDate)
 
   log.info(context, 'Leaderboards')
 

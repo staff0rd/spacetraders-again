@@ -2,7 +2,7 @@ import { Queue, Worker } from 'bullmq'
 import { formatDistance } from 'date-fns'
 import IORedis from 'ioredis'
 import { getConfig } from '../config'
-import { leaderboards } from '../leaderboards'
+import { getStatus } from '../features/status/get-status'
 import { log } from '../logging/configure-logging'
 import { logError } from '../logging/log-error'
 import { configureDashboard } from './configure-dashboard'
@@ -39,7 +39,7 @@ export const setupQueues = async () => {
     async () => {
       try {
         log.info('leaderboards-worker', 'Starting job')
-        await leaderboards('leaderboards-worker')
+        await getStatus('leaderboards-worker')
       } catch (err) {
         logError('leaderboards-worker', err)
         throw err
