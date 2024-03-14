@@ -11,6 +11,7 @@ const config: Options = {
   dbName: process.env.POSTGRES_DB,
   password: process.env.POSTGRES_PASSWORD,
   user: process.env.POSTGRES_USER,
+  host: process.env.POSTGRES_HOST,
   port: parseInt(process.env.POSTGRES_PORT!),
   // folder-based discovery setup, using common filename suffix
   entities: ['dist/**/*.entity.js'],

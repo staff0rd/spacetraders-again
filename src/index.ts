@@ -21,7 +21,12 @@ program
   .command('status')
   .description('Get status')
   .action(async () => {
-    await getStatus('status-command')
+    try {
+      await getStatus('status-command')
+    } catch (err) {
+      logError('status', err)
+      throw err
+    }
   })
 
 program

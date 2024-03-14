@@ -17,7 +17,8 @@
     "test:coverage": "vitest run --coverage",
     "test:ci": "vitest run --coverage --reporter junit --outputFile test-results.xml",
     "influx:add-token": "docker exec spacetraders-again-influxdb-1 influx auth create --org my-org --all-access",
-    "influx:add-user": "docker exec spacetraders-again-influxdb-1 influx user create -n staff0rd -p mypassword -o my-org"
+    "influx:add-user": "docker exec spacetraders-again-influxdb-1 influx user create -n staff0rd -p mypassword -o my-org",
+    "db:migrate": "npx mikro-orm-esm migration:up"
   },
   "type": "module",
   "dependencies": {
