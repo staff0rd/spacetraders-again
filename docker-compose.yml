@@ -80,7 +80,7 @@ services:
   postgres:
     image: postgres:15
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT}:5432'
     restart: unless-stopped
     volumes:
       - $PWD/data/postgres:/var/lib/postgresql/data
