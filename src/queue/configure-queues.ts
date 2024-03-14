@@ -25,7 +25,7 @@ export const setupQueues = async () => {
 
   const queue = new Queue('leaderboards', { connection })
 
-  await addRepeatableJob(queue, 'leaderboards', '*/10 * * * *')
+  await addRepeatableJob(queue, 'leaderboards', '*/15 * * * *')
 
   const jobs = await queue.getRepeatableJobs()
   jobs.forEach((job) => {
