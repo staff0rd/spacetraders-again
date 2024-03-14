@@ -64,3 +64,6 @@ out/
 .env.local
 
 data/
+
+# mikro orm appears to write json here
+temp

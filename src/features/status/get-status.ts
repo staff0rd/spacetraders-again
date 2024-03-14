@@ -3,6 +3,7 @@ import { hostname } from 'os'
 import { DefaultApiFactory } from '../../../api'
 import { getConfig } from '../../config'
 import { log } from '../../logging/configure-logging'
+import { findOrCreateStatus } from './findOrCreateStatus'
 
 export async function getStatus(context: string) {
   const { url, token, org, bucket } = getConfig().influx
@@ -11,7 +12,7 @@ export async function getStatus(context: string) {
 
   const result = await DefaultApiFactory().getStatus()
 
-  //await findOrCreateStatus(result.data.resetDate)
+  await findOrCreateStatus(result.data.resetDate)
 
   log.info(context, 'Leaderboards')
 

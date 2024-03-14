@@ -17,6 +17,9 @@ services:
       INFLUX_TOKEN: '${INFLUX_TOKEN}'
       INFLUX_ORG: my-org
       INFLUX_BUCKET: my-bucket
+      POSTGRES_USER: '${POSTGRES_USER}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+      POSTGRES_DB: '${POSTGRES_DB}'
     ports:
       - 3000:3000
     command: npm start -- start
@@ -74,6 +77,24 @@ services:
     ports:
       - 5341:80
     image: datalust/seq
+  postgres:
+    image: postgres:15
+    ports:
+      - '5432:5432'
+    restart: unless-stopped
+    volumes:
+      - $PWD/data/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: '${POSTGRES_USER}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+      POSTGRES_DB: '${POSTGRES_DB}'
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+
 volumes:
   grafana_storage: {}
   redis_storage: {}
