@@ -14,17 +14,30 @@ export async function getStatus(context: string) {
 
   await findOrCreateStatus(result.data.resetDate)
 
+  const resetDate = result.data.resetDate
+
+  writeApi.writePoint(
+    new Point('stats')
+      .tag('reset-date', resetDate)
+      .floatField('agents', result.data.stats.agents)
+      .floatField('ships', result.data.stats.ships)
+      .floatField('systems', result.data.stats.systems)
+      .floatField('waypoints', result.data.stats.waypoints),
+  )
+
   log.info(context, 'Leaderboards')
 
   log.info(context, 'Most credits', result.data.leaderboards.mostCredits)
   result.data.leaderboards.mostCredits.forEach((x, i) => {
-    writeApi.writePoint(new Point('most-credits').tag('agent', x.agentSymbol).floatField('credits', x.credits))
+    writeApi.writePoint(new Point('most-credits').tag('agent', x.agentSymbol).tag('reset-date', resetDate).floatField('credits', x.credits))
     log.info(context, `${`${i + 1}.`.toLocaleString().padEnd(3)} ${x.credits.toLocaleString().padEnd(15)} ${x.agentSymbol}`)
   })
 
   log.info(context, 'Most submitted charts')
   result.data.leaderboards.mostSubmittedCharts.forEach((x, i) => {
-    writeApi.writePoint(new Point('most-submitted-charts').tag('agent', x.agentSymbol).floatField('chart-count', x.chartCount))
+    writeApi.writePoint(
+      new Point('most-submitted-charts').tag('agent', x.agentSymbol).tag('reset-date', resetDate).floatField('chart-count', x.chartCount),
+    )
     log.info(context, `${`${i + 1}.`.toLocaleString().padEnd(3)} ${x.chartCount.toLocaleString().padEnd(8)} ${x.agentSymbol}`)
   })
 
