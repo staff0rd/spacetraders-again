@@ -2,5 +2,4 @@ import { EntityManager, MikroORM } from '@mikro-orm/postgresql' // or any other 
 
 import config from './mikro-orm.config'
 const orm = await MikroORM.init(config)
-const em = orm.em as EntityManager
-export const getEntityManager = () => em.fork()
+export const getEntityManager = () => orm.em.fork() as EntityManager

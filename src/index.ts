@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker'
 import { program } from 'commander'
 import { DefaultApiFactory } from '../api'
 import { getStatus } from './features/status/get-status'
+import { startup } from './features/status/startup'
 import { log } from './logging/configure-logging'
 import { logError } from './logging/log-error'
 import { setupQueues } from './queue/configure-queues'
@@ -12,9 +13,13 @@ program
   .command('start')
   .description('Start runner')
   .action(async () => {
-    log.info('app', 'Starting runner')
-    setupQueues()
-    await new Promise(() => {})
+    try {
+      log.info('app', 'Starting runner')
+      await setupQueues()
+      await startup()
+    } catch (err) {
+      logError('startup', err)
+    }
   })
 
 program
