@@ -101,17 +101,27 @@ export async function startup() {
 
   const closestShipyard = getClosest(shipyards, waypoint)
   const shipyard = await api.systems.getShipyard(commandShip.nav.systemSymbol, myShips[1].nav.waypointSymbol)
-  if (myShips.length === 2) {
-    await api.fleet.purchaseShip({ shipType: 'SHIP_MINING_DRONE', waypointSymbol: shipyard.data.data.symbol })
+
+  const getOrPurchaseShip = async () => {
+    if (myShips.length === 2) {
+      const {
+        data: {
+          data: { ship },
+        },
+      } = await api.fleet.purchaseShip({ shipType: 'SHIP_MINING_DRONE', waypointSymbol: shipyard.data.data.symbol })
+      return ship
+    } else {
+      return myShips.find((s) => s.frame.symbol === 'FRAME_DRONE')!
+    }
   }
+
+  const miningDrone = getOrPurchaseShip()
 
   const {
     data: {
       data: [engineeredAteroid],
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
-
-  const miningDrone = myShips.find((s) => s.frame.symbol === 'FRAME_DRONE')!
 
   const dockShip = async (ship: Ship) => {
     const {
