@@ -6,8 +6,8 @@ export const logError = async (label: string, err: unknown) => {
     const message = err.response?.data?.error?.message
     if (message) {
       log.error(label, `${message}`, { code: err.code, message, response: err.message, err })
-    } else log.error(label, `Failed with ${err.code}, ${err.message}`, { error: err })
+    } else log.error(label, `Failed with ${err.code}, ${err.message}`, { err })
   } else if (err instanceof Error) {
-    log.error(label, `Failed with ${err.message}`, { error: err })
-  } else log.error(label, 'Unknown error', { error: err })
+    log.error(label, `Failed with ${err.message}`, { err })
+  } else log.error(label, 'Unknown error', { err })
 }
