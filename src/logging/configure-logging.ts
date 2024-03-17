@@ -26,15 +26,18 @@ const consoleFormat = winston.format.printf(({ message, timestamp, category, lev
   return `${timestamp} ${level} ${chalk.grey(category)} ${message}`
 })
 
+const format = winston.format.combine(
+  /* This is required to get errors to log with stack traces. See https://github.com/winstonjs/winston/issues/1498 */
+  winston.format.errors({ stack: true }),
+  winston.format.json(),
+  winston.format.timestamp({ format: 'HH:mm:ss' }),
+  winston.format.prettyPrint(),
+  winston.format.label(),
+)
+
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    /* This is required to get errors to log with stack traces. See https://github.com/winstonjs/winston/issues/1498 */
-    winston.format.errors({ stack: true }),
-    winston.format.json(),
-    winston.format.timestamp({ format: 'HH:mm:ss' }),
-    winston.format.label(),
-  ),
+  format,
   defaultMeta: { service: 'user-service' },
   transports: [
     new winston.transports.Console({
