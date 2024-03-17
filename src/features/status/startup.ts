@@ -115,7 +115,7 @@ export async function startup() {
     }
   }
 
-  const miningDrone = getOrPurchaseShip()
+  const miningDrone = await getOrPurchaseShip()
 
   const {
     data: {
