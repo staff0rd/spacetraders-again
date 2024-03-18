@@ -1,9 +1,11 @@
-import { Market, Ship, Waypoint } from '../../../../api'
+import { Ship } from '../../../../api'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { apiFactory } from '../apiFactory'
 import { getClosest } from '../utils/getClosest'
+import { getCurrentFlightTime } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
+import { Waypoint as MarketData } from '../waypoint.entity'
 
 export const getActor = (api: ReturnType<typeof apiFactory>) => {
   const dockShip = async (ship: Ship) => {
@@ -36,7 +38,7 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
     ship.nav = nav
   }
 
-  const navigateShip = async (ship: Ship, waypoint: Waypoint) => {
+  const navigateShip = async (ship: Ship, waypoint: { symbol: string }) => {
     invariant(ship, 'Ship is required')
     invariant(waypoint, 'Waypoint is required')
     invariant(ship.nav.route.destination, 'Destination is required')
@@ -52,12 +54,30 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
         },
       } = await api.fleet.navigateShip(ship.symbol, { waypointSymbol: waypoint.symbol })
       ship.nav = nav
+      const flightTime = getCurrentFlightTime(ship)
+      log.info('agent', `Ship will arrive at ${waypoint.symbol} in ${flightTime}s`)
     }
   }
 
-  const sellGoods = async (markets: Waypoint[], marketData: Market[], ship: Ship, dontSellSymbol: string) => {
+  const jettisonUnsellable = async (markets: MarketData[], ship: Ship, dontSellSymbol: string) => {
+    const locations = await getSellLocations(markets, ship, dontSellSymbol)
+    const unsellable = locations.filter((p) => !p.closestMarket)
+    await Promise.all(
+      unsellable.map(async ({ symbol, units }) => {
+        log.warn('agent', `Jettisoning ${units}x${symbol}`)
+        const {
+          data: {
+            data: { cargo },
+          },
+        } = await api.fleet.jettison(ship.symbol, { symbol, units })
+        ship.cargo = cargo
+      }),
+    )
+  }
+
+  const sellGoods = async (markets: MarketData[], ship: Ship, dontSellSymbol: string) => {
     log.info('agent', 'Will sell goods')
-    const locations = await getSellLocations(markets, marketData, ship, dontSellSymbol)
+    const locations = await getSellLocations(markets, ship, dontSellSymbol)
 
     const sellableHere = locations.filter((p) => p.closestMarket && p.closestMarket.symbol === ship.nav.waypointSymbol)
 
@@ -111,5 +131,6 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
     navigateShip,
     sellGoods,
     beginMining,
+    jettisonUnsellable,
   }
 }

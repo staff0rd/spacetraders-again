@@ -1,11 +1,10 @@
 import { Configuration, ContractsApiFactory, DefaultApiFactory, Ship } from '../../../api'
 import { findOrCreateAgent } from '../../db/findOrCreateAgent'
+import { getOrPopulateMarkets } from '../../db/getOrPopulateMarkets'
 import { log } from '../../logging/configure-logging'
 import { logError } from '../../logging/log-error'
-import { findMarkets } from './actions/findMarkets'
 import { getActor } from './actions/getActor'
 import { getOrPurchaseMiningDrone } from './actions/getOrPurchaseMiningDrone'
-import { queryMarkets } from './actions/queryMarkets'
 import { apiFactory } from './apiFactory'
 import { getClosest } from './utils/getClosest'
 import { getCurrentFlightTime } from './utils/getCurrentFlightTime'
@@ -46,9 +45,6 @@ export async function startup() {
     //@ts-expect-error because it is wrong
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, undefined, { traits: ['SHIPYARD'] })
 
-  const markets = await findMarkets(api.systems, commandShip.nav.systemSymbol)
-  const marketData = await queryMarkets(api.systems, markets)
-
   const closestShipyard = getClosest(shipyards, waypoint)
   const {
     data: { data: shipyard },
@@ -62,20 +58,23 @@ export async function startup() {
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
+  const markets = await getOrPopulateMarkets(api, resetDate, commandShip.nav.systemSymbol)
+
   const makeDecision = async (ship: Ship) => {
     try {
       const arrival = getCurrentFlightTime(ship)
       if (arrival <= 0) {
         await act.refuelShip(ship)
+        await act.jettisonUnsellable(markets, ship, desiredResource.tradeSymbol)
 
         if (ship.nav.waypointSymbol === engineeredAteroid.symbol) {
           if (ship.cargo.units < ship.cargo.capacity) {
             await act.beginMining(ship)
           } else {
-            await act.sellGoods(markets, marketData, ship, desiredResource.tradeSymbol)
+            await act.sellGoods(markets, ship, desiredResource.tradeSymbol)
           }
         } else if (ship.cargo.inventory.filter((p) => p.symbol !== desiredResource.tradeSymbol).length > 0) {
-          await act.sellGoods(markets, marketData, ship, desiredResource.tradeSymbol)
+          await act.sellGoods(markets, ship, desiredResource.tradeSymbol)
         } else if (ship.cargo.inventory.find((p) => p.symbol === desiredResource.tradeSymbol)) {
           throw new Error('Not implemented - sell desired resource')
         } else {
