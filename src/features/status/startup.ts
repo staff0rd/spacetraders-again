@@ -156,6 +156,7 @@ export async function startup() {
     invariant(ship, 'Ship is required')
     invariant(waypoint, 'Waypoint is required')
     invariant(ship.nav.route.destination, 'Destination is required')
+    await refuelShip(ship)
     if (ship.nav.route.destination.symbol !== waypoint.symbol) {
       log.info('agent', `Navigating ship ${ship.symbol} to ${waypoint.symbol}`)
       if (ship.nav.status === 'DOCKED') {
