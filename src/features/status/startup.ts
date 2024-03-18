@@ -26,7 +26,7 @@ async function findOrCreateAgent(resetDate: string) {
 
 type Position = { x: number; y: number }
 
-const getClosest = <T extends Position, K extends Position>(points: T[], origin: K): T => {
+const getClosest = <T extends Position, K extends Position>(points: T[], origin: K): T | undefined => {
   let closest = points[0]
   let closestDistance = Infinity
   for (const object of points) {
@@ -155,6 +155,7 @@ export async function startup() {
   const navigateShip = async (ship: Ship, waypoint: Waypoint) => {
     invariant(ship, 'Ship is required')
     invariant(waypoint, 'Waypoint is required')
+    invariant(ship.nav.route.destination, 'Destination is required')
     if (ship.nav.route.destination.symbol !== waypoint.symbol) {
       log.info('agent', `Navigating ship ${ship.symbol} to ${waypoint.symbol}`)
       if (ship.nav.status === 'DOCKED') {
@@ -204,15 +205,19 @@ export async function startup() {
       ),
     }))
 
-    sellLocations.forEach((location) =>
-      log.info(
-        'agent',
-        `Will sell ${location.symbol} at ${location.closestMarket.symbol}, distance: ${lineLength([
-          [ship.nav.route.destination.x, ship.nav.route.destination.y],
-          [location.closestMarket.x, location.closestMarket.y],
-        ])}`,
-      ),
-    )
+    sellLocations.forEach((location) => {
+      if (location.closestMarket) {
+        log.info(
+          'agent',
+          `Will sell ${location.symbol} at ${location.closestMarket.symbol}, distance: ${lineLength([
+            [ship.nav.route.destination.x, ship.nav.route.destination.y],
+            [location.closestMarket.x, location.closestMarket.y],
+          ])}`,
+        )
+      } else {
+        log.warn('agent', `Have ${location.units}x${location.symbol}, but there is no sell location`)
+      }
+    })
     return sellLocations
   }
 
@@ -220,13 +225,13 @@ export async function startup() {
     log.info('agent', 'Will sell goods')
     const locations = await getSellLocations(ship)
 
-    const sellableHere = locations.filter((p) => p.closestMarket.symbol === ship.nav.waypointSymbol)
+    const sellableHere = locations.filter((p) => p.closestMarket && p.closestMarket.symbol === ship.nav.waypointSymbol)
 
     if (sellableHere.length) {
       await dockShip(ship)
       await Promise.all(
         sellableHere.map(async (p) => {
-          log.info('agent', `Selling ${p.units} of ${p.symbol} at ${p.closestMarket.symbol}`)
+          log.info('agent', `Selling ${p.units} of ${p.symbol} at ${p.closestMarket!.symbol}`)
           const {
             data: {
               data: { cargo, transaction },
@@ -242,10 +247,10 @@ export async function startup() {
       await makeDecision(ship)
     } else {
       const closest = getClosest(
-        locations.map((p) => p.closestMarket),
+        locations.filter((p) => p.closestMarket).map((p) => p.closestMarket!),
         ship.nav.route.destination,
       )
-      await navigateShip(ship, closest)
+      await navigateShip(ship, closest!)
     }
   }
 
