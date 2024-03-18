@@ -2,8 +2,8 @@ import { InfluxDB, Point } from '@influxdata/influxdb-client'
 import { hostname } from 'os'
 import { DefaultApiFactory } from '../../../api'
 import { getConfig } from '../../config'
+import { findOrCreateStatus } from '../../db/findOrCreateStatus'
 import { log } from '../../logging/configure-logging'
-import { findOrCreateStatus } from './findOrCreateStatus'
 
 export async function getStatus(context: string) {
   const { url, token, org, bucket } = getConfig().influx

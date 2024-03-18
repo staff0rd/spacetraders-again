@@ -1,5 +1,5 @@
-import { getEntityManager } from '../../orm'
-import { Status } from './status.entity'
+import { Status } from '../features/status/status.entity'
+import { getEntityManager } from '../orm'
 
 export const findOrCreateStatus = async (resetDate: string) => {
   const em = getEntityManager()
