@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "start": "node --experimental-specifier-resolution=node --loader ts-node/esm ./src/index.ts",
-    "watch": "ts-node-dev ./src/index.ts",
+    "start": "node --experimental-specifier-resolution=node --loader ts-node/esm ./src/main.ts",
+    "watch": "ts-node-dev ./src/main.ts",
     "audit": "better-npm-audit audit",
     "format": "prettier --write .",
     "lint": "eslint \"src/**/*.ts\"",
