@@ -1,6 +1,7 @@
 import { formatDistance } from 'date-fns'
 import { lineLength } from 'geometric'
 import { Configuration, ContractsApiFactory, DefaultApiFactory, Ship, SystemsApiFactory, Waypoint } from '../../../api'
+import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
 import { logError } from '../../logging/log-error'
 import { getEntityManager } from '../../orm'
@@ -152,6 +153,8 @@ export async function startup() {
   }
 
   const navigateShip = async (ship: Ship, waypoint: Waypoint) => {
+    invariant(ship, 'Ship is required')
+    invariant(waypoint, 'Waypoint is required')
     if (ship.nav.route.destination.symbol !== waypoint.symbol) {
       log.info('agent', `Navigating ship ${ship.symbol} to ${waypoint.symbol}`)
       if (ship.nav.status === 'DOCKED') {
