@@ -82,8 +82,10 @@ export async function startup() {
         }
       } else {
         log.warn('agent', `Mining drone is not yet in position. Waiting for arrival in ${arrival} seconds`)
-        setTimeout(() => makeDecision(ship), arrival * 1000)
+        await act.wait(arrival * 1000)
+        await makeDecision(ship)
       }
+      await makeDecision(miningDrone)
     } catch (err) {
       logError('makeDecision', err)
     }

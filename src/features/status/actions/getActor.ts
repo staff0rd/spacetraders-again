@@ -132,5 +132,6 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
     sellGoods,
     beginMining,
     jettisonUnsellable,
+    wait,
   }
 }
