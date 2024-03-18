@@ -22,6 +22,24 @@ program
     }
   })
 
+type SomeType = {
+  name: string
+}
+
+program
+  .command('error')
+  .description('test error handling')
+  .action(async () => {
+    try {
+      const something: SomeType = { name: 'blah' }
+      // @ts-expect-error intentional
+      delete something.name
+      console.log(something.name.padEnd(2, 'x'))
+    } catch (err) {
+      logError('force-error', err)
+    }
+  })
+
 program
   .command('status')
   .description('Get status')

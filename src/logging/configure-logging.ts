@@ -57,7 +57,7 @@ const logger = winston.createLogger({
 })
 
 export const log = {
-  info: (category: string, message: string, ...meta: unknown[]) => logger.info(message, { category }, ...meta),
-  warn: (category: string, message: string, ...meta: unknown[]) => logger.warn(message, { category }, ...meta),
-  error: (category: string, message: string, ...meta: unknown[]) => logger.error(message, { category }, ...meta),
+  info: (category: string, message: string, meta?: object) => logger.info(message, { ...meta, category }),
+  warn: (category: string, message: string, meta?: object) => logger.warn(message, { ...meta, category }),
+  error: (category: string, message: string, meta?: object) => logger.error(message, { ...meta, category }),
 }
