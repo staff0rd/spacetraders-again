@@ -22,10 +22,14 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
       await dockShip(ship)
       const {
         data: {
-          data: { fuel },
+          data: { fuel, transaction, agent },
         },
       } = await api.fleet.refuelShip(ship.symbol)
       ship.fuel = fuel
+      log.info(
+        'agent',
+        `Refueled ship ${ship.symbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
+      )
     }
   }
 
@@ -114,13 +118,16 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
           log.info('agent', `Selling ${p.units} of ${p.symbol} at ${p.closestMarket!.symbol}`)
           const {
             data: {
-              data: { cargo, transaction },
+              data: { cargo, transaction, agent },
             },
           } = await api.fleet.sellCargo(ship.symbol, {
             symbol: p.symbol,
             units: p.units,
           })
-          log.info('agent', `Sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}`)
+          log.info(
+            'agent',
+            `Sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
+          )
           ship.cargo = cargo
         }),
       )
