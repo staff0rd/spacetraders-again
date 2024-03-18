@@ -78,7 +78,7 @@ export async function startup() {
         } else if (ship.cargo.inventory.find((p) => p.symbol === desiredResource.tradeSymbol)) {
           throw new Error('Not implemented - sell desired resource')
         } else {
-          await act.navigateShip(ship, engineeredAteroid)
+          await act.navigateShip(ship, engineeredAteroid, markets)
         }
       } else {
         log.warn('agent', `Mining drone is not yet in position. Waiting for arrival in ${arrival} seconds`)

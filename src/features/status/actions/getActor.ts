@@ -1,11 +1,11 @@
+import { lineLength } from 'geometric'
 import { Ship } from '../../../../api'
-import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { apiFactory } from '../apiFactory'
 import { getClosest } from '../utils/getClosest'
 import { getCurrentFlightTime } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
-import { Waypoint as MarketData } from '../waypoint.entity'
+import { Waypoint as MarketData, Waypoint } from '../waypoint.entity'
 
 export const getActor = (api: ReturnType<typeof apiFactory>) => {
   const dockShip = async (ship: Ship) => {
@@ -38,24 +38,50 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
     ship.nav = nav
   }
 
-  const navigateShip = async (ship: Ship, waypoint: { symbol: string }) => {
-    invariant(ship, 'Ship is required')
-    invariant(waypoint, 'Waypoint is required')
-    invariant(ship.nav.route.destination, 'Destination is required')
+  const navigateShip = async (ship: Ship, target: { symbol: string; x: number; y: number }, otherWaypoints: Waypoint[]) => {
     await refuelShip(ship)
-    if (ship.nav.route.destination.symbol !== waypoint.symbol) {
-      log.info('agent', `Navigating ship ${ship.symbol} to ${waypoint.symbol}`)
-      if (ship.nav.status === 'DOCKED') {
-        await orbitShip(ship)
+    if (ship.nav.route.destination.symbol !== target.symbol) {
+      const distance = lineLength([
+        [ship.nav.route.destination.x, ship.nav.route.destination.y],
+        [target.x, target.y],
+      ])
+      const fuelNeeded = Math.round(distance)
+      log.info(
+        'agent',
+        `Navigating ship ${ship.symbol} to ${target.symbol}, distance: ${distance}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
+      )
+      if (ship.fuel.capacity < fuelNeeded) {
+        const reachableWaypoints = otherWaypoints.filter((w) => {
+          const distance = lineLength([
+            [ship.nav.route.destination.x, ship.nav.route.destination.y],
+            [w.x, w.y],
+          ])
+          return ship.fuel.capacity >= distance
+        })
+        const byDistanceToTarget = reachableWaypoints
+          .map((w) => ({
+            w,
+            distance: lineLength([
+              [w.x, w.y],
+              [target.x, target.y],
+            ]),
+          }))
+          .sort((a, b) => a.distance - b.distance)
+        log.warn('agent', `Ship ${ship.symbol} cannot reach ${target.symbol}, will navigate to ${byDistanceToTarget[0].w.symbol}`)
+        await navigateShip(ship, byDistanceToTarget[0].w, otherWaypoints)
+      } else {
+        if (ship.nav.status === 'DOCKED') {
+          await orbitShip(ship)
+        }
+        const {
+          data: {
+            data: { nav },
+          },
+        } = await api.fleet.navigateShip(ship.symbol, { waypointSymbol: target.symbol })
+        ship.nav = nav
+        const flightTime = getCurrentFlightTime(ship)
+        log.info('agent', `Ship will arrive at ${target.symbol} in ${flightTime}s`)
       }
-      const {
-        data: {
-          data: { nav },
-        },
-      } = await api.fleet.navigateShip(ship.symbol, { waypointSymbol: waypoint.symbol })
-      ship.nav = nav
-      const flightTime = getCurrentFlightTime(ship)
-      log.info('agent', `Ship will arrive at ${waypoint.symbol} in ${flightTime}s`)
     }
   }
 
@@ -103,7 +129,7 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
         locations.filter((p) => p.closestMarket).map((p) => p.closestMarket!),
         ship.nav.route.destination,
       )
-      await navigateShip(ship, closest!)
+      await navigateShip(ship, closest!, markets)
     }
   }
 
