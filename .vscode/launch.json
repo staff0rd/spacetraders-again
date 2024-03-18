@@ -9,7 +9,7 @@
       "runtimeArgs": [
         "start",
         "--",
-        "error"
+        "start"
       ],
       "env": {}
     },
