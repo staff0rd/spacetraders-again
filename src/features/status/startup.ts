@@ -91,7 +91,7 @@ export async function startup() {
           }
         } else if (ship.cargo.inventory.filter((p) => p.symbol !== desiredResource.tradeSymbol).length > 0) {
           await act.sellGoods(markets, ship, desiredResource.tradeSymbol)
-        } else if (ship.cargo.inventory.find((p) => p.symbol === desiredResource.tradeSymbol)) {
+        } else if (ship.cargo.inventory.find((p) => p.symbol === desiredResource.tradeSymbol)?.units === ship.cargo.capacity) {
           throw new Error('Not implemented - sell desired resource')
         } else {
           await act.navigateShip(ship, engineeredAteroid, markets)
