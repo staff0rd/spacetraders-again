@@ -1,6 +1,7 @@
 import { Configuration, ContractsApiFactory, DefaultApiFactory, Ship } from '../../../api'
 import { findOrCreateAgent } from '../../db/findOrCreateAgent'
 import { getOrPopulateMarkets } from '../../db/getOrPopulateMarkets'
+import { updateShips } from '../../db/updateShips'
 import { log } from '../../logging/configure-logging'
 import { logError } from '../../logging/log-error'
 import { getActor } from './actions/getActor'
@@ -18,11 +19,12 @@ export async function startup() {
   const agent = await findOrCreateAgent(resetDate)
 
   const api = apiFactory(agent.token)
-  const act = getActor(api)
+  const act = getActor(api, resetDate)
 
   const {
     data: { data: myShips },
   } = await api.fleet.getMyShips()
+  await updateShips(resetDate, myShips)
   const contracts = await ContractsApiFactory(new Configuration({ accessToken: agent.token })).getContracts()
   const commandShip = myShips[0]
   const {
@@ -105,6 +107,7 @@ export async function startup() {
     }
   }
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     await makeDecision(miningDrone)
     const decisionRate = getDecisionRate()

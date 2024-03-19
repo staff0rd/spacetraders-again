@@ -1,20 +1,30 @@
+import { EntityData } from '@mikro-orm/core'
 import { lineLength } from 'geometric'
 import { Ship } from '../../../../api'
 import { log } from '../../../logging/configure-logging'
+import { getEntityManager } from '../../../orm'
+import { ShipEntity } from '../../ship/ship.entity'
 import { apiFactory } from '../apiFactory'
 import { getClosest } from '../utils/getClosest'
 import { getCurrentFlightTime } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
 import { Waypoint as MarketData, Waypoint } from '../waypoint.entity'
 
-export const getActor = (api: ReturnType<typeof apiFactory>) => {
+export const getActor = (api: ReturnType<typeof apiFactory>, resetDate: string) => {
+  async function updateShip(ship: Ship, data: EntityData<ShipEntity>) {
+    await getEntityManager().fork().nativeUpdate(ShipEntity, { symbol: ship.symbol, resetDate }, data)
+    Object.entries(data).forEach(([key, value]) => {
+      // @ts-expect-error bad type
+      ship[key as keyof Ship] = value
+    })
+  }
   const dockShip = async (ship: Ship) => {
     const {
       data: {
         data: { nav },
       },
     } = await api.fleet.dockShip(ship.symbol)
-    ship.nav = nav
+    await updateShip(ship, { nav })
   }
 
   const refuelShip = async (ship: Ship) => {
@@ -30,6 +40,7 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
         'agent',
         `Refueled ship ${ship.symbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
       )
+      await updateShip(ship, { fuel })
     }
   }
 
@@ -39,7 +50,7 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
         data: { nav },
       },
     } = await api.fleet.orbitShip(ship.symbol)
-    ship.nav = nav
+    await updateShip(ship, { nav })
   }
 
   const navigateShip = async (ship: Ship, target: { symbol: string; x: number; y: number }, otherWaypoints: Waypoint[]) => {
@@ -79,10 +90,10 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
         }
         const {
           data: {
-            data: { nav },
+            data: { nav, fuel },
           },
         } = await api.fleet.navigateShip(ship.symbol, { waypointSymbol: target.symbol })
-        ship.nav = nav
+        await updateShip(ship, { nav, fuel })
         const flightTime = getCurrentFlightTime(ship)
         log.info('agent', `Ship will arrive at ${target.symbol} in ${flightTime}s`)
       }
@@ -100,7 +111,7 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
             data: { cargo },
           },
         } = await api.fleet.jettison(ship.symbol, { symbol, units })
-        ship.cargo = cargo
+        await updateShip(ship, { cargo })
       }),
     )
   }
@@ -128,7 +139,7 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
             'agent',
             `Sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
           )
-          ship.cargo = cargo
+          await updateShip(ship, { cargo })
         }),
       )
     } else {
@@ -150,7 +161,7 @@ export const getActor = (api: ReturnType<typeof apiFactory>) => {
       },
     } = await api.fleet.extractResources(ship.symbol)
     log.info('agent', `Mining result: ${JSON.stringify(extraction.yield)}`)
-    ship.cargo = cargo
+    await updateShip(ship, { cargo, cooldown })
     if (cargo.units < cargo.capacity) {
       log.info('agent', `Mining drone cooldown ${cooldown.remainingSeconds}s`)
       await wait(cooldown.remainingSeconds * 1000)
