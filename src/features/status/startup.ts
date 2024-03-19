@@ -60,7 +60,21 @@ export async function startup() {
 
   const markets = await getOrPopulateMarkets(api, resetDate, commandShip.nav.systemSymbol)
 
+  const decisionTimestamps: Date[] = []
+  const recordTimestamp = () => {
+    decisionTimestamps.push(new Date())
+    decisionTimestamps.splice(0, decisionTimestamps.length - 10)
+  }
+  const getDecisionRate = () => {
+    if (decisionTimestamps.length < 10) return Infinity
+    const first = decisionTimestamps[0]
+    const last = decisionTimestamps[decisionTimestamps.length - 1]
+    return (last.getTime() - first.getTime()) / 1000
+  }
+
   const makeDecision = async (ship: Ship) => {
+    recordTimestamp()
+
     try {
       const arrival = getCurrentFlightTime(ship)
       if (arrival <= 0) {
@@ -90,7 +104,12 @@ export async function startup() {
       logError('makeDecision', err)
     }
   }
-  await makeDecision(miningDrone)
 
-  await new Promise(() => {})
+  while (true) {
+    await makeDecision(miningDrone)
+    const decisionRate = getDecisionRate()
+    if (decisionRate < 2) {
+      throw new Error('Decision rate too high')
+    }
+  }
 }
