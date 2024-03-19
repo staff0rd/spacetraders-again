@@ -1,4 +1,3 @@
-import { lineLength } from 'geometric'
 import { Ship } from '../../../../api'
 import { log } from '../../../logging/configure-logging'
 import { Waypoint as MarketData } from '../waypoint.entity'
@@ -16,15 +15,7 @@ export const getSellLocations = async (markets: MarketData[], ship: Ship, dontSe
   })
 
   sellLocations.forEach((location) => {
-    if (location.closestMarket) {
-      log.info(
-        'agent',
-        `Will sell ${location.symbol} at ${location.closestMarket.symbol}, distance: ${lineLength([
-          [ship.nav.route.destination.x, ship.nav.route.destination.y],
-          [location.closestMarket.x, location.closestMarket.y],
-        ])}`,
-      )
-    } else {
+    if (!location.closestMarket) {
       log.warn('agent', `Have ${location.units}x${location.symbol}, but there is no sell location`)
     }
   })
