@@ -71,4 +71,10 @@ export class ShipEntity {
     this.cargo = ship.cargo
     this.fuel = ship.fuel
   }
+
+  cooldownRemaining() {
+    const expiry = this.cooldown.expiration
+    if (!expiry) return 0
+    return Math.max(new Date(expiry).getTime() - new Date().getTime(), 0)
+  }
 }

@@ -226,6 +226,12 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
 
   const beginMining = async (ship: ShipEntity) => {
     await orbitShip(ship)
+    const cooldownRemaining = ship.cooldownRemaining()
+    if (cooldownRemaining > 0) {
+      log.warn('agent', `Ship ${ship.symbol} will wait for ${cooldownRemaining}ms before mining`)
+      await wait(cooldownRemaining)
+    }
+
     const {
       data: {
         data: { cooldown, cargo, extraction },
@@ -234,8 +240,6 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     log.info('agent', `Mining result: ${JSON.stringify(extraction.yield)}`)
     await updateShip(ship, { cargo, cooldown })
     if (cargo.units < cargo.capacity) {
-      log.info('agent', `Mining drone cooldown ${cooldown.remainingSeconds}s`)
-      await wait(cooldown.remainingSeconds * 1000)
       await beginMining(ship)
     }
   }
