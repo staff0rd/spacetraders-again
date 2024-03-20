@@ -92,10 +92,15 @@ services:
       POSTGRES_DB: '${POSTGRES_DB}'
 
   adminer:
-    image: adminer
+    build:
+      dockerfile_inline: |
+        FROM adminer
+        ADD --chmod=644 https://raw.githubusercontent.com/staff0rd/adminer-plugins/master/AdminerJsonPreview.php /var/www/html/plugins/AdminerJsonPreview.php
     restart: unless-stopped
     ports:
       - '8080:8080'
+    environment:
+      ADMINER_PLUGINS: 'AdminerJsonPreview'
 
 volumes:
   grafana_storage: {}
