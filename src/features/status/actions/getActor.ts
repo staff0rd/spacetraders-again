@@ -159,7 +159,10 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     const units = Math.min(contractUnitBalance, ship.cargo.inventory.find((p) => p.symbol === deliver.tradeSymbol)?.units || 0)
     invariant(units > 0, `Expected ship to have ${deliver.tradeSymbol} to deliver`)
 
-    await navigateShip(ship, destination, waypoints)
+    if (ship.nav.waypointSymbol !== destination.symbol) {
+      await navigateShip(ship, destination, waypoints)
+      return
+    }
 
     const {
       data: {

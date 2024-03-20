@@ -85,6 +85,8 @@ export async function startup() {
 
         if (contractGood.unitsFulfilled === contractGood.unitsRequired) {
           await act.fulfillContract(agent)
+        } else if (ship.cargo.inventory.find((p) => p.symbol === contractGood.tradeSymbol)?.units === ship.cargo.capacity) {
+          await act.deliverGoods(ship, agent)
         } else if (ship.nav.waypointSymbol === engineeredAteroid.symbol) {
           if (ship.cargo.units < ship.cargo.capacity) {
             await act.beginMining(ship)
@@ -93,8 +95,6 @@ export async function startup() {
           }
         } else if (ship.cargo.inventory.filter((p) => p.symbol !== contractGood.tradeSymbol).length > 0) {
           await act.sellGoods(markets, ship, contractGood.tradeSymbol)
-        } else if (ship.cargo.inventory.find((p) => p.symbol === contractGood.tradeSymbol)?.units === ship.cargo.capacity) {
-          await act.deliverGoods(ship, agent)
         } else {
           await act.navigateShip(ship, engineeredAteroid, markets)
         }
