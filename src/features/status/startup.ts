@@ -1,12 +1,12 @@
-import { DefaultApiFactory, Ship } from '../../../api'
+import { DefaultApiFactory } from '../../../api'
 import { getOrPopulateMarkets } from '../../db/getOrPopulateMarkets'
 import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
 import { logError } from '../../logging/log-error'
+import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
 import { getAgent } from './actions/getAgent'
-import { getOrPurchaseMiningDrone } from './actions/getOrPurchaseMiningDrone'
 import { getClosest } from './utils/getClosest'
 import { getCurrentFlightTime } from './utils/getCurrentFlightTime'
 
@@ -22,11 +22,13 @@ export async function startup() {
   await act.getOrAcceptContract(agent)
 
   const {
-    data: { data: myShips },
+    data: { data: shipsFromApi },
   } = await api.fleet.getMyShips()
-  await updateShips(resetDate, myShips)
+  const ships = await updateShips(resetDate, shipsFromApi)
 
-  const commandShip = myShips[0]
+  const commandShip = ships.find((s) => s.registration.role === 'COMMAND')
+  invariant(commandShip, 'Expected to find a command ship')
+
   const {
     data: { data: waypoint },
   } = await api.systems.getWaypoint(commandShip.nav.systemSymbol, commandShip.nav.waypointSymbol)
@@ -37,9 +39,6 @@ export async function startup() {
     data: { data: orbital },
   } = await api.systems.getWaypoint(commandShip.nav.systemSymbol, waypoint.orbitals[0].symbol)
 
-  invariant(agent.contract, 'Expected agent to have a contract')
-  const desiredResource = agent.contract.terms.deliver![0]
-
   const {
     data: { data: shipyards },
     //@ts-expect-error because it is wrong
@@ -48,9 +47,9 @@ export async function startup() {
   const closestShipyard = getClosest(shipyards, waypoint)
   const {
     data: { data: shipyard },
-  } = await api.systems.getShipyard(commandShip.nav.systemSymbol, myShips[1].nav.waypointSymbol)
+  } = await api.systems.getShipyard(commandShip.nav.systemSymbol, shipsFromApi[1].nav.waypointSymbol)
 
-  const miningDrone = await getOrPurchaseMiningDrone(api, myShips, shipyard)
+  const miningDrone = await act.getOrPurchaseMiningDrone(api, ships, shipyard)
 
   const {
     data: {
@@ -72,34 +71,38 @@ export async function startup() {
     return (last.getTime() - first.getTime()) / 1000
   }
 
-  const makeDecision = async (ship: Ship) => {
+  const makeDecision = async (ship: ShipEntity) => {
     recordTimestamp()
 
     try {
+      invariant(agent.contract?.terms.deliver?.length === 1, 'Expected agent to have a single deliver contract')
+      const contractGood = agent.contract.terms.deliver[0]
+
       const arrival = getCurrentFlightTime(ship)
       if (arrival <= 0) {
         await act.refuelShip(ship)
-        await act.jettisonUnsellable(markets, ship, desiredResource.tradeSymbol)
+        await act.jettisonUnsellable(markets, ship, contractGood.tradeSymbol)
 
-        if (ship.nav.waypointSymbol === engineeredAteroid.symbol) {
+        if (contractGood.unitsFulfilled === contractGood.unitsRequired) {
+          await act.fulfillContract(agent)
+        } else if (ship.nav.waypointSymbol === engineeredAteroid.symbol) {
           if (ship.cargo.units < ship.cargo.capacity) {
             await act.beginMining(ship)
           } else {
-            await act.sellGoods(markets, ship, desiredResource.tradeSymbol)
+            await act.sellGoods(markets, ship, contractGood.tradeSymbol)
           }
-        } else if (ship.cargo.inventory.filter((p) => p.symbol !== desiredResource.tradeSymbol).length > 0) {
-          await act.sellGoods(markets, ship, desiredResource.tradeSymbol)
-        } else if (ship.cargo.inventory.find((p) => p.symbol === desiredResource.tradeSymbol)?.units === ship.cargo.capacity) {
-          throw new Error('Not implemented - sell desired resource')
+        } else if (ship.cargo.inventory.filter((p) => p.symbol !== contractGood.tradeSymbol).length > 0) {
+          await act.sellGoods(markets, ship, contractGood.tradeSymbol)
+        } else if (ship.cargo.inventory.find((p) => p.symbol === contractGood.tradeSymbol)?.units === ship.cargo.capacity) {
+          await act.deliverGoods(ship, agent)
         } else {
           await act.navigateShip(ship, engineeredAteroid, markets)
         }
       } else {
         log.warn('agent', `Mining drone is not yet in position. Waiting for arrival in ${arrival} seconds`)
         await act.wait(arrival * 1000)
-        await makeDecision(ship)
       }
-      await makeDecision(miningDrone)
+      await makeDecision(ship)
     } catch (err) {
       logError('makeDecision', err)
     }

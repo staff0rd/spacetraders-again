@@ -1,6 +1,7 @@
 import { EntityData } from '@mikro-orm/core'
 import { lineLength } from 'geometric'
-import { Ship } from '../../../../api'
+import { Ship, Shipyard } from '../../../../api'
+import { findOrCreateShip } from '../../../db/findOrCreateShip'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
@@ -15,7 +16,7 @@ import { updateAgentFactory } from './getAgent'
 
 export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnType<typeof apiFactory>) => {
   const updateAgent = updateAgentFactory(token, resetDate)
-  async function updateShip(ship: Ship, data: EntityData<ShipEntity>) {
+  async function updateShip(ship: ShipEntity, data: EntityData<ShipEntity>) {
     await getEntityManager().fork().nativeUpdate(ShipEntity, { symbol: ship.symbol, resetDate }, data)
     Object.entries(data).forEach(([key, value]) => {
       // @ts-expect-error bad type
@@ -47,7 +48,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     await updateAgent(agent, { contract, ...rest })
   }
 
-  const dockShip = async (ship: Ship) => {
+  const dockShip = async (ship: ShipEntity) => {
     const {
       data: {
         data: { nav },
@@ -56,7 +57,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     await updateShip(ship, { nav })
   }
 
-  const refuelShip = async (ship: Ship) => {
+  const refuelShip = async (ship: ShipEntity) => {
     if (ship.fuel.current < ship.fuel.capacity) {
       await dockShip(ship)
       const {
@@ -73,7 +74,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     }
   }
 
-  const orbitShip = async (ship: Ship) => {
+  const orbitShip = async (ship: ShipEntity) => {
     const {
       data: {
         data: { nav },
@@ -82,7 +83,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     await updateShip(ship, { nav })
   }
 
-  const navigateShip = async (ship: Ship, target: { symbol: string; x: number; y: number }, otherWaypoints: Waypoint[]) => {
+  const navigateShip = async (ship: ShipEntity, target: { symbol: string; x: number; y: number }, otherWaypoints: Waypoint[]) => {
     await refuelShip(ship)
     if (ship.nav.route.destination.symbol !== target.symbol) {
       const distance = lineLength([
@@ -129,7 +130,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     }
   }
 
-  const jettisonUnsellable = async (markets: MarketData[], ship: Ship, dontSellSymbol: string) => {
+  const jettisonUnsellable = async (markets: MarketData[], ship: ShipEntity, dontSellSymbol: string) => {
     const locations = await getSellLocations(markets, ship, dontSellSymbol)
     const unsellable = locations.filter((p) => !p.closestMarket)
     await Promise.all(
@@ -145,7 +146,32 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     )
   }
 
-  const sellGoods = async (markets: MarketData[], ship: Ship, dontSellSymbol: string) => {
+  const deliverGoods = async (ship: ShipEntity, agent: AgentEntity) => {
+    log.info('agent', 'Will deliver goods')
+    invariant(agent.contract, 'Expected agent to have a contract')
+    invariant(agent.contract.terms.deliver, 'Expected contract to have deliver terms')
+    invariant(agent.contract.terms.deliver.length === 1, 'Expected contract to have exactly one deliver term')
+    const deliver = agent.contract.terms.deliver[0]
+    const waypoints = await getEntityManager().findAll(Waypoint, { where: { resetDate } })
+    const destination = waypoints.find((w) => w.symbol === deliver.destinationSymbol)
+    invariant(destination, `Expected waypoint ${deliver.destinationSymbol} to exist`)
+    const contractUnitBalance = deliver.unitsRequired - deliver.unitsFulfilled
+    const units = Math.min(contractUnitBalance, ship.cargo.inventory.find((p) => p.symbol === deliver.tradeSymbol)?.units || 0)
+    invariant(units > 0, `Expected ship to have ${deliver.tradeSymbol} to deliver`)
+
+    await navigateShip(ship, destination, waypoints)
+
+    const {
+      data: {
+        data: { cargo, contract },
+      },
+    } = await api.contracts.deliverContract(agent.contract.id, { shipSymbol: ship.symbol, tradeSymbol: deliver.tradeSymbol, units })
+    log.info('agent', `Delivered ${units} of ${deliver.tradeSymbol}`)
+    await updateShip(ship, { cargo })
+    await updateAgent(agent, { contract })
+  }
+
+  const sellGoods = async (markets: MarketData[], ship: ShipEntity, dontSellSymbol: string) => {
     log.info('agent', 'Will sell goods')
     const locations = await getSellLocations(markets, ship, dontSellSymbol)
 
@@ -182,7 +208,20 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
 
   const wait = async (delayMs: number) => new Promise((resolve) => setTimeout(resolve, delayMs))
 
-  const beginMining = async (ship: Ship) => {
+  const fulfillContract = async (agent: AgentEntity) => {
+    invariant(agent.contract, 'Expected agent to have a contract')
+    const {
+      data: {
+        data: { agent: data, contract },
+      },
+    } = await api.contracts.fulfillContract(agent.contract.id)
+
+    await updateAgent(agent, { contract, data })
+
+    log.info('agent', `Fulfilled contract, current credits: $${agent.data?.credits.toLocaleString()}`)
+  }
+
+  const beginMining = async (ship: ShipEntity) => {
     await orbitShip(ship)
     const {
       data: {
@@ -197,6 +236,19 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
       await beginMining(ship)
     }
   }
+  const getOrPurchaseMiningDrone = async (api: ReturnType<typeof apiFactory>, ships: ShipEntity[], shipyard: Shipyard) => {
+    if (ships.length === 2) {
+      const {
+        data: {
+          data: { ship },
+        },
+      } = await api.fleet.purchaseShip({ shipType: 'SHIP_MINING_DRONE', waypointSymbol: shipyard.symbol })
+      const entity = await findOrCreateShip(resetDate, ship)
+      return entity
+    } else {
+      return ships.find((s) => s.frame.symbol === 'FRAME_DRONE')!
+    }
+  }
 
   return {
     dockShip,
@@ -207,5 +259,8 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     jettisonUnsellable,
     wait,
     getOrAcceptContract,
+    getOrPurchaseMiningDrone,
+    deliverGoods,
+    fulfillContract,
   }
 }

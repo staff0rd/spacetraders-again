@@ -4,10 +4,11 @@ import { getEntityManager } from '../orm'
 import { findOrCreateShip } from './findOrCreateShip'
 
 export async function updateShips(resetDate: string, ships: Ship[]) {
-  return Promise.all(
+  const em = getEntityManager()
+  await Promise.all(
     ships.map(async (ship) => {
       const entity = await findOrCreateShip(resetDate, ship)
-      const em = getEntityManager()
+
       await em.nativeUpdate(
         ShipEntity,
         { id: entity.id },
@@ -27,4 +28,5 @@ export async function updateShips(resetDate: string, ships: Ship[]) {
       )
     }),
   )
+  return em.findAll(ShipEntity, { where: { resetDate } })
 }
