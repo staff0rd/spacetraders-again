@@ -21,7 +21,8 @@
     "influx:add-user": "docker exec spacetraders-again-influxdb-1 influx user create -n staff0rd -p mypassword -o my-org",
     "db:migration:up": "npx mikro-orm-esm migration:up",
     "db:migration:down": "npx mikro-orm-esm migration:down",
-    "db:migration:create": "npx mikro-orm-esm migration:create"
+    "db:migration:create": "npx mikro-orm-esm migration:create",
+    "db:debug": "npx mikro-orm-esm debug"
   },
   "type": "module",
   "dependencies": {
@@ -46,6 +47,7 @@
     "geometric": "^2.5.4",
     "ioredis": "^5.3.2",
     "ts-node-dev": "^2.0.0",
+    "type-fest": "^4.13.1",
     "typescript": "^5.4.2",
     "uuid": "^9.0.1",
     "winston": "^3.12.0"

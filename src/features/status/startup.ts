@@ -1,12 +1,12 @@
-import { Configuration, ContractsApiFactory, DefaultApiFactory, Ship } from '../../../api'
-import { findOrCreateAgent } from '../../db/findOrCreateAgent'
+import { DefaultApiFactory, Ship } from '../../../api'
 import { getOrPopulateMarkets } from '../../db/getOrPopulateMarkets'
 import { updateShips } from '../../db/updateShips'
+import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
 import { logError } from '../../logging/log-error'
 import { getActor } from './actions/getActor'
+import { getAgent } from './actions/getAgent'
 import { getOrPurchaseMiningDrone } from './actions/getOrPurchaseMiningDrone'
-import { apiFactory } from './apiFactory'
 import { getClosest } from './utils/getClosest'
 import { getCurrentFlightTime } from './utils/getCurrentFlightTime'
 
@@ -16,16 +16,16 @@ export async function startup() {
   const {
     data: { resetDate },
   } = await DefaultApiFactory().getStatus()
-  const agent = await findOrCreateAgent(resetDate)
+  const { agent, api } = await getAgent(resetDate)
 
-  const api = apiFactory(agent.token)
-  const act = getActor(api, resetDate)
+  const act = await getActor(agent, api)
+  await act.getOrAcceptContract(agent)
 
   const {
     data: { data: myShips },
   } = await api.fleet.getMyShips()
   await updateShips(resetDate, myShips)
-  const contracts = await ContractsApiFactory(new Configuration({ accessToken: agent.token })).getContracts()
+
   const commandShip = myShips[0]
   const {
     data: { data: waypoint },
@@ -36,11 +36,9 @@ export async function startup() {
   const {
     data: { data: orbital },
   } = await api.systems.getWaypoint(commandShip.nav.systemSymbol, waypoint.orbitals[0].symbol)
-  const contract = contracts.data.data[0]
-  if (!contract.accepted) {
-    await ContractsApiFactory(new Configuration({ accessToken: agent.token })).acceptContract(contract.id)
-  }
-  const desiredResource = contract.terms.deliver![0]
+
+  invariant(agent.contract, 'Expected agent to have a contract')
+  const desiredResource = agent.contract.terms.deliver![0]
 
   const {
     data: { data: shipyards },

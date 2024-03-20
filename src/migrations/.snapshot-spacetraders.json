@@ -24,15 +24,6 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "symbol": {
-          "name": "symbol",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        },
         "token": {
           "name": "token",
           "type": "character varying(600)",
@@ -41,6 +32,24 @@
           "primary": false,
           "nullable": false,
           "mappedType": "unknown"
+        },
+        "contract": {
+          "name": "contract",
+          "type": "json",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "data": {
+          "name": "data",
+          "type": "json",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
         }
       },
       "name": "agent",

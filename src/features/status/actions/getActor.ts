@@ -1,16 +1,20 @@
 import { EntityData } from '@mikro-orm/core'
 import { lineLength } from 'geometric'
 import { Ship } from '../../../../api'
+import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
 import { ShipEntity } from '../../ship/ship.entity'
+import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
 import { getClosest } from '../utils/getClosest'
 import { getCurrentFlightTime } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
 import { Waypoint as MarketData, Waypoint } from '../waypoint.entity'
+import { updateAgentFactory } from './getAgent'
 
-export const getActor = (api: ReturnType<typeof apiFactory>, resetDate: string) => {
+export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnType<typeof apiFactory>) => {
+  const updateAgent = updateAgentFactory(token, resetDate)
   async function updateShip(ship: Ship, data: EntityData<ShipEntity>) {
     await getEntityManager().fork().nativeUpdate(ShipEntity, { symbol: ship.symbol, resetDate }, data)
     Object.entries(data).forEach(([key, value]) => {
@@ -18,6 +22,31 @@ export const getActor = (api: ReturnType<typeof apiFactory>, resetDate: string) 
       ship[key as keyof Ship] = value
     })
   }
+
+  const getOrAcceptContract = async (agent: AgentEntity) => {
+    const {
+      data: { data: contracts },
+    } = await api.contracts.getContracts()
+
+    invariant(contracts.length === 1, 'Expected exactly one contract')
+
+    const firstContract = contracts[0]
+    if (firstContract.accepted) {
+      await updateAgent(agent, { contract: firstContract })
+      return
+    }
+
+    const {
+      data: {
+        data: {
+          agent: { accountId, symbol, ...rest },
+          contract,
+        },
+      },
+    } = await api.contracts.acceptContract(firstContract.id)
+    await updateAgent(agent, { contract, ...rest })
+  }
+
   const dockShip = async (ship: Ship) => {
     const {
       data: {
@@ -177,5 +206,6 @@ export const getActor = (api: ReturnType<typeof apiFactory>, resetDate: string) 
     beginMining,
     jettisonUnsellable,
     wait,
+    getOrAcceptContract,
   }
 }
