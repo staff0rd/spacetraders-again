@@ -7,6 +7,13 @@ import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
 
 export const updateAgentFactory = (token: string, resetDate: string) => async (agent: AgentEntity, data: EntityData<AgentEntity>) => {
+  const agentKeys = Object.keys(agent)
+  Object.keys(data).forEach((key) => {
+    if (!agentKeys.includes(key)) {
+      // @ts-expect-error bad type
+      delete data[key]
+    }
+  })
   await getEntityManager().fork().nativeUpdate(AgentEntity, { token, resetDate }, data)
 
   const entries = Object.entries(data) as Entries<AgentEntity>

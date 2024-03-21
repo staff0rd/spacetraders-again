@@ -11,7 +11,7 @@ import { apiFactory } from '../apiFactory'
 import { getClosest } from '../utils/getClosest'
 import { getCurrentFlightTime } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
-import { Waypoint as MarketData, Waypoint } from '../waypoint.entity'
+import { WaypointEntity } from '../waypoint.entity'
 import { updateAgentFactory } from './getAgent'
 
 export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnType<typeof apiFactory>) => {
@@ -29,9 +29,11 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
       data: { data: contracts },
     } = await api.contracts.getContracts()
 
-    invariant(contracts.length === 1, 'Expected exactly one contract')
+    const unfulfilled = contracts.filter((c) => !c.fulfilled)
 
-    const firstContract = contracts[0]
+    invariant(unfulfilled.length === 1, 'Expected exactly one contract')
+
+    const firstContract = unfulfilled[0]
     if (firstContract.accepted) {
       await updateAgent(agent, { contract: firstContract })
       return
@@ -83,7 +85,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     await updateShip(ship, { nav })
   }
 
-  const navigateShip = async (ship: ShipEntity, target: { symbol: string; x: number; y: number }, otherWaypoints: Waypoint[]) => {
+  const navigateShip = async (ship: ShipEntity, target: { symbol: string; x: number; y: number }, otherWaypoints: WaypointEntity[]) => {
     await refuelShip(ship)
     if (ship.nav.route.destination.symbol !== target.symbol) {
       const distance = lineLength([
@@ -130,7 +132,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     }
   }
 
-  const jettisonUnsellable = async (markets: MarketData[], ship: ShipEntity, dontSellSymbol: string) => {
+  const jettisonUnsellable = async (markets: WaypointEntity[], ship: ShipEntity, dontSellSymbol: string) => {
     const locations = await getSellLocations(markets, ship, dontSellSymbol)
     const unsellable = locations.filter((p) => !p.closestMarket)
     await Promise.all(
@@ -152,7 +154,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     invariant(agent.contract.terms.deliver, 'Expected contract to have deliver terms')
     invariant(agent.contract.terms.deliver.length === 1, 'Expected contract to have exactly one deliver term')
     const deliver = agent.contract.terms.deliver[0]
-    const waypoints = await getEntityManager().findAll(Waypoint, { where: { resetDate } })
+    const waypoints = await getEntityManager().findAll(WaypointEntity, { where: { resetDate } })
     const destination = waypoints.find((w) => w.symbol === deliver.destinationSymbol)
     invariant(destination, `Expected waypoint ${deliver.destinationSymbol} to exist`)
     const contractUnitBalance = deliver.unitsRequired - deliver.unitsFulfilled
@@ -174,7 +176,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     await updateAgent(agent, { contract })
   }
 
-  const sellGoods = async (markets: MarketData[], ship: ShipEntity, dontSellSymbol: string) => {
+  const sellGoods = async (markets: WaypointEntity[], ship: ShipEntity, dontSellSymbol: string) => {
     log.info('agent', 'Will sell goods')
     const locations = await getSellLocations(markets, ship, dontSellSymbol)
 

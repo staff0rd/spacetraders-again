@@ -1,3 +1,4 @@
+import lodash from 'lodash'
 import { DefaultApiFactory } from '../../../api'
 import { getOrPopulateMarkets } from '../../db/getOrPopulateMarkets'
 import { updateShips } from '../../db/updateShips'
@@ -7,7 +8,7 @@ import { logError } from '../../logging/log-error'
 import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
 import { getAgent } from './actions/getAgent'
-import { getClosest } from './utils/getClosest'
+import { updateWaypoint } from './updateWaypoint'
 import { getCurrentFlightTime } from './utils/getCurrentFlightTime'
 
 export type Position = { x: number; y: number }
@@ -39,17 +40,31 @@ export async function startup() {
     data: { data: orbital },
   } = await api.systems.getWaypoint(commandShip.nav.systemSymbol, waypoint.orbitals[0].symbol)
 
+  const systemSymbol = commandShip.nav.systemSymbol
+
   const {
-    data: { data: shipyards },
+    data: { data: shipyardWaypoints, meta },
     //@ts-expect-error because it is wrong
-  } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, undefined, { traits: ['SHIPYARD'] })
+  } = await api.systems.getSystemWaypoints(systemSymbol, undefined, 20, undefined, { traits: ['SHIPYARD'] })
+  invariant(meta.total < 21, 'Expected less than 21 shipyards')
 
-  const closestShipyard = getClosest(shipyards, waypoint)
-  const {
-    data: { data: shipyard },
-  } = await api.systems.getShipyard(commandShip.nav.systemSymbol, shipsFromApi[1].nav.waypointSymbol)
+  const shipyards = await Promise.all(
+    shipyardWaypoints.map(async (waypoint) => {
+      const {
+        data: { data: shipyard },
+      } = await api.systems.getShipyard(systemSymbol, waypoint.symbol)
+      const data = lodash.omit(shipyard, 'transactions', 'symbol')
+      const result = await updateWaypoint(resetDate, waypoint.symbol, { shipyard: data })
+      invariant(result, 'Expected to update waypoint')
+      return shipyard
+    }),
+  )
 
-  const miningDrone = await act.getOrPurchaseMiningDrone(api, ships, shipyard)
+  const miningDrone = await act.getOrPurchaseMiningDrone(
+    api,
+    ships,
+    shipyards.find((x) => x.symbol === shipsFromApi[1].nav.waypointSymbol)!,
+  )
 
   const {
     data: {
@@ -83,7 +98,18 @@ export async function startup() {
         await act.refuelShip(ship)
         await act.jettisonUnsellable(markets, ship, contractGood.tradeSymbol)
 
-        if (contractGood.unitsFulfilled === contractGood.unitsRequired) {
+        if (agent.contract.fulfilled) {
+          const {
+            data: {
+              data: { contract: newContract },
+            },
+          } = await api.fleet.negotiateContract(commandShip.symbol)
+          const {
+            data: {
+              data: { agent, contract },
+            },
+          } = await api.contracts.acceptContract(newContract.id)
+        } else if (contractGood.unitsFulfilled === contractGood.unitsRequired) {
           await act.fulfillContract(agent)
         } else if (ship.cargo.inventory.find((p) => p.symbol === contractGood.tradeSymbol)?.units === ship.cargo.capacity) {
           await act.deliverGoods(ship, agent)
@@ -102,7 +128,6 @@ export async function startup() {
         log.warn('agent', `Mining drone is not yet in position. Waiting for arrival in ${arrival} seconds`)
         await act.wait(arrival * 1000)
       }
-      await makeDecision(ship)
     } catch (err) {
       logError('makeDecision', err)
     }

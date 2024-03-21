@@ -1,7 +1,8 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core'
+import { Shipyard } from '../../../api'
 
-@Entity()
-export class Waypoint {
+@Entity({ tableName: 'waypoint' })
+export class WaypointEntity {
   @PrimaryKey({ autoincrement: true })
   id!: number
 
@@ -22,6 +23,9 @@ export class Waypoint {
 
   @Property()
   imports: string[]
+
+  @Property({ type: 'json' })
+  shipyard: undefined | Pick<Shipyard, 'modificationsFee' | 'shipTypes' | 'ships'>
 
   constructor(resetDate: string, systemSymbol: string, symbol: string, imports: string[], x: number, y: number) {
     this.resetDate = resetDate
