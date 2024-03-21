@@ -1,5 +1,5 @@
 import { InfluxDB, Point, WriteApi } from '@influxdata/influxdb-client'
-import { pick } from 'lodash'
+import lodash from 'lodash'
 import { hostname } from 'os'
 import { Agent, MarketTransaction } from '../../../api'
 import { getConfig } from '../../config'
@@ -25,10 +25,10 @@ export const writePoint = <T, K extends keyof T>(
   }: { measurementName: string; tags: K[]; fields: K[]; resetDate: string; agentSymbol: string },
 ) => {
   const point = new Point(measurementName)
-  Object.entries(pick(object, tags)).forEach(([key, value]) => {
+  Object.entries(lodash.pick(object, tags)).forEach(([key, value]) => {
     point.tag(key, value as string)
   })
-  Object.entries(pick(object, fields)).forEach(([key, value]) => {
+  Object.entries(lodash.pick(object, fields)).forEach(([key, value]) => {
     point.floatField(key, value)
   })
   point.tag('resetDate', resetDate)
