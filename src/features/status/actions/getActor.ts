@@ -8,6 +8,7 @@ import { getEntityManager } from '../../../orm'
 import { ShipEntity } from '../../ship/ship.entity'
 import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
+import { writeCredits, writeMarketTransaction } from '../influxWrite'
 import { getClosest } from '../utils/getClosest'
 import { getCurrentFlightTime } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
@@ -47,6 +48,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
         },
       },
     } = await api.contracts.acceptContract(firstContract.id)
+    writeCredits({ symbol, credits: rest.credits }, resetDate)
     await updateAgent(agent, { contract, ...rest })
   }
 
@@ -68,6 +70,9 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
         },
       } = await api.fleet.refuelShip(ship.symbol)
       ship.fuel = fuel
+
+      writeMarketTransaction(resetDate, transaction, agent)
+
       log.info(
         'agent',
         `Refueled ship ${ship.symbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
@@ -195,6 +200,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
             symbol: p.symbol,
             units: p.units,
           })
+          writeMarketTransaction(resetDate, transaction, agent)
           log.info(
             'agent',
             `Sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
@@ -221,6 +227,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
       },
     } = await api.contracts.fulfillContract(agent.contract.id)
 
+    writeCredits(data, resetDate)
     await updateAgent(agent, { contract, data })
 
     log.info('agent', `Fulfilled contract, current credits: $${agent.data?.credits.toLocaleString()}`)
@@ -249,9 +256,10 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     if (ships.length === 2) {
       const {
         data: {
-          data: { ship },
+          data: { ship, agent, transaction },
         },
       } = await api.fleet.purchaseShip({ shipType: 'SHIP_MINING_DRONE', waypointSymbol: shipyard.symbol })
+      // TODO: write shipyard transaction
       const entity = await findOrCreateShip(resetDate, ship)
       return entity
     } else {

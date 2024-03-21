@@ -1,0 +1,58 @@
+import { InfluxDB, Point, WriteApi } from '@influxdata/influxdb-client'
+import { pick } from 'lodash'
+import { hostname } from 'os'
+import { Agent, MarketTransaction } from '../../../api'
+import { getConfig } from '../../config'
+
+let writeApi: WriteApi | undefined
+export const influxWrite = () => {
+  if (!writeApi) {
+    const { url, token, org, bucket } = getConfig().influx
+    writeApi = new InfluxDB({ url, token }).getWriteApi(org, bucket, 'ms')
+    writeApi.useDefaultTags({ location: hostname() })
+  }
+  return writeApi
+}
+
+export const writePoint = <T, K extends keyof T>(
+  object: T,
+  {
+    measurementName,
+    tags,
+    fields,
+    resetDate,
+    agentSymbol,
+  }: { measurementName: string; tags: K[]; fields: K[]; resetDate: string; agentSymbol: string },
+) => {
+  const point = new Point(measurementName)
+  Object.entries(pick(object, tags)).forEach(([key, value]) => {
+    point.tag(key, value as string)
+  })
+  Object.entries(pick(object, fields)).forEach(([key, value]) => {
+    point.floatField(key, value)
+  })
+  point.tag('resetDate', resetDate)
+  point.tag('agentSymbol', agentSymbol)
+  influxWrite().writePoint(point)
+}
+
+export const writeMarketTransaction = (resetDate: string, transaction: MarketTransaction, agent: Agent) => {
+  writePoint(transaction, {
+    measurementName: 'market-transaction',
+    tags: ['waypointSymbol', 'shipSymbol', 'tradeSymbol', 'type'],
+    fields: ['units', 'pricePerUnit', 'totalPrice'],
+    resetDate,
+    agentSymbol: agent.symbol,
+  })
+  writeCredits(agent, resetDate)
+}
+
+export const writeCredits = (agent: Pick<Agent, 'symbol' | 'credits'>, resetDate: string) => {
+  writePoint(agent, {
+    measurementName: 'credits',
+    tags: [],
+    fields: ['credits'],
+    resetDate,
+    agentSymbol: agent.symbol,
+  })
+}
