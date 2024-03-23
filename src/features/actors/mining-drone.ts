@@ -17,7 +17,7 @@ export const miningDroneActorFactory = (
     await act.jettisonUnsellable(waypoints, ship, agent.contractGood.tradeSymbol)
 
     if (ship.cargo.inventory.find((p) => p.symbol === agent.contractGood.tradeSymbol)?.units === ship.cargo.capacity) {
-      await act.deliverGoods(ship, agent)
+      await act.deliverGoods(ship)
     } else if (ship.nav.waypointSymbol === miningLocation.symbol) {
       if (ship.cargo.units < ship.cargo.capacity) {
         await act.beginMining(ship)

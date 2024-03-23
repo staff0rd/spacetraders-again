@@ -14,6 +14,7 @@ import {
   ShipReactor,
   ShipRegistration,
 } from '../../../api'
+
 @Entity({ tableName: 'ship' })
 export class ShipEntity {
   @PrimaryKey({ type: 'uuid' })
@@ -76,11 +77,5 @@ export class ShipEntity {
 
   get label() {
     return `${this.registration.role} (${this.symbol})`
-  }
-
-  cooldownRemaining() {
-    const expiry = this.cooldown.expiration
-    if (!expiry) return 0
-    return Math.max(new Date(expiry).getTime() - new Date().getTime(), 0)
   }
 }

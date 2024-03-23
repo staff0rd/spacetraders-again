@@ -42,12 +42,12 @@ export async function startup() {
 
   await decisionMaker(commandShip, act, async (ship: ShipEntity) => {
     if (!agent.contract || agent.contract.fulfilled) {
-      await act.getOrAcceptContract(agent, ship)
+      await act.getOrAcceptContract(ship)
       return
     }
 
     if (agent.contractGood.unitsFulfilled === agent.contractGood.unitsRequired) {
-      await act.fulfillContract(agent)
+      await act.fulfillContract()
       return
     }
 
@@ -62,7 +62,7 @@ export async function startup() {
         return
       }
 
-      await act.getOrPurchaseMiningDrone(api, agent, ships, miningDroneShipyard)
+      await act.getOrPurchaseMiningDrone(ships, miningDroneShipyard)
       return
     } else {
       const idleDrones = miningDrones.filter((s) => !s.isCommanded)
@@ -81,7 +81,7 @@ export async function startup() {
       return
     }
 
-    log.info('decision-maker', 'Command ship will wait 5 minutes')
+    log.info('ship', `${ship.label} will wait 5 minutes`)
     await act.wait(1000 * 60 * 5)
   })
 }

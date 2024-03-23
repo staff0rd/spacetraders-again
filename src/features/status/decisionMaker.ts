@@ -2,7 +2,7 @@ import { log } from '../../logging/configure-logging'
 import { logError } from '../../logging/log-error'
 import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
-import { getCurrentFlightTime } from './utils/getCurrentFlightTime'
+import { shipArriving } from './utils/getCurrentFlightTime'
 
 const createDecisionRateMonitor = () => {
   const decisionTimestamps: Date[] = []
@@ -25,12 +25,12 @@ export const decisionMaker = async (ship: ShipEntity, act: Awaited<ReturnType<ty
     recordTimestamp()
 
     try {
-      const { flightTimeFromNowSeconds, distance } = getCurrentFlightTime(ship)
-      if (flightTimeFromNowSeconds <= 0) {
+      const { seconds, distance } = shipArriving(ship)
+      if (seconds <= 0) {
         await decisions(ship)
       } else {
         log.info('ship', `${ship.label} is not yet in position. Waiting for arrival ${distance}`)
-        await act.wait(flightTimeFromNowSeconds * 1000)
+        await act.wait(seconds * 1000)
       }
     } catch (err) {
       logError(`${ship.label} makeDecision`, err)
