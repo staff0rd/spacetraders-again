@@ -25,7 +25,10 @@ export class WaypointEntity {
   imports: string[]
 
   @Property({ type: 'json' })
-  shipyard: undefined | Pick<Shipyard, 'modificationsFee' | 'shipTypes' | 'ships'>
+  shipyard: undefined | Pick<Shipyard, 'modificationsFee' | 'shipTypes'>
+
+  @Property({ type: 'json' })
+  ships: undefined | Shipyard['ships']
 
   constructor(resetDate: string, systemSymbol: string, symbol: string, imports: string[], x: number, y: number) {
     this.resetDate = resetDate

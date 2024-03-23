@@ -5,6 +5,7 @@ import { log } from '../../logging/configure-logging'
 import { influxWrite } from './influxWrite'
 
 export async function getStatus(context: string) {
+  // todo: use rate limited api
   const result = await DefaultApiFactory().getStatus()
 
   await findOrCreateStatus(result.data.resetDate)

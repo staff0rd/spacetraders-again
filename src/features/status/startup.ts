@@ -48,13 +48,20 @@ export async function startup() {
   } = await api.systems.getSystemWaypoints(systemSymbol, undefined, 20, undefined, { traits: ['SHIPYARD'] })
   invariant(meta.total < 21, 'Expected less than 21 shipyards')
 
+  const markets = await getOrPopulateMarkets(api, resetDate, commandShip.nav.systemSymbol)
+
   const shipyards = await Promise.all(
     shipyardWaypoints.map(async (waypoint) => {
       const {
         data: { data: shipyard },
       } = await api.systems.getShipyard(systemSymbol, waypoint.symbol)
       const data = lodash.omit(shipyard, 'transactions', 'symbol')
-      const result = await updateWaypoint(resetDate, waypoint.symbol, { shipyard: data })
+      const result = await updateWaypoint(
+        resetDate,
+        waypoint.symbol,
+        { modificationsFee: data.modificationsFee, shipTypes: data.shipTypes },
+        data.ships,
+      )
       invariant(result, 'Expected to update waypoint')
       return shipyard
     }),
@@ -71,8 +78,6 @@ export async function startup() {
       data: [engineeredAteroid],
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
-
-  const markets = await getOrPopulateMarkets(api, resetDate, commandShip.nav.systemSymbol)
 
   const decisionTimestamps: Date[] = []
   const recordTimestamp = () => {
