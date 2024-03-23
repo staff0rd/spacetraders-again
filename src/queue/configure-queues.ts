@@ -38,7 +38,6 @@ export const setupQueues = async () => {
     'leaderboards',
     async () => {
       try {
-        log.info('leaderboards-worker', 'Starting job')
         await getStatus('leaderboards-worker')
       } catch (err) {
         logError('leaderboards-worker', err)
