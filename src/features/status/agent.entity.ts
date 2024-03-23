@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core'
 import { Agent, Contract } from '../../../api'
-import { invariant } from '../../invariant'
 
 @Entity({ tableName: 'agent' })
 export class AgentEntity {
@@ -27,7 +26,7 @@ export class AgentEntity {
   }
 
   get contractGood() {
-    invariant(this.contract?.terms.deliver?.length === 1, 'Expected agent to have a single deliver contract')
+    if (this.contract?.terms.deliver?.length !== 1) throw new Error('Expected agent to have a single deliver contract')
     return this.contract.terms.deliver[0]
   }
 
