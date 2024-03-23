@@ -73,6 +73,13 @@ export async function startup() {
     shipyards.find((x) => x.symbol === shipsFromApi[1].nav.waypointSymbol)!,
   )
 
+  const probeShipYard = shipyards.find((x) => x.shipTypes.map((s) => s.type).includes('SHIP_PROBE'))
+  invariant(probeShipYard, 'Expected to find a shipyard with a probe ship')
+  if (commandShip.nav.route.destination.symbol !== probeShipYard.symbol) {
+    const waypoint = shipyardWaypoints.find((x) => x.symbol === probeShipYard.symbol)!
+    await act.navigateShip(commandShip, { symbol: probeShipYard.symbol, x: waypoint?.x, y: waypoint.y }, markets)
+  }
+
   const {
     data: {
       data: [engineeredAteroid],

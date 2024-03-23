@@ -99,8 +99,8 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
       ])
       const fuelNeeded = Math.round(distance)
       log.info(
-        'agent',
-        `Navigating ship ${ship.symbol} to ${target.symbol}, distance: ${distance}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
+        'ship',
+        `${ship.registration.role}, (${ship.symbol}) will navigate to ${target.symbol}, distance: ${distance}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
       )
       if (ship.fuel.capacity < fuelNeeded) {
         const reachableWaypoints = otherWaypoints.filter((w) => {
