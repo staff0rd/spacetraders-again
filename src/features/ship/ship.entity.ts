@@ -54,6 +54,8 @@ export class ShipEntity {
   @Property({ type: 'json' })
   fuel: ShipFuel
 
+  isCommanded = false
+
   constructor(resetDate: string, ship: Ship) {
     this.resetDate = resetDate
     this.symbol = ship.symbol
@@ -70,6 +72,10 @@ export class ShipEntity {
     this.mounts = ship.mounts
     this.cargo = ship.cargo
     this.fuel = ship.fuel
+  }
+
+  get label() {
+    return `${this.registration.role} (${this.symbol})`
   }
 
   cooldownRemaining() {

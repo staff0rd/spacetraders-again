@@ -20,7 +20,7 @@ export const updateAgentFactory = (token: string, resetDate: string) => async (a
 
   entries.forEach(([key, value]) => {
     // @ts-expect-error bad type
-    if (agent[key]) agent[key] = value
+    if (data[key]) agent[key] = value
   })
 }
 

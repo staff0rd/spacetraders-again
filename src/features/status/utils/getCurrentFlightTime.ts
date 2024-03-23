@@ -8,5 +8,5 @@ export const getCurrentFlightTime = (ship: Ship) => {
   const distance = formatDistance(arrival, new Date(), { addSuffix: true })
   const flightTimeSeconds = (arrival.getTime() - departure.getTime()) / 1000
   const flightTimeFromNowSeconds = (arrival.getTime() - new Date().getTime()) / 1000
-  return flightTimeFromNowSeconds
+  return { flightTimeFromNowSeconds, distance }
 }

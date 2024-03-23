@@ -1,9 +1,10 @@
 import { Ship } from '../../api'
 import { ShipEntity } from '../features/ship/ship.entity'
+import { AgentEntity } from '../features/status/agent.entity'
 import { getEntityManager } from '../orm'
 import { findOrCreateShip } from './findOrCreateShip'
 
-export async function updateShips(resetDate: string, ships: Ship[]) {
+export async function updateShips(resetDate: string, agent: AgentEntity, ships: Ship[]) {
   const em = getEntityManager()
   await Promise.all(
     ships.map(async (ship) => {
@@ -28,5 +29,5 @@ export async function updateShips(resetDate: string, ships: Ship[]) {
       )
     }),
   )
-  return em.findAll(ShipEntity, { where: { resetDate } })
+  return em.findAll(ShipEntity, { where: { resetDate, symbol: { $ilike: `${agent.data!.symbol}%` } } })
 }
