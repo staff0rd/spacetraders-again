@@ -342,6 +342,33 @@
           "nullable": false,
           "mappedType": "array"
         },
+        "exports": {
+          "name": "exports",
+          "type": "text[]",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "array"
+        },
+        "exchange": {
+          "name": "exchange",
+          "type": "text[]",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "array"
+        },
+        "trade_goods": {
+          "name": "trade_goods",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
         "shipyard": {
           "name": "shipyard",
           "type": "jsonb",

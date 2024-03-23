@@ -23,6 +23,9 @@ export const getOrPopulateMarkets = async (
       market.systemSymbol,
       market.symbol,
       data.imports.map((d) => d.symbol),
+      data.exports.map((d) => d.symbol),
+      data.exchange.map((d) => d.symbol),
+      data.tradeGoods,
       market.x,
       market.y,
     )
