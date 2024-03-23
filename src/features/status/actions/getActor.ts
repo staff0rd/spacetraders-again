@@ -243,7 +243,7 @@ export const getActor = async ({ token, resetDate }: AgentEntity, api: ReturnTyp
     await orbitShip(ship)
     const cooldownRemaining = ship.cooldownRemaining()
     if (cooldownRemaining > 0) {
-      log.warn('agent', `Ship ${ship.symbol} will wait for ${cooldownRemaining}ms before mining`)
+      log.info('agent', `Ship ${ship.symbol} will wait for ${cooldownRemaining}ms before mining`)
       await wait(cooldownRemaining)
     }
 
