@@ -1,8 +1,9 @@
 import { InfluxDB, Point, WriteApi } from '@influxdata/influxdb-client'
 import lodash from 'lodash'
 import { hostname } from 'os'
-import { Agent, MarketTransaction } from '../../../api'
+import { Agent, Extraction, MarketTransaction } from '../../../api'
 import { getConfig } from '../../config'
+import { AgentEntity } from './agent.entity'
 
 let writeApi: WriteApi | undefined
 export const influxWrite = () => {
@@ -55,4 +56,21 @@ export const writeCredits = (agent: Pick<Agent, 'symbol' | 'credits'>, resetDate
     resetDate,
     agentSymbol: agent.symbol,
   })
+}
+
+export const writeExtraction = ({ resetDate, data: agent }: Pick<AgentEntity, 'resetDate' | 'data'>, extraction: Extraction) => {
+  writePoint(
+    {
+      shipSymbol: extraction.shipSymbol,
+      tradeGood: extraction.yield.symbol,
+      units: extraction.yield.units,
+    },
+    {
+      measurementName: 'extraction',
+      tags: ['shipSymbol', 'tradeGood'],
+      fields: ['units'],
+      resetDate,
+      agentSymbol: agent!.symbol,
+    },
+  )
 }

@@ -8,7 +8,7 @@ import { getEntityManager } from '../../../orm'
 import { ShipEntity } from '../../ship/ship.entity'
 import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
-import { writeCredits, writeMarketTransaction } from '../influxWrite'
+import { writeCredits, writeExtraction, writeMarketTransaction } from '../influxWrite'
 import { getClosest } from '../utils/getClosest'
 import { shipArriving, shipCooldownRemaining } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
@@ -255,6 +255,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
       },
     } = await api.fleet.extractResources(ship.symbol)
     log.info('ship', `${ship.label} mining result: is ${extraction.yield.units}x${extraction.yield.symbol}`)
+    writeExtraction(agent, extraction)
     await updateShip(ship, { cargo, cooldown })
     if (cargo.units < cargo.capacity) {
       await beginMining(ship)
