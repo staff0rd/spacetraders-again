@@ -1,3 +1,4 @@
+import { TradeSymbol } from '../../../api'
 import { ShipActionType, ShipEntity } from '../ship/ship.entity'
 import { IWaypoint } from '../status/actions/IWaypoint'
 import { getActor } from '../status/actions/getActor'
@@ -12,10 +13,11 @@ export const shuttleActorFactory = (
   markets: WaypointEntity[],
   miningLocation: IWaypoint,
   ships: ShipEntity[],
+  sell: TradeSymbol[],
 ) =>
   decisionMaker(shuttle, act, async (ship: ShipEntity) => {
     await act.refuelShip(ship)
-    await act.jettisonUnsellable(markets, ship, agent.contractGood.tradeSymbol)
+    await act.jettisonUnwanted(ship, sell)
     const currentAction = ship.action?.type
     if (!currentAction) {
       await act.updateShipAction(ship, ShipActionType.FILL)
@@ -40,7 +42,7 @@ export const shuttleActorFactory = (
       } else if (ship.cargo.inventory.find((p) => p.symbol === agent.contractGood.tradeSymbol)?.units) {
         await act.deliverGoods(ship)
       } else {
-        await act.sellGoods(markets, ship, agent.contractGood.tradeSymbol)
+        await act.sellGoods(markets, ship, [agent.contractGood.tradeSymbol as TradeSymbol])
       }
     } else throw new Error(`Unknown action: ${currentAction}`)
     await act.wait(1000 * 10)

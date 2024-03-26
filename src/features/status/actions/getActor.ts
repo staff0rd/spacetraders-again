@@ -1,6 +1,6 @@
 import { EntityData } from '@mikro-orm/core'
 import { lineLength } from 'geometric'
-import { Ship, ShipType } from '../../../../api'
+import { Ship, ShipType, TradeSymbol } from '../../../../api'
 import { findOrCreateShip } from '../../../db/findOrCreateShip'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
@@ -147,12 +147,27 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     }
   }
 
-  const jettisonUnsellable = async (markets: WaypointEntity[], ship: ShipEntity, dontSellSymbol: string) => {
-    const locations = await getSellLocations(markets, ship, dontSellSymbol)
+  const jettisonUnsellable = async (markets: WaypointEntity[], ship: ShipEntity, keep: TradeSymbol[]) => {
+    const locations = await getSellLocations(markets, ship, keep)
     const unsellable = locations.filter((p) => !p.closestMarket)
     await Promise.all(
       unsellable.map(async ({ symbol, units }) => {
-        log.warn('ship', `${ship.label} is jettisoning ${units}x${symbol}`)
+        log.warn('ship', `${ship.label} is jettisoning ${units}x${symbol} because it is unsellable`)
+        const {
+          data: {
+            data: { cargo },
+          },
+        } = await api.fleet.jettison(ship.symbol, { symbol, units })
+        await updateShip(ship, { cargo })
+      }),
+    )
+  }
+
+  const jettisonUnwanted = async (ship: ShipEntity, keep: TradeSymbol[]) => {
+    const excessCargo = ship.cargo.inventory.filter((p) => !keep.includes(p.symbol))
+    await Promise.all(
+      excessCargo.map(async ({ symbol, units }) => {
+        log.warn('ship', `${ship.label} is jettisoning ${units}x${symbol} because it is unwanted`)
         const {
           data: {
             data: { cargo },
@@ -221,9 +236,9 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     await updateAgent(agent, { contract })
   }
 
-  const sellGoods = async (markets: WaypointEntity[], ship: ShipEntity, dontSellSymbol: string) => {
+  const sellGoods = async (markets: WaypointEntity[], ship: ShipEntity, keep: TradeSymbol[]) => {
     log.info('ship', `${ship.label} will sell goods`)
-    const locations = await getSellLocations(markets, ship, dontSellSymbol)
+    const locations = await getSellLocations(markets, ship, keep)
 
     const sellableHere = locations.filter((p) => p.closestMarket && p.closestMarket.symbol === ship.nav.waypointSymbol)
 
@@ -342,5 +357,6 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     fulfillContract,
     updateShipAction,
     transferGoods,
+    jettisonUnwanted,
   }
 }

@@ -39,7 +39,7 @@ export async function startup() {
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
-  const miningDronesToPurchase = 1
+  const miningDronesToPurchase = 2
   const shuttlesToPurchase = 1
 
   await decisionMaker(commandShip, act, async (ship: ShipEntity) => {
@@ -77,7 +77,7 @@ export async function startup() {
       idleShuttles.forEach((ship) => {
         log.warn('command', `Spawning worker for ${ship.label}`)
         ship.isCommanded = true
-        shuttleActorFactory(ship, act, agent, markets, engineeredAsteroid, ships)
+        shuttleActorFactory(ship, act, agent, markets, engineeredAsteroid, ships, ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE'])
       })
     }
 

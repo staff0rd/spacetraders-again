@@ -1,5 +1,5 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core'
-import { MarketTradeGood, Shipyard } from '../../../api'
+import { MarketTradeGood, Shipyard, TradeSymbol } from '../../../api'
 
 @Entity({ tableName: 'waypoint' })
 export class WaypointEntity {
@@ -22,13 +22,13 @@ export class WaypointEntity {
   y: number
 
   @Property()
-  imports: string[]
+  imports: TradeSymbol[]
 
   @Property()
-  exports: string[]
+  exports: TradeSymbol[]
 
   @Property()
-  exchange: string[]
+  exchange: TradeSymbol[]
 
   @Property({ type: 'json' })
   tradeGoods: MarketTradeGood[] | undefined
@@ -43,9 +43,9 @@ export class WaypointEntity {
     resetDate: string,
     systemSymbol: string,
     symbol: string,
-    imports: string[],
-    exports: string[],
-    exchange: string[],
+    imports: TradeSymbol[],
+    exports: TradeSymbol[],
+    exchange: TradeSymbol[],
     tradeGoods: MarketTradeGood[] | undefined,
     x: number,
     y: number,

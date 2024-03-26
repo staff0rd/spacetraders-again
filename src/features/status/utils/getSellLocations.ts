@@ -1,10 +1,10 @@
-import { Ship } from '../../../../api'
+import { Ship, TradeSymbol } from '../../../../api'
 import { log } from '../../../logging/configure-logging'
 import { WaypointEntity } from '../waypoint.entity'
 import { getClosest } from './getClosest'
 
-export const getSellLocations = async (markets: WaypointEntity[], ship: Ship, dontSellSymbol: string) => {
-  const excessCargo = ship.cargo.inventory.filter((item) => item.symbol !== dontSellSymbol)
+export const getSellLocations = async (markets: WaypointEntity[], ship: Ship, keep: TradeSymbol[]) => {
+  const excessCargo = ship.cargo.inventory.filter((item) => !keep.includes(item.symbol))
   const sellLocations = excessCargo.map((cargo) => {
     const marketsThatImport = markets.filter((m) => m.imports.includes(cargo.symbol))
     return {
