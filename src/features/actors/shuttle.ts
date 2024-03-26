@@ -34,6 +34,7 @@ export const shuttleActorFactory = (
         const droneWithCargo = dronesAtMiningLocation.find((s) => s.cargo.units > 0)
         if (droneWithCargo) {
           await act.transferGoods(droneWithCargo, ship, capacity)
+          return
         }
       }
     } else if (currentAction === ShipActionType.SELL) {
@@ -43,6 +44,7 @@ export const shuttleActorFactory = (
         await act.deliverGoods(ship)
       } else {
         await act.sellGoods(markets, ship, [agent.contractGood.tradeSymbol as TradeSymbol])
+        return
       }
     } else throw new Error(`Unknown action: ${currentAction}`)
     await act.wait(1000 * 10)
