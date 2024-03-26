@@ -56,7 +56,7 @@ export async function startup() {
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     log.info('agent', `There are ${miningDrones.length} mining drones`)
     // TODO: don't hardcode the price
-    if ((miningDrones.length < miningDronesToPurchase && agent.data?.credits) ?? 0 > 50000) {
+    if (miningDrones.length < miningDronesToPurchase && (agent.data?.credits ?? 0) > 50000) {
       await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', shipyards, markets, ships)
       return
     } else {
