@@ -39,7 +39,7 @@ export async function startup() {
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
-  const miningDronesToPurchase = 2
+  const miningDronesToPurchase = 10
   const shuttlesToPurchase = 1
 
   await decisionMaker(commandShip, act, async (ship: ShipEntity) => {
@@ -55,7 +55,8 @@ export async function startup() {
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     log.info('agent', `There are ${miningDrones.length} mining drones`)
-    if (miningDrones.length < miningDronesToPurchase) {
+    // TODO: don't hardcode the price
+    if ((miningDrones.length < miningDronesToPurchase && agent.data?.credits) ?? 0 > 50000) {
       await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', shipyards, markets, ships)
       return
     } else {
