@@ -54,6 +54,7 @@ export async function startup() {
     }
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
+    log.info('agent', `There are ${miningDrones.length} mining drones`)
     if (miningDrones.length < miningDronesToPurchase) {
       await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', shipyards, markets, ships)
       return
@@ -67,6 +68,7 @@ export async function startup() {
     }
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
+    log.info('agent', `There are ${shuttles.length} shuttles`)
     if (shuttles.length < shuttlesToPurchase) {
       await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', shipyards, markets, ships)
       return
