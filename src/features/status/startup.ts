@@ -5,6 +5,7 @@ import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
 import { miningDroneActorFactory } from '../actors/mining-drone'
+import { shuttleActorFactory } from '../actors/shuttle'
 import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
 import { getAgent } from './actions/getAgent'
@@ -30,7 +31,7 @@ export async function startup() {
 
   const systemSymbol = commandShip.nav.systemSymbol
 
-  const { markets, shipyards, shipyardWaypoints } = await initSystem(api, resetDate, systemSymbol)
+  const { markets, shipyards } = await initSystem(api, resetDate, systemSymbol)
 
   const {
     data: {
@@ -39,6 +40,7 @@ export async function startup() {
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
   const miningDronesToPurchase = 1
+  const shuttlesToPurchase = 1
 
   await decisionMaker(commandShip, act, async (ship: ShipEntity) => {
     if (!agent.contract || agent.contract.fulfilled) {
@@ -53,35 +55,31 @@ export async function startup() {
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     if (miningDrones.length < miningDronesToPurchase) {
-      const miningDroneShipyard = shipyards.find((x) => x.shipTypes.map((s) => s.type).includes('SHIP_MINING_DRONE'))
-      invariant(miningDroneShipyard, 'Expected to find a shipyard with a mining drone ship')
-      const miningDroneShipyardWaypoint = shipyardWaypoints.find((x) => x.symbol === miningDroneShipyard.symbol)
-      invariant(miningDroneShipyardWaypoint, 'Expected to find a waypoint for the mining drone shipyard')
-      if (commandShip.nav.route.destination.symbol !== miningDroneShipyard.symbol) {
-        await act.navigateShip(commandShip, miningDroneShipyardWaypoint, markets)
-        return
-      }
-
-      await act.getOrPurchaseMiningDrone(ships, miningDroneShipyard)
+      await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', shipyards, markets, ships)
       return
     } else {
       const idleDrones = miningDrones.filter((s) => !s.isCommanded)
       idleDrones.forEach((drone) => {
         log.warn('command', `Spawning worker for ${drone.label}`)
         drone.isCommanded = true
-        miningDroneActorFactory(drone, act, agent, markets, engineeredAsteroid)
+        miningDroneActorFactory(drone, act, markets, engineeredAsteroid)
       })
     }
 
-    const haulerShipYard = shipyards.find((x) => x.shipTypes.map((s) => s.type).includes('SHIP_LIGHT_HAULER'))
-    invariant(haulerShipYard, 'Expected to find a shipyard with a light hauler ship')
-    if (commandShip.nav.route.destination.symbol !== haulerShipYard.symbol) {
-      const waypoint = shipyardWaypoints.find((x) => x.symbol === haulerShipYard.symbol)!
-      await act.navigateShip(commandShip, { symbol: haulerShipYard.symbol, x: waypoint?.x, y: waypoint.y }, markets)
+    const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
+    if (shuttles.length < shuttlesToPurchase) {
+      await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', shipyards, markets, ships)
       return
+    } else {
+      const idleShuttles = shuttles.filter((s) => !s.isCommanded)
+      idleShuttles.forEach((ship) => {
+        log.warn('command', `Spawning worker for ${ship.label}`)
+        ship.isCommanded = true
+        shuttleActorFactory(ship, act, agent, markets, engineeredAsteroid, ships)
+      })
     }
 
-    log.info('ship', `${ship.label} will wait 5 minutes`)
+    log.info('ship', `${ship.label} has nothing to do, will idle 5 minutes`)
     await act.wait(1000 * 60 * 5)
   })
 }
@@ -107,9 +105,8 @@ const initSystem = async (api: Awaited<ReturnType<typeof getAgent>>['api'], rese
         { modificationsFee: data.modificationsFee, shipTypes: data.shipTypes },
         data.ships,
       )
-      invariant(result, 'Expected to update waypoint')
-      return shipyard
+      return result
     }),
   )
-  return { markets, shipyards, shipyardWaypoints }
+  return { markets, shipyards }
 }

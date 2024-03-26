@@ -15,6 +15,15 @@ import {
   ShipRegistration,
 } from '../../../api'
 
+export enum ShipActionType {
+  SELL = 'SELL',
+  FILL = 'FILL',
+}
+
+type ShipAction = {
+  type?: ShipActionType
+}
+
 @Entity({ tableName: 'ship' })
 export class ShipEntity {
   @PrimaryKey({ type: 'uuid' })
@@ -54,6 +63,8 @@ export class ShipEntity {
   cargo: ShipCargo
   @Property({ type: 'json' })
   fuel: ShipFuel
+  @Property({ type: 'json' })
+  action?: ShipAction
 
   isCommanded = false
 

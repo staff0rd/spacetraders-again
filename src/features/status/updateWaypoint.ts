@@ -1,4 +1,3 @@
-import { EntityData } from '@mikro-orm/core'
 import { Shipyard } from '../../../api'
 import { getEntityManager } from '../../orm'
 import { WaypointEntity } from './waypoint.entity'
@@ -8,8 +7,11 @@ export const updateWaypoint = async (
   symbol: string,
   shipyard: Pick<Shipyard, 'modificationsFee' | 'shipTypes'> | undefined,
   ships: Shipyard['ships'] | undefined,
-) => {
-  const toUpdate: EntityData<WaypointEntity> = { shipyard }
-  if (ships) toUpdate.ships = ships
-  return await getEntityManager().fork().nativeUpdate(WaypointEntity, { resetDate, symbol }, toUpdate)
+): Promise<WaypointEntity> => {
+  const em = getEntityManager().fork()
+  const waypoint = await em.findOneOrFail(WaypointEntity, { resetDate, symbol })
+  waypoint.shipyard = shipyard
+  if (ships) waypoint.ships = ships
+  await em.persistAndFlush(waypoint)
+  return waypoint
 }

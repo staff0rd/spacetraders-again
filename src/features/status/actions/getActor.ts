@@ -1,14 +1,14 @@
 import { EntityData } from '@mikro-orm/core'
 import { lineLength } from 'geometric'
-import { Ship, Shipyard } from '../../../../api'
+import { Ship, ShipType } from '../../../../api'
 import { findOrCreateShip } from '../../../db/findOrCreateShip'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
-import { ShipEntity } from '../../ship/ship.entity'
+import { ShipActionType, ShipEntity } from '../../ship/ship.entity'
 import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
-import { writeCredits, writeExtraction, writeMarketTransaction } from '../influxWrite'
+import { writeCredits, writeExtraction, writeMarketTransaction, writeShipyardTransaction } from '../influxWrite'
 import { getClosest } from '../utils/getClosest'
 import { shipArriving, shipCooldownRemaining } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
@@ -28,6 +28,8 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
   }
 
   const getOrAcceptContract = async (commandShip: ShipEntity) => {
+    await dockShip(commandShip)
+
     const {
       data: { data: contracts },
     } = await api.contracts.getContracts()
@@ -45,7 +47,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
         await updateAgent(agent, { contract: firstContract })
         return
       }
-
+      log.info('agent', `Accepting contract`)
       const {
         data: {
           data: {
@@ -161,6 +163,36 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     )
   }
 
+  const transferGoods = async (from: ShipEntity, to: ShipEntity, units: number) => {
+    if (from.nav.status !== to.nav.status) {
+      if (from.nav.status === 'DOCKED') {
+        await dockShip(to)
+      } else if (from.nav.status === 'IN_ORBIT') {
+        await orbitShip(to)
+      } else {
+        throw new Error(`From ship, ${from.label}, is unexpectedly in transit`)
+      }
+    }
+
+    const payload: Parameters<typeof api.fleet.transferCargo>[1] = {
+      shipSymbol: to.symbol,
+      tradeSymbol: from.cargo.inventory[0].symbol,
+      units: Math.min(units, from.cargo.inventory[0].units),
+    }
+
+    const {
+      data: {
+        data: { cargo },
+      },
+    } = await api.fleet.transferCargo(from.symbol, payload)
+
+    log.info('ship', `${from.label} transferred ${payload.units}x${payload.tradeSymbol} to ${to.label}`)
+
+    await updateShip(from, { cargo })
+    const toShipCargo = await api.fleet.getMyShip(to.symbol)
+    await updateShip(to, { cargo: toShipCargo.data.data.cargo })
+  }
+
   const deliverGoods = async (ship: ShipEntity) => {
     log.info('ship', `${ship.label} will deliver goods`)
     invariant(agent.contract, 'Expected agent to have a contract')
@@ -261,21 +293,39 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
       await beginMining(ship)
     }
   }
-  const getOrPurchaseMiningDrone = async (ships: ShipEntity[], shipyard: Shipyard) => {
-    if (ships.length === 2) {
-      const {
-        data: {
-          data: { ship, agent: data, transaction },
-        },
-      } = await api.fleet.purchaseShip({ shipType: 'SHIP_MINING_DRONE', waypointSymbol: shipyard.symbol })
-      updateAgent(agent, { data })
-      // TODO: write shipyard transaction
-      const entity = await findOrCreateShip(resetDate, ship)
-      ships.push(entity)
-      return entity
-    } else {
-      return ships.find((s) => s.frame.symbol === 'FRAME_DRONE')!
+
+  const purchaseShip = async (
+    buyer: ShipEntity,
+    shipType: ShipType,
+    shipyards: WaypointEntity[],
+    markets: WaypointEntity[],
+    ships: ShipEntity[],
+  ) => {
+    const shipyardForType = shipyards.find((x) => x.shipyard?.shipTypes.map((s) => s.type).includes(shipType))
+    invariant(shipyardForType, `Expected to find a shipyard with ${shipType}`)
+    const shipyard = shipyards.find((x) => x.symbol === shipyardForType.symbol)
+    invariant(shipyard, `Expected to find a waypoint for the ${shipType} shipyard`)
+    if (buyer.nav.route.destination.symbol !== shipyardForType.symbol) {
+      await navigateShip(buyer, shipyard, markets)
+      return
     }
+
+    const {
+      data: {
+        data: { ship, agent: data, transaction },
+      },
+    } = await api.fleet.purchaseShip({ shipType, waypointSymbol: shipyard.symbol })
+    updateAgent(agent, { data })
+    log.info('agent', `Purchased ${transaction.shipType} for ${transaction.price}`)
+    writeShipyardTransaction(resetDate, transaction, data)
+    const entity = await findOrCreateShip(resetDate, ship)
+    ships.push(entity)
+  }
+
+  const updateShipAction = async (ship: ShipEntity, action: ShipActionType) => {
+    ship.action = { type: action }
+    log.info('ship', `${ship.label} will now ${ship.action.type}`)
+    await getEntityManager().fork().persistAndFlush(ship)
   }
 
   return {
@@ -287,8 +337,10 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     jettisonUnsellable,
     wait,
     getOrAcceptContract,
-    getOrPurchaseMiningDrone,
+    purchaseShip,
     deliverGoods,
     fulfillContract,
+    updateShipAction,
+    transferGoods,
   }
 }

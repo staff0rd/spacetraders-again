@@ -1,7 +1,7 @@
 import { InfluxDB, Point, WriteApi } from '@influxdata/influxdb-client'
 import lodash from 'lodash'
 import { hostname } from 'os'
-import { Agent, Extraction, MarketTransaction } from '../../../api'
+import { Agent, Extraction, MarketTransaction, ShipyardTransaction } from '../../../api'
 import { getConfig } from '../../config'
 import { AgentEntity } from './agent.entity'
 
@@ -73,4 +73,15 @@ export const writeExtraction = ({ resetDate, data: agent }: Pick<AgentEntity, 'r
       agentSymbol: agent!.symbol,
     },
   )
+}
+
+export const writeShipyardTransaction = (resetDate: string, transaction: ShipyardTransaction, agent: Agent) => {
+  writePoint(transaction, {
+    measurementName: 'shipyard-transaction',
+    tags: ['waypointSymbol', 'shipSymbol', 'shipType'],
+    fields: ['price'],
+    resetDate,
+    agentSymbol: agent.symbol,
+  })
+  writeCredits(agent, resetDate)
 }
