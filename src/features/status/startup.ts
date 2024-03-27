@@ -1,5 +1,5 @@
 import lodash from 'lodash'
-import { DefaultApiFactory } from '../../../api'
+import { DefaultApiFactory, TradeSymbol } from '../../../api'
 import { getOrPopulateMarkets } from '../../db/getOrPopulateMarkets'
 import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
@@ -39,10 +39,10 @@ export async function startup() {
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
-  const miningDronesToPurchase = 4
+  const miningDronesToPurchase = 5
   const shuttlesToPurchase = 1
 
-  await decisionMaker(commandShip, act, async (ship: ShipEntity) => {
+  await decisionMaker(commandShip, agent, act, async (ship: ShipEntity) => {
     if (!agent.contract || agent.contract.fulfilled) {
       await act.getOrAcceptContract(ship)
       return
@@ -52,6 +52,8 @@ export async function startup() {
       await act.fulfillContract()
       return
     }
+
+    const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE']
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     log.info('agent', `There are ${miningDrones.length} mining drones`)
@@ -64,7 +66,7 @@ export async function startup() {
       idleDrones.forEach((drone) => {
         log.warn('command', `Spawning worker for ${drone.label}`)
         drone.isCommanded = true
-        miningDroneActorFactory(drone, act, markets, engineeredAsteroid)
+        miningDroneActorFactory(drone, agent, act, markets, engineeredAsteroid, keep)
       })
     }
 
@@ -78,7 +80,7 @@ export async function startup() {
       idleShuttles.forEach((ship) => {
         log.warn('command', `Spawning worker for ${ship.label}`)
         ship.isCommanded = true
-        shuttleActorFactory(ship, act, agent, markets, engineeredAsteroid, ships, ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE'])
+        shuttleActorFactory(ship, agent, act, markets, engineeredAsteroid, ships, keep)
       })
     }
 

@@ -163,8 +163,10 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     )
   }
 
+  const toKeep = (keep: TradeSymbol[]) => [...keep, agent.contract?.terms.deliver?.[0].tradeSymbol].filter(Boolean) as TradeSymbol[]
+
   const jettisonUnwanted = async (ship: ShipEntity, keep: TradeSymbol[]) => {
-    const excessCargo = ship.cargo.inventory.filter((p) => !keep.includes(p.symbol))
+    const excessCargo = ship.cargo.inventory.filter((p) => !toKeep(keep).includes(p.symbol))
     await Promise.all(
       excessCargo.map(async ({ symbol, units }) => {
         log.warn('ship', `${ship.label} is jettisoning ${units}x${symbol} because it is unwanted`)
@@ -178,7 +180,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     )
   }
 
-  const transferGoods = async (from: ShipEntity, to: ShipEntity, units: number) => {
+  const transferGoods = async (from: ShipEntity, to: ShipEntity, units: number, wanted: TradeSymbol[]) => {
     if (from.nav.status !== to.nav.status) {
       if (from.nav.status === 'DOCKED') {
         await dockShip(to)
@@ -189,10 +191,13 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
       }
     }
 
+    const toTransfer = from.cargo.inventory.find((p) => toKeep(wanted).includes(p.symbol))
+    invariant(toTransfer, `Expected ${from.label} to have ${toKeep(wanted).join(', ')} to transfer`)
+
     const payload: Parameters<typeof api.fleet.transferCargo>[1] = {
       shipSymbol: to.symbol,
-      tradeSymbol: from.cargo.inventory[0].symbol,
-      units: Math.min(units, from.cargo.inventory[0].units),
+      tradeSymbol: toTransfer.symbol,
+      units: Math.min(units, toTransfer.units),
     }
 
     const {
@@ -288,7 +293,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     log.info('agent', `Fulfilled contract, current credits: $${agent.data?.credits.toLocaleString()}`)
   }
 
-  const beginMining = async (ship: ShipEntity) => {
+  const beginMining = async (ship: ShipEntity, keep: TradeSymbol[]) => {
     await orbitShip(ship)
     const { seconds, distance } = shipCooldownRemaining(ship)
     if (seconds > 0) {
@@ -304,8 +309,9 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     log.info('ship', `${ship.label} mining result: is ${extraction.yield.units}x${extraction.yield.symbol}`)
     writeExtraction(agent, extraction)
     await updateShip(ship, { cargo, cooldown })
+    await jettisonUnwanted(ship, toKeep(keep))
     if (cargo.units < cargo.capacity) {
-      await beginMining(ship)
+      await beginMining(ship, toKeep(keep))
     }
   }
 

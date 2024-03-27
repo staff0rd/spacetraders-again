@@ -2,6 +2,7 @@ import { log } from '../../logging/configure-logging'
 import { logError } from '../../logging/log-error'
 import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
+import { AgentEntity } from './agent.entity'
 import { shipArriving } from './utils/getCurrentFlightTime'
 
 const createDecisionRateMonitor = () => {
@@ -19,7 +20,12 @@ const createDecisionRateMonitor = () => {
   }
   return { recordTimestamp, getDecisionRate }
 }
-export const decisionMaker = async (ship: ShipEntity, act: Awaited<ReturnType<typeof getActor>>, decisions: (ship: ShipEntity) => void) => {
+export const decisionMaker = async (
+  ship: ShipEntity,
+  agent: AgentEntity,
+  act: Awaited<ReturnType<typeof getActor>>,
+  decisions: (ship: ShipEntity, agent: AgentEntity) => void,
+) => {
   const { recordTimestamp, getDecisionRate } = createDecisionRateMonitor()
   const makeNextDecision = async (ship: ShipEntity) => {
     recordTimestamp()
@@ -27,7 +33,7 @@ export const decisionMaker = async (ship: ShipEntity, act: Awaited<ReturnType<ty
     try {
       const { seconds, distance } = shipArriving(ship)
       if (seconds <= 0) {
-        await decisions(ship)
+        await decisions(ship, agent)
       } else {
         log.info('ship', `${ship.label} is not yet in position. Waiting for arrival ${distance}`)
         await act.wait(seconds * 1000)

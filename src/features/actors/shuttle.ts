@@ -8,14 +8,14 @@ import { WaypointEntity } from '../status/waypoint.entity'
 
 export const shuttleActorFactory = (
   shuttle: ShipEntity,
-  act: Awaited<ReturnType<typeof getActor>>,
   agent: AgentEntity,
+  act: Awaited<ReturnType<typeof getActor>>,
   markets: WaypointEntity[],
   miningLocation: IWaypoint,
   ships: ShipEntity[],
   sell: TradeSymbol[],
 ) =>
-  decisionMaker(shuttle, act, async (ship: ShipEntity) => {
+  decisionMaker(shuttle, agent, act, async (ship: ShipEntity, agent: AgentEntity) => {
     await act.refuelShip(ship)
     await act.jettisonUnwanted(ship, sell)
     const currentAction = ship.action?.type
@@ -31,9 +31,9 @@ export const shuttleActorFactory = (
         const dronesAtMiningLocation = ships.filter(
           (s) => s.nav.waypointSymbol === miningLocation.symbol && s.frame.symbol === 'FRAME_DRONE' && s.nav.status !== 'IN_TRANSIT',
         )
-        const droneWithCargo = dronesAtMiningLocation.find((s) => s.cargo.units > 0)
-        if (droneWithCargo) {
-          await act.transferGoods(droneWithCargo, ship, capacity)
+        const droneWithWantedCargo = dronesAtMiningLocation.find((s) => s.cargo.inventory.find((p) => sell.includes(p.symbol)))
+        if (droneWithWantedCargo) {
+          await act.transferGoods(droneWithWantedCargo, ship, capacity, sell)
           return
         }
       }
