@@ -5,7 +5,7 @@ import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
 import { miningDroneActorFactory } from '../actors/mining-drone'
-import { shuttleActorFactory } from '../actors/shuttle'
+import { shuttleActorFactory, shuttleLogicFactory } from '../actors/shuttle'
 import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
 import { getAgent } from './actions/getAgent'
@@ -39,8 +39,11 @@ export async function startup() {
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
-  const miningDronesToPurchase = 5
+  const miningDronesToPurchase = 15
   const shuttlesToPurchase = 1
+  const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE']
+
+  const shuttleLogic = shuttleLogicFactory(act, markets, engineeredAsteroid, ships, keep)
 
   await decisionMaker(commandShip, agent, act, async (ship: ShipEntity) => {
     if (!agent.contract || agent.contract.fulfilled) {
@@ -52,8 +55,6 @@ export async function startup() {
       await act.fulfillContract()
       return
     }
-
-    const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE']
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     log.info('agent', `There are ${miningDrones.length} mining drones`)
@@ -84,8 +85,7 @@ export async function startup() {
       })
     }
 
-    log.info('ship', `${ship.label} has nothing to do, will idle 5 minutes`)
-    await act.wait(1000 * 60 * 5)
+    await shuttleLogic(commandShip, agent)
   })
 }
 
