@@ -39,7 +39,7 @@ export async function startup() {
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
-  const miningDronesToPurchase = 10
+  const miningDronesToPurchase = 4
   const shuttlesToPurchase = 1
 
   await decisionMaker(commandShip, act, async (ship: ShipEntity) => {
