@@ -57,7 +57,6 @@ export async function startup() {
     }
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
-    log.info('agent', `There are ${miningDrones.length} mining drones`)
     // TODO: don't hardcode the price
     if (miningDrones.length < miningDronesToPurchase && (agent.data?.credits ?? 0) > 50000) {
       await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', shipyards, markets, ships)
@@ -72,7 +71,6 @@ export async function startup() {
     }
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
-    log.info('agent', `There are ${shuttles.length} shuttles`)
     if (shuttles.length < shuttlesToPurchase) {
       await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', shipyards, markets, ships)
       return
