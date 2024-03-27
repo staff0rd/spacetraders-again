@@ -21,7 +21,9 @@
    ```
 
 4. Connect influxdb to grafana
+   ```
    Url: http://influxdb:8086
    Header: Authorization
    Value: Token <token>
    Database: my-bucket
+   ```
