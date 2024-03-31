@@ -1,14 +1,11 @@
 import { Point } from '@influxdata/influxdb-client'
 import { DefaultApiFactory } from '../../../api'
-import { findOrCreateStatus } from '../../db/findOrCreateStatus'
 import { log } from '../../logging/configure-logging'
 import { influxWrite } from './influxWrite'
 
-export async function getStatus(context: string) {
+export async function getStatus() {
   // todo: use rate limited api
   const result = await DefaultApiFactory().getStatus()
-
-  await findOrCreateStatus(result.data.resetDate)
 
   const resetDate = result.data.resetDate
 
@@ -21,13 +18,13 @@ export async function getStatus(context: string) {
       .floatField('waypoints', result.data.stats.waypoints),
   )
 
-  result.data.leaderboards.mostCredits.forEach((x, i) => {
+  result.data.leaderboards.mostCredits.forEach((x) => {
     influxWrite().writePoint(
       new Point('most-credits').tag('agent', x.agentSymbol).tag('reset-date', resetDate).floatField('credits', x.credits),
     )
   })
 
-  result.data.leaderboards.mostSubmittedCharts.forEach((x, i) => {
+  result.data.leaderboards.mostSubmittedCharts.forEach((x) => {
     influxWrite().writePoint(
       new Point('most-submitted-charts').tag('agent', x.agentSymbol).tag('reset-date', resetDate).floatField('chart-count', x.chartCount),
     )

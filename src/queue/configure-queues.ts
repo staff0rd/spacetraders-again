@@ -38,7 +38,7 @@ export const setupQueues = async () => {
     'leaderboards',
     async () => {
       try {
-        await getStatus('leaderboards-worker')
+        await getStatus()
       } catch (err) {
         logError('leaderboards-worker', err)
         throw err

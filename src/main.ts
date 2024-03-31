@@ -45,7 +45,7 @@ program
   .description('Get status')
   .action(async () => {
     try {
-      await getStatus('status-command')
+      await getStatus()
     } catch (err) {
       logError('status', err)
       throw err
