@@ -5,13 +5,11 @@ import { IWaypoint } from '../status/actions/IWaypoint'
 import { getActor } from '../status/actions/getActor'
 import { AgentEntity } from '../status/agent.entity'
 import { decisionMaker } from '../status/decisionMaker'
-import { WaypointEntity } from '../status/waypoint.entity'
 
 export const miningDroneActorFactory = (
   miningDrone: ShipEntity,
   agent: AgentEntity,
   act: Awaited<ReturnType<typeof getActor>>,
-  waypoints: WaypointEntity[],
   miningLocation: IWaypoint,
   keep: TradeSymbol[],
 ) =>
@@ -19,7 +17,7 @@ export const miningDroneActorFactory = (
     await act.refuelShip(ship)
     await act.jettisonUnwanted(miningDrone, keep)
     if (ship.nav.waypointSymbol !== miningLocation.symbol) {
-      await act.navigateShip(ship, miningLocation, waypoints)
+      await act.navigateShip(ship, miningLocation)
     } else if (ship.cargo.units < ship.cargo.capacity) {
       await act.beginMining(ship, keep)
     } else {

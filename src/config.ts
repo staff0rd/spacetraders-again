@@ -7,6 +7,11 @@ const getInt = (key: string, defaultValue: number) => {
   return value ? parseInt(value, 10) : defaultValue
 }
 
+const getBool = (key: string, defaultValue: boolean) => {
+  const value = process.env[key]
+  return value ? value === 'true' : defaultValue
+}
+
 export const getConfig = () => ({
   influx: {
     url: process.env.INFLUX_URL!,
@@ -24,5 +29,8 @@ export const getConfig = () => ({
     mining: getInt('PURCHASE_MINING_SHIPS', 0),
     shuttles: getInt('PURCHASE_SHUTTLES', 0),
     satelites: getInt('PURCHASE_SATELITES', 0),
+  },
+  strategy: {
+    mine: getBool('SHOULD_MINE', true),
   },
 })

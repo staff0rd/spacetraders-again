@@ -1,7 +1,7 @@
 import { InfluxDB, Point, WriteApi } from '@influxdata/influxdb-client'
 import lodash from 'lodash'
 import { hostname } from 'os'
-import { Agent, Extraction, MarketTransaction, ShipyardTransaction } from '../../../api'
+import { Agent, Extraction, MarketTradeGood, MarketTransaction, ShipyardTransaction } from '../../../api'
 import { getConfig } from '../../config'
 import { AgentEntity } from './agent.entity'
 
@@ -101,4 +101,17 @@ export function writeMarketTransaction(transaction: MarketTransaction, resetDate
     agentSymbol,
     timestamp: transaction.timestamp,
   })
+}
+
+export function writeMarketTradeGood(tradeGood: MarketTradeGood, resetDate: string, agentSymbol: string, waypointSymbol: string) {
+  writePoint(
+    { ...tradeGood, waypointSymbol },
+    {
+      measurementName: 'trade-good',
+      tags: ['symbol', 'type', 'supply', 'waypointSymbol'],
+      fields: ['tradeVolume', 'sellPrice', 'purchasePrice'],
+      resetDate,
+      agentSymbol,
+    },
+  )
 }

@@ -17,7 +17,7 @@ import { WaypointEntity } from '../waypoint.entity'
 import { IWaypoint } from './IWaypoint'
 import { updateAgentFactory } from './getAgent'
 
-export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFactory>) => {
+export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFactory>, waypoints: WaypointEntity[]) => {
   const { token, resetDate } = agent
   const updateAgent = updateAgentFactory(token, resetDate)
   async function updateShip(ship: ShipEntity, data: EntityData<ShipEntity>) {
@@ -72,7 +72,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
   }
 
   const refuelShip = async (ship: ShipEntity) => {
-    if (ship.fuel.current < ship.fuel.capacity) {
+    if (ship.fuel.capacity > 0 && ship.fuel.current < ship.fuel.capacity) {
       await dockShip(ship)
       const {
         data: {
@@ -94,8 +94,9 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
 
   const updateCurrentWaypoint = async (ship: ShipEntity) => {
     const em = getEntityManager()
-    const waypoint = await em.findOneOrFail(WaypointEntity, { symbol: ship.nav.waypointSymbol, resetDate: agent.resetDate })
-    await updateWaypoint(waypoint, api)
+    const waypoint = waypoints.find((x) => x.symbol === ship.nav.waypointSymbol)
+    invariant(waypoint, `Expected waypoint ${ship.nav.waypointSymbol} to exist`)
+    await updateWaypoint(waypoint, agent, api)
   }
 
   const orbitShip = async (ship: ShipEntity) => {
@@ -107,20 +108,20 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     await updateShip(ship, { nav })
   }
 
-  const navigateShip = async (ship: ShipEntity, target: IWaypoint, otherWaypoints: WaypointEntity[]) => {
+  const navigateShip = async (ship: ShipEntity, target: IWaypoint) => {
     await refuelShip(ship)
     if (ship.nav.route.destination.symbol !== target.symbol) {
       const distance = lineLength([
         [ship.nav.route.destination.x, ship.nav.route.destination.y],
         [target.x, target.y],
       ])
-      const fuelNeeded = Math.round(distance)
+      const fuelNeeded = ship.fuel.capacity === 0 ? 0 : Math.round(distance)
       log.info(
         'ship',
-        `${ship.label} will navigate to ${target.symbol}, distance: ${distance}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
+        `${ship.label} will navigate to ${target.symbol}, distance: ${distance.toLocaleString()}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
       )
       if (ship.fuel.capacity < fuelNeeded) {
-        const reachableWaypoints = otherWaypoints.filter((w) => {
+        const reachableWaypoints = waypoints.filter((w) => {
           const distance = lineLength([
             [ship.nav.route.destination.x, ship.nav.route.destination.y],
             [w.x, w.y],
@@ -137,7 +138,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
           }))
           .sort((a, b) => a.distance - b.distance)
         log.warn('ship', `${ship.label} cannot reach ${target.symbol}, will navigate to ${byDistanceToTarget[0].w.symbol}`)
-        await navigateShip(ship, byDistanceToTarget[0].w, otherWaypoints)
+        await navigateShip(ship, byDistanceToTarget[0].w)
       } else {
         if (ship.nav.status === 'DOCKED') {
           await orbitShip(ship)
@@ -234,7 +235,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     invariant(units > 0, `Expected ${ship.label} to have ${deliver.tradeSymbol} to deliver`)
 
     if (ship.nav.waypointSymbol !== destination.symbol) {
-      await navigateShip(ship, destination, waypoints)
+      await navigateShip(ship, destination)
       return
     }
 
@@ -248,9 +249,9 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     await updateAgent(agent, { contract })
   }
 
-  const sellGoods = async (markets: WaypointEntity[], ship: ShipEntity, keep: TradeSymbol[]) => {
+  const sellGoods = async (ship: ShipEntity, keep: TradeSymbol[]) => {
     log.info('ship', `${ship.label} will sell goods`)
-    const locations = await getSellLocations(markets, ship, keep)
+    const locations = await getSellLocations(waypoints, ship, keep)
 
     const sellableHere = locations.filter((p) => p.closestMarket && p.closestMarket.symbol === ship.nav.waypointSymbol)
 
@@ -280,7 +281,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
         locations.filter((p) => p.closestMarket).map((p) => p.closestMarket!),
         ship.nav.route.destination,
       )
-      await navigateShip(ship, closest!, markets)
+      await navigateShip(ship, closest!)
     }
   }
 
@@ -322,11 +323,11 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     }
   }
 
-  const purchaseShip = async (buyer: ShipEntity, shipType: ShipType, waypoints: WaypointEntity[], ships: ShipEntity[]) => {
+  const purchaseShip = async (buyer: ShipEntity, shipType: ShipType, ships: ShipEntity[]) => {
     const shipyard = waypoints.find((x) => x.shipyard?.shipTypes.map((s) => s.type).includes(shipType))
     invariant(shipyard, `Expected to find a waypoint for the ${shipType} shipyard`)
     if (buyer.nav.route.destination.symbol !== shipyard.symbol) {
-      await navigateShip(buyer, shipyard, waypoints)
+      await navigateShip(buyer, shipyard)
       return
     }
 
@@ -336,7 +337,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
       },
     } = await api.fleet.purchaseShip({ shipType, waypointSymbol: shipyard.symbol })
     updateAgent(agent, { data })
-    log.info('agent', `Purchased ${transaction.shipType} for ${transaction.price}`)
+    log.info('agent', `Purchased ${transaction.shipType} for $${transaction.price.toLocaleString()}`)
     writeShipyardTransaction(resetDate, transaction, data)
     const entity = await findOrCreateShip(resetDate, ship)
     ships.push(entity)

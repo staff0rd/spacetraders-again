@@ -1,9 +1,11 @@
-import { DefaultApiFactory, TradeSymbol } from '../../../api'
+import lodash from 'lodash'
+import { DefaultApiFactory, TradeSymbol, WaypointTraitSymbol } from '../../../api'
 import { getConfig } from '../../config'
 import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
 import { miningDroneActorFactory } from '../actors/mining-drone'
+import { probeActorFactory } from '../actors/probe'
 import { shuttleActorFactory, shuttleLogicFactory } from '../actors/shuttle'
 import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
@@ -20,7 +22,6 @@ export async function startup() {
   } = await DefaultApiFactory().getStatus()
   const { agent, api } = await getAgent(resetDate)
 
-  const act = await getActor(agent, api)
   const {
     data: { data: shipsFromApi },
   } = await api.fleet.getMyShips()
@@ -31,7 +32,7 @@ export async function startup() {
 
   const systemSymbol = commandShip.nav.systemSymbol
 
-  const waypoints = await systemScan(systemSymbol, resetDate, api)
+  const waypoints = await systemScan(systemSymbol, agent, api)
 
   const {
     data: {
@@ -41,7 +42,9 @@ export async function startup() {
 
   const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE']
 
-  const shuttleLogic = shuttleLogicFactory(act, waypoints, engineeredAsteroid, ships, keep)
+  const act = await getActor(agent, api, waypoints)
+
+  const shuttleLogic = shuttleLogicFactory(act, engineeredAsteroid, ships, keep)
 
   await decisionMaker(commandShip, true, agent, act, async (ship: ShipEntity) => {
     if (!agent.contract || agent.contract.fulfilled) {
@@ -54,36 +57,53 @@ export async function startup() {
       return
     }
 
-    const probes = ships.filter((s) => s.frame.symbol === 'FRAME_PROBE')
+    const probes = ships.filter((s) => s.frame.symbol === 'FRAME_PROBE').toSorted((a, b) => a.label.localeCompare(b.label))
     if (probes.length < config.purchases.satelites) {
-      await act.purchaseShip(commandShip, 'SHIP_PROBE', waypoints, ships)
+      await act.purchaseShip(commandShip, 'SHIP_PROBE', ships)
       return
+    } else {
+      const probedLocations = waypoints
+        .filter((x) => x.type !== 'ENGINEERED_ASTEROID')
+        .filter((x) => x.traits.includes(WaypointTraitSymbol.Marketplace) || x.traits.includes(WaypointTraitSymbol.Shipyard))
+
+      const sortedProbeLocations = lodash.orderBy(
+        probedLocations,
+        [(w) => w.imports.length, (w) => w.exports.length, (w) => w.distanceFromEngineeredAsteroid, (w) => w.symbol],
+        ['desc', 'desc', 'asc', 'asc'],
+      )
+      const sortedProbes = lodash.orderBy(probes, [(s) => s.label])
+      sortedProbes.forEach((probe, ix) => {
+        if (probe.isCommanded) return
+        log.warn('command', `Spawning worker for ${probe.label}`)
+        probe.isCommanded = true
+        probeActorFactory(probe, agent, act, sortedProbeLocations[ix])
+      })
     }
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     // TODO: don't hardcode the price
     if (miningDrones.length < config.purchases.mining && (agent.data?.credits ?? 0) > 50000) {
-      await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', waypoints, ships)
+      await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', ships)
       return
-    } else {
+    } else if (config.strategy.mine) {
       const idleDrones = miningDrones.filter((s) => !s.isCommanded)
       idleDrones.forEach((drone) => {
         log.warn('command', `Spawning worker for ${drone.label}`)
         drone.isCommanded = true
-        miningDroneActorFactory(drone, agent, act, waypoints, engineeredAsteroid, keep)
+        miningDroneActorFactory(drone, agent, act, engineeredAsteroid, keep)
       })
     }
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
     if (shuttles.length < config.purchases.shuttles) {
-      await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', waypoints, ships)
+      await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', ships)
       return
     } else {
       const idleShuttles = shuttles.filter((s) => !s.isCommanded)
       idleShuttles.forEach((ship) => {
         log.warn('command', `Spawning worker for ${ship.label}`)
         ship.isCommanded = true
-        shuttleActorFactory(ship, agent, act, waypoints, engineeredAsteroid, ships, keep)
+        shuttleActorFactory(ship, agent, act, engineeredAsteroid, ships, keep)
       })
     }
 

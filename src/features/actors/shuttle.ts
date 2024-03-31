@@ -4,26 +4,18 @@ import { IWaypoint } from '../status/actions/IWaypoint'
 import { getActor } from '../status/actions/getActor'
 import { AgentEntity } from '../status/agent.entity'
 import { decisionMaker } from '../status/decisionMaker'
-import { WaypointEntity } from '../status/waypoint.entity'
 
 export const shuttleActorFactory = (
   shuttle: ShipEntity,
   agent: AgentEntity,
   act: Awaited<ReturnType<typeof getActor>>,
-  markets: WaypointEntity[],
   miningLocation: IWaypoint,
   ships: ShipEntity[],
   sell: TradeSymbol[],
-) => decisionMaker(shuttle, true, agent, act, shuttleLogicFactory(act, markets, miningLocation, ships, sell))
+) => decisionMaker(shuttle, true, agent, act, shuttleLogicFactory(act, miningLocation, ships, sell))
 
 export const shuttleLogicFactory =
-  (
-    act: Awaited<ReturnType<typeof getActor>>,
-    markets: WaypointEntity[],
-    miningLocation: IWaypoint,
-    ships: ShipEntity[],
-    sell: TradeSymbol[],
-  ) =>
+  (act: Awaited<ReturnType<typeof getActor>>, miningLocation: IWaypoint, ships: ShipEntity[], sell: TradeSymbol[]) =>
   async (ship: ShipEntity, agent: AgentEntity) => {
     await act.refuelShip(ship)
     await act.jettisonUnwanted(ship, sell)
@@ -36,7 +28,7 @@ export const shuttleLogicFactory =
         await act.updateShipAction(ship, ShipActionType.SELL)
         return
       } else if (ship.nav.waypointSymbol !== miningLocation.symbol) {
-        await act.navigateShip(ship, miningLocation, markets)
+        await act.navigateShip(ship, miningLocation)
         return
       } else {
         const capacity = ship.cargo.capacity - ship.cargo.units
@@ -57,7 +49,7 @@ export const shuttleLogicFactory =
         await act.deliverGoods(ship)
         return
       } else {
-        await act.sellGoods(markets, ship, [agent.contractGood.tradeSymbol as TradeSymbol])
+        await act.sellGoods(ship, [agent.contractGood.tradeSymbol as TradeSymbol])
         return
       }
     } else throw new Error(`Unknown action: ${currentAction}`)

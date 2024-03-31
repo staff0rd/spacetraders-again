@@ -2,7 +2,8 @@ import { WaypointTraitSymbol } from '../../../api'
 import { invariant } from '../../invariant'
 import { getEntityManager } from '../../orm'
 import { getAgent } from './actions/getAgent'
-import { writeMarketTransaction } from './influxWrite'
+import { AgentEntity } from './agent.entity'
+import { writeMarketTradeGood, writeMarketTransaction } from './influxWrite'
 import { WaypointEntity } from './waypoint.entity'
 
 async function getAllWaypoints(api: Awaited<ReturnType<typeof getAgent>>['api'], systemSymbol: string) {
@@ -17,7 +18,7 @@ async function getAllWaypoints(api: Awaited<ReturnType<typeof getAgent>>['api'],
   }
 }
 
-export async function updateWaypoint(waypoint: WaypointEntity, api: Awaited<ReturnType<typeof getAgent>>['api']) {
+export async function updateWaypoint(waypoint: WaypointEntity, agent: AgentEntity, api: Awaited<ReturnType<typeof getAgent>>['api']) {
   if (waypoint.traits.includes(WaypointTraitSymbol.Marketplace)) {
     const {
       data: { data: market },
@@ -28,6 +29,9 @@ export async function updateWaypoint(waypoint: WaypointEntity, api: Awaited<Retu
     waypoint.exchange = market.exchange.map((e) => e.symbol)
     if (market.tradeGoods) {
       waypoint.tradeGoods = market.tradeGoods
+      waypoint.tradeGoods.forEach((tg) => {
+        writeMarketTradeGood(tg, waypoint.resetDate, agent.data!.symbol, waypoint.symbol)
+      })
     }
     if (market.transactions) {
       market.transactions.forEach((t) => {
@@ -50,7 +54,7 @@ export async function updateWaypoint(waypoint: WaypointEntity, api: Awaited<Retu
 
 export async function systemScan(
   systemSymbol: string,
-  resetDate: string,
+  agent: AgentEntity,
   api: Awaited<ReturnType<typeof getAgent>>['api'],
 ): Promise<WaypointEntity[]> {
   const waypoints = await getAllWaypoints(api, systemSymbol)
@@ -61,7 +65,7 @@ export async function systemScan(
     waypoints.map(
       ({ isUnderConstruction, traits, type, x, y, faction, modifiers, symbol }) =>
         new WaypointEntity({
-          resetDate,
+          resetDate: agent.resetDate,
           symbol,
           systemSymbol,
           x,
@@ -75,11 +79,11 @@ export async function systemScan(
     ),
   )
 
-  const entities = await em.find(WaypointEntity, { resetDate, systemSymbol })
+  const entities = await em.find(WaypointEntity, { resetDate: agent.resetDate, systemSymbol })
 
   await Promise.all(
     entities.map(async (waypoint) => {
-      await updateWaypoint(waypoint, api)
+      await updateWaypoint(waypoint, agent, api)
       em.persist(waypoint)
     }),
   )
@@ -91,5 +95,5 @@ export async function systemScan(
     w.distanceFromEngineeredAsteroid = Math.sqrt((w.x - engineeredAsteroid.x) ** 2 + (w.y - engineeredAsteroid.y) ** 2)
   })
 
-  return entities.toSorted((a, b) => a.distanceFromEngineeredAsteroid - b.distanceFromEngineeredAsteroid)
+  return entities
 }

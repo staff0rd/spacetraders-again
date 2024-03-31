@@ -55,6 +55,10 @@ export class WaypointEntity {
 
   distanceFromEngineeredAsteroid: number = 0
 
+  get label() {
+    return `${this.type} (${this.symbol})`
+  }
+
   constructor(values: {
     resetDate: string
     symbol: string

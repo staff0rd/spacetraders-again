@@ -88,6 +88,6 @@ export class ShipEntity {
 
   get label() {
     const suffix = this.symbol.match(/-(.+$)/)?.[1] ?? ''
-    return `${this.registration.role}-${suffix}`
+    return `${this.registration.role}-${suffix.padStart(2, '0')}`
   }
 }
