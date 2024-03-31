@@ -14,7 +14,7 @@ export const shuttleActorFactory = (
   miningLocation: IWaypoint,
   ships: ShipEntity[],
   sell: TradeSymbol[],
-) => decisionMaker(shuttle, agent, act, shuttleLogicFactory(act, markets, miningLocation, ships, sell))
+) => decisionMaker(shuttle, true, agent, act, shuttleLogicFactory(act, markets, miningLocation, ships, sell))
 
 export const shuttleLogicFactory =
   (

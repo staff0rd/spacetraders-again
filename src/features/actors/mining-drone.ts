@@ -15,7 +15,7 @@ export const miningDroneActorFactory = (
   miningLocation: IWaypoint,
   keep: TradeSymbol[],
 ) =>
-  decisionMaker(miningDrone, agent, act, async (ship: ShipEntity, agent: AgentEntity) => {
+  decisionMaker(miningDrone, false, agent, act, async (ship: ShipEntity, agent: AgentEntity) => {
     await act.refuelShip(ship)
     await act.jettisonUnwanted(miningDrone, keep)
     if (ship.nav.waypointSymbol !== miningLocation.symbol) {

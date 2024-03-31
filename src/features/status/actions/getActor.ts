@@ -8,7 +8,8 @@ import { getEntityManager } from '../../../orm'
 import { ShipActionType, ShipEntity } from '../../ship/ship.entity'
 import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
-import { writeCredits, writeExtraction, writeMarketTransaction, writeShipyardTransaction } from '../influxWrite'
+import { writeCredits, writeExtraction, writeMyMarketTransaction, writeShipyardTransaction } from '../influxWrite'
+import { updateWaypoint } from '../systemScan'
 import { getClosest } from '../utils/getClosest'
 import { shipArriving, shipCooldownRemaining } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
@@ -80,7 +81,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
       } = await api.fleet.refuelShip(ship.symbol)
       ship.fuel = fuel
 
-      writeMarketTransaction(resetDate, transaction, data)
+      writeMyMarketTransaction(resetDate, transaction, data)
       await updateAgent(agent, { data })
 
       log.info(
@@ -89,6 +90,12 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
       )
       await updateShip(ship, { fuel })
     }
+  }
+
+  const updateCurrentWaypoint = async (ship: ShipEntity) => {
+    const em = getEntityManager()
+    const waypoint = await em.findOneOrFail(WaypointEntity, { symbol: ship.nav.waypointSymbol, resetDate: agent.resetDate })
+    await updateWaypoint(waypoint, api)
   }
 
   const orbitShip = async (ship: ShipEntity) => {
@@ -260,7 +267,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
             symbol: p.symbol,
             units: p.units,
           })
-          writeMarketTransaction(resetDate, transaction, agent)
+          writeMyMarketTransaction(resetDate, transaction, agent)
           log.info(
             'ship',
             `${ship.label} sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
@@ -315,19 +322,11 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     }
   }
 
-  const purchaseShip = async (
-    buyer: ShipEntity,
-    shipType: ShipType,
-    shipyards: WaypointEntity[],
-    markets: WaypointEntity[],
-    ships: ShipEntity[],
-  ) => {
-    const shipyardForType = shipyards.find((x) => x.shipyard?.shipTypes.map((s) => s.type).includes(shipType))
-    invariant(shipyardForType, `Expected to find a shipyard with ${shipType}`)
-    const shipyard = shipyards.find((x) => x.symbol === shipyardForType.symbol)
+  const purchaseShip = async (buyer: ShipEntity, shipType: ShipType, waypoints: WaypointEntity[], ships: ShipEntity[]) => {
+    const shipyard = waypoints.find((x) => x.shipyard?.shipTypes.map((s) => s.type).includes(shipType))
     invariant(shipyard, `Expected to find a waypoint for the ${shipType} shipyard`)
-    if (buyer.nav.route.destination.symbol !== shipyardForType.symbol) {
-      await navigateShip(buyer, shipyard, markets)
+    if (buyer.nav.route.destination.symbol !== shipyard.symbol) {
+      await navigateShip(buyer, shipyard, waypoints)
       return
     }
 
@@ -364,5 +363,6 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     updateShipAction,
     transferGoods,
     jettisonUnwanted,
+    updateCurrentWaypoint,
   }
 }

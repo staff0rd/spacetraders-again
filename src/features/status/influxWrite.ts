@@ -23,9 +23,21 @@ export const writePoint = <T, K extends keyof T>(
     fields,
     resetDate,
     agentSymbol,
-  }: { measurementName: string; tags: K[]; fields: K[]; resetDate: string; agentSymbol: string },
+    timestamp = new Date().toISOString(),
+  }: {
+    measurementName: string
+    tags: K[]
+    fields: K[]
+    resetDate: string
+    agentSymbol: string
+    timestamp?: string
+  },
 ) => {
   const point = new Point(measurementName)
+  if (timestamp) {
+    const date = new Date(timestamp)
+    point.timestamp(date)
+  }
   Object.entries(lodash.pick(object, tags)).forEach(([key, value]) => {
     point.tag(key, value as string)
   })
@@ -37,14 +49,8 @@ export const writePoint = <T, K extends keyof T>(
   influxWrite().writePoint(point)
 }
 
-export const writeMarketTransaction = (resetDate: string, transaction: MarketTransaction, agent: Agent) => {
-  writePoint(transaction, {
-    measurementName: 'market-transaction',
-    tags: ['waypointSymbol', 'shipSymbol', 'tradeSymbol', 'type'],
-    fields: ['units', 'pricePerUnit', 'totalPrice'],
-    resetDate,
-    agentSymbol: agent.symbol,
-  })
+export const writeMyMarketTransaction = (resetDate: string, transaction: MarketTransaction, agent: Agent) => {
+  writeMarketTransaction(transaction, resetDate, agent.symbol)
   writeCredits(agent, resetDate)
 }
 
@@ -84,4 +90,15 @@ export const writeShipyardTransaction = (resetDate: string, transaction: Shipyar
     agentSymbol: agent.symbol,
   })
   writeCredits(agent, resetDate)
+}
+
+export function writeMarketTransaction(transaction: MarketTransaction, resetDate: string, agentSymbol: string) {
+  writePoint(transaction, {
+    measurementName: 'market-transaction',
+    tags: ['waypointSymbol', 'shipSymbol', 'tradeSymbol', 'type'],
+    fields: ['units', 'pricePerUnit', 'totalPrice'],
+    resetDate,
+    agentSymbol,
+    timestamp: transaction.timestamp,
+  })
 }

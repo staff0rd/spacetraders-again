@@ -1,19 +1,16 @@
-import { Entity, PrimaryKey, Property } from '@mikro-orm/core'
+import { Entity, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core'
 import { MarketTradeGood, Shipyard, TradeSymbol } from '../../../api'
 
 @Entity({ tableName: 'waypoint' })
 export class WaypointEntity {
-  @PrimaryKey({ autoincrement: true })
-  id!: number
-
-  @Property()
+  @PrimaryKey()
   resetDate: string
+
+  @PrimaryKey()
+  symbol: string
 
   @Property()
   systemSymbol: string
-
-  @Property()
-  symbol: string
 
   @Property()
   x: number
@@ -22,13 +19,13 @@ export class WaypointEntity {
   y: number
 
   @Property()
-  imports: TradeSymbol[]
+  imports: TradeSymbol[] = []
 
   @Property()
-  exports: TradeSymbol[]
+  exports: TradeSymbol[] = []
 
   @Property()
-  exchange: TradeSymbol[]
+  exchange: TradeSymbol[] = []
 
   @Property({ type: 'json' })
   tradeGoods: MarketTradeGood[] | undefined
@@ -37,27 +34,46 @@ export class WaypointEntity {
   shipyard: undefined | Pick<Shipyard, 'modificationsFee' | 'shipTypes'>
 
   @Property({ type: 'json' })
-  ships: undefined | Shipyard['ships']
+  ships: undefined | Shipyard['ships'];
 
-  constructor(
-    resetDate: string,
-    systemSymbol: string,
-    symbol: string,
-    imports: TradeSymbol[],
-    exports: TradeSymbol[],
-    exchange: TradeSymbol[],
-    tradeGoods: MarketTradeGood[] | undefined,
-    x: number,
-    y: number,
-  ) {
-    this.resetDate = resetDate
-    this.symbol = symbol
-    this.systemSymbol = systemSymbol
-    this.x = x
-    this.y = y
-    this.imports = imports
-    this.exports = exports
-    this.exchange = exchange
-    this.tradeGoods = tradeGoods
+  [PrimaryKeyProp]?: ['resetDate', 'symbol']
+
+  @Property()
+  isUnderConstruction: boolean
+
+  @Property()
+  traits: string[]
+
+  @Property()
+  faction: string | undefined
+
+  @Property()
+  type: string
+
+  @Property()
+  modifiers: string[]
+
+  constructor(values: {
+    resetDate: string
+    symbol: string
+    systemSymbol: string
+    x: number
+    y: number
+    isUnderConstruction: boolean
+    traits: string[]
+    faction: string | undefined
+    type: string
+    modifiers: string[]
+  }) {
+    this.resetDate = values.resetDate
+    this.symbol = values.symbol
+    this.systemSymbol = values.systemSymbol
+    this.x = values.x
+    this.y = values.y
+    this.isUnderConstruction = values.isUnderConstruction
+    this.traits = values.traits
+    this.faction = values.faction
+    this.type = values.type
+    this.modifiers = values.modifiers
   }
 }

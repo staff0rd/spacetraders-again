@@ -288,15 +288,6 @@
     },
     {
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "mappedType": "integer"
-        },
         "reset_date": {
           "name": "reset_date",
           "type": "varchar(255)",
@@ -306,8 +297,8 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "system_symbol": {
-          "name": "system_symbol",
+        "symbol": {
+          "name": "symbol",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -315,8 +306,8 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "symbol": {
-          "name": "symbol",
+        "system_symbol": {
+          "name": "system_symbol",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -395,6 +386,51 @@
           "primary": false,
           "nullable": true,
           "mappedType": "json"
+        },
+        "is_under_construction": {
+          "name": "is_under_construction",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "boolean"
+        },
+        "traits": {
+          "name": "traits",
+          "type": "text[]",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "array"
+        },
+        "faction": {
+          "name": "faction",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "modifiers": {
+          "name": "modifiers",
+          "type": "text[]",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "array"
         }
       },
       "name": "waypoint",
@@ -403,9 +439,10 @@
         {
           "keyName": "waypoint_pkey",
           "columnNames": [
-            "id"
+            "reset_date",
+            "symbol"
           ],
-          "composite": false,
+          "composite": true,
           "constraint": true,
           "primary": true,
           "unique": true

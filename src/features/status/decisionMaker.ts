@@ -22,6 +22,7 @@ const createDecisionRateMonitor = () => {
 }
 export const decisionMaker = async (
   ship: ShipEntity,
+  shouldUpdateWaypoint: boolean,
   agent: AgentEntity,
   act: Awaited<ReturnType<typeof getActor>>,
   decisions: (ship: ShipEntity, agent: AgentEntity) => void,
@@ -33,6 +34,10 @@ export const decisionMaker = async (
     try {
       const { seconds, distance } = shipArriving(ship)
       if (seconds <= 0) {
+        if (shouldUpdateWaypoint) {
+          await act.updateCurrentWaypoint(ship)
+        }
+
         await decisions(ship, agent)
       } else {
         log.info('ship', `${ship.label} is not yet in position. Waiting for arrival ${distance}`)

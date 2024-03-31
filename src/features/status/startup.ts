@@ -1,6 +1,4 @@
-import lodash from 'lodash'
 import { DefaultApiFactory, TradeSymbol } from '../../../api'
-import { getOrPopulateMarkets } from '../../db/getOrPopulateMarkets'
 import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
@@ -10,7 +8,7 @@ import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
 import { getAgent } from './actions/getAgent'
 import { decisionMaker } from './decisionMaker'
-import { updateWaypoint } from './updateWaypoint'
+import { systemScan } from './systemScan'
 
 export type Position = { x: number; y: number }
 
@@ -31,7 +29,7 @@ export async function startup() {
 
   const systemSymbol = commandShip.nav.systemSymbol
 
-  const { markets, shipyards } = await initSystem(api, resetDate, systemSymbol)
+  const waypoints = await systemScan(systemSymbol, resetDate, api)
 
   const {
     data: {
@@ -39,13 +37,13 @@ export async function startup() {
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
-  const miningDronesToPurchase = 15
+  const miningDronesToPurchase = 20
   const shuttlesToPurchase = 1
   const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE']
 
-  const shuttleLogic = shuttleLogicFactory(act, markets, engineeredAsteroid, ships, keep)
+  const shuttleLogic = shuttleLogicFactory(act, waypoints, engineeredAsteroid, ships, keep)
 
-  await decisionMaker(commandShip, agent, act, async (ship: ShipEntity) => {
+  await decisionMaker(commandShip, true, agent, act, async (ship: ShipEntity) => {
     if (!agent.contract || agent.contract.fulfilled) {
       await act.getOrAcceptContract(ship)
       return
@@ -59,57 +57,30 @@ export async function startup() {
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     // TODO: don't hardcode the price
     if (miningDrones.length < miningDronesToPurchase && (agent.data?.credits ?? 0) > 50000) {
-      await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', shipyards, markets, ships)
+      await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', waypoints, ships)
       return
     } else {
       const idleDrones = miningDrones.filter((s) => !s.isCommanded)
       idleDrones.forEach((drone) => {
         log.warn('command', `Spawning worker for ${drone.label}`)
         drone.isCommanded = true
-        miningDroneActorFactory(drone, agent, act, markets, engineeredAsteroid, keep)
+        miningDroneActorFactory(drone, agent, act, waypoints, engineeredAsteroid, keep)
       })
     }
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
     if (shuttles.length < shuttlesToPurchase) {
-      await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', shipyards, markets, ships)
+      await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', waypoints, ships)
       return
     } else {
       const idleShuttles = shuttles.filter((s) => !s.isCommanded)
       idleShuttles.forEach((ship) => {
         log.warn('command', `Spawning worker for ${ship.label}`)
         ship.isCommanded = true
-        shuttleActorFactory(ship, agent, act, markets, engineeredAsteroid, ships, keep)
+        shuttleActorFactory(ship, agent, act, waypoints, engineeredAsteroid, ships, keep)
       })
     }
 
     await shuttleLogic(commandShip, agent)
   })
-}
-
-const initSystem = async (api: Awaited<ReturnType<typeof getAgent>>['api'], resetDate: string, systemSymbol: string) => {
-  const {
-    data: { data: shipyardWaypoints, meta },
-    //@ts-expect-error because it is wrong
-  } = await api.systems.getSystemWaypoints(systemSymbol, undefined, 20, undefined, { traits: ['SHIPYARD'] })
-  invariant(meta.total < 21, 'Expected less than 21 shipyards')
-
-  const markets = await getOrPopulateMarkets(api, resetDate, systemSymbol)
-
-  const shipyards = await Promise.all(
-    shipyardWaypoints.map(async (waypoint) => {
-      const {
-        data: { data: shipyard },
-      } = await api.systems.getShipyard(systemSymbol, waypoint.symbol)
-      const data = lodash.omit(shipyard, 'transactions', 'symbol')
-      const result = await updateWaypoint(
-        resetDate,
-        waypoint.symbol,
-        { modificationsFee: data.modificationsFee, shipTypes: data.shipTypes },
-        data.ships,
-      )
-      return result
-    }),
-  )
-  return { markets, shipyards }
 }
