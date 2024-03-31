@@ -1,4 +1,5 @@
 import { DefaultApiFactory, TradeSymbol } from '../../../api'
+import { getConfig } from '../../config'
 import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
@@ -13,6 +14,7 @@ import { systemScan } from './systemScan'
 export type Position = { x: number; y: number }
 
 export async function startup() {
+  const config = getConfig()
   const {
     data: { resetDate },
   } = await DefaultApiFactory().getStatus()
@@ -37,8 +39,6 @@ export async function startup() {
     },
   } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
 
-  const miningDronesToPurchase = 20
-  const shuttlesToPurchase = 1
   const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE']
 
   const shuttleLogic = shuttleLogicFactory(act, waypoints, engineeredAsteroid, ships, keep)
@@ -54,9 +54,15 @@ export async function startup() {
       return
     }
 
+    const probes = ships.filter((s) => s.frame.symbol === 'FRAME_PROBE')
+    if (probes.length < config.purchases.satelites) {
+      await act.purchaseShip(commandShip, 'SHIP_PROBE', waypoints, ships)
+      return
+    }
+
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     // TODO: don't hardcode the price
-    if (miningDrones.length < miningDronesToPurchase && (agent.data?.credits ?? 0) > 50000) {
+    if (miningDrones.length < config.purchases.mining && (agent.data?.credits ?? 0) > 50000) {
       await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', waypoints, ships)
       return
     } else {
@@ -69,7 +75,7 @@ export async function startup() {
     }
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
-    if (shuttles.length < shuttlesToPurchase) {
+    if (shuttles.length < config.purchases.shuttles) {
       await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', waypoints, ships)
       return
     } else {

@@ -53,6 +53,8 @@ export class WaypointEntity {
   @Property()
   modifiers: string[]
 
+  distanceFromEngineeredAsteroid: number = 0
+
   constructor(values: {
     resetDate: string
     symbol: string

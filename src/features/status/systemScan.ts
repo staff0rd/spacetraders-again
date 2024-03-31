@@ -86,5 +86,10 @@ export async function systemScan(
 
   await em.flush()
 
-  return entities
+  const engineeredAsteroid = entities.find((w) => w.type == 'ENGINEERED_ASTEROID')!
+  entities.forEach((w) => {
+    w.distanceFromEngineeredAsteroid = Math.sqrt((w.x - engineeredAsteroid.x) ** 2 + (w.y - engineeredAsteroid.y) ** 2)
+  })
+
+  return entities.toSorted((a, b) => a.distanceFromEngineeredAsteroid - b.distanceFromEngineeredAsteroid)
 }
