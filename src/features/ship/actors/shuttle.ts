@@ -1,9 +1,9 @@
-import { TradeSymbol } from '../../../api'
-import { ShipActionType, ShipEntity } from '../ship/ship.entity'
-import { IWaypoint } from '../status/actions/IWaypoint'
-import { getActor } from '../status/actions/getActor'
-import { AgentEntity } from '../status/agent.entity'
-import { decisionMaker } from '../status/decisionMaker'
+import { TradeSymbol } from '../../../../api'
+import { ShipActionType, ShipEntity } from '../../ship/ship.entity'
+import { getActor } from '../../status/actions/getActor'
+import { AgentEntity } from '../../status/agent.entity'
+import { decisionMaker } from '../../status/decisionMaker'
+import { IWaypoint } from '../../waypoints/IWaypoint'
 
 export const shuttleActorFactory = (
   shuttle: ShipEntity,

@@ -1,6 +1,6 @@
 import { Ship, TradeSymbol } from '../../../../api'
 import { log } from '../../../logging/configure-logging'
-import { WaypointEntity } from '../waypoint.entity'
+import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { getClosest } from './getClosest'
 
 export const getSellLocations = async (markets: WaypointEntity[], ship: Ship, keep: TradeSymbol[]) => {

@@ -1,10 +1,10 @@
-import { TradeSymbol } from '../../../api'
-import { log } from '../../logging/configure-logging'
-import { ShipEntity } from '../ship/ship.entity'
-import { IWaypoint } from '../status/actions/IWaypoint'
-import { getActor } from '../status/actions/getActor'
-import { AgentEntity } from '../status/agent.entity'
-import { decisionMaker } from '../status/decisionMaker'
+import { TradeSymbol } from '../../../../api'
+import { log } from '../../../logging/configure-logging'
+import { ShipEntity } from '../../ship/ship.entity'
+import { getActor } from '../../status/actions/getActor'
+import { AgentEntity } from '../../status/agent.entity'
+import { decisionMaker } from '../../status/decisionMaker'
+import { IWaypoint } from '../../waypoints/IWaypoint'
 
 export const miningDroneActorFactory = (
   miningDrone: ShipEntity,

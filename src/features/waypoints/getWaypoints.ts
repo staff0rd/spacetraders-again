@@ -2,9 +2,9 @@ import { WaypointTraitSymbol } from '../../../api'
 import { getConfig } from '../../config'
 import { invariant } from '../../invariant'
 import { getEntityManager } from '../../orm'
-import { getAgent } from './actions/getAgent'
-import { AgentEntity } from './agent.entity'
-import { writeMarketTradeGood, writeMarketTransaction } from './influxWrite'
+import { getAgent } from '../status/actions/getAgent'
+import { AgentEntity } from '../status/agent.entity'
+import { writeMarketTradeGood, writeMarketTransaction } from '../status/influxWrite'
 import { WaypointEntity } from './waypoint.entity'
 
 async function getAllWaypoints(api: Awaited<ReturnType<typeof getAgent>>['api'], systemSymbol: string) {

@@ -4,14 +4,14 @@ import { getConfig } from '../../config'
 import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
-import { miningDroneActorFactory } from '../actors/mining-drone'
-import { probeActorFactory } from '../actors/probe'
-import { shuttleActorFactory, shuttleLogicFactory } from '../actors/shuttle'
+import { miningDroneActorFactory } from '../ship/actors/mining-drone'
+import { probeActorFactory } from '../ship/actors/probe'
+import { shuttleActorFactory, shuttleLogicFactory } from '../ship/actors/shuttle'
 import { ShipEntity } from '../ship/ship.entity'
+import { getWaypoints } from '../waypoints/getWaypoints'
 import { getActor } from './actions/getActor'
 import { getAgent } from './actions/getAgent'
 import { decisionMaker } from './decisionMaker'
-import { getWaypoints } from './getWaypoints'
 
 export type Position = { x: number; y: number }
 

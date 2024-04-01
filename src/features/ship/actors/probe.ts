@@ -1,9 +1,9 @@
-import { log } from '../../logging/configure-logging'
-import { ShipEntity } from '../ship/ship.entity'
-import { getActor } from '../status/actions/getActor'
-import { AgentEntity } from '../status/agent.entity'
-import { decisionMaker } from '../status/decisionMaker'
-import { WaypointEntity } from '../status/waypoint.entity'
+import { log } from '../../../logging/configure-logging'
+import { ShipEntity } from '../../ship/ship.entity'
+import { getActor } from '../../status/actions/getActor'
+import { AgentEntity } from '../../status/agent.entity'
+import { decisionMaker } from '../../status/decisionMaker'
+import { WaypointEntity } from '../../waypoints/waypoint.entity'
 
 export const probeActorFactory = (
   probe: ShipEntity,
