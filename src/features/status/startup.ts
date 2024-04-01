@@ -11,7 +11,7 @@ import { ShipEntity } from '../ship/ship.entity'
 import { getActor } from './actions/getActor'
 import { getAgent } from './actions/getAgent'
 import { decisionMaker } from './decisionMaker'
-import { systemScan } from './systemScan'
+import { getWaypoints } from './getWaypoints'
 
 export type Position = { x: number; y: number }
 
@@ -32,7 +32,7 @@ export async function startup() {
 
   const systemSymbol = commandShip.nav.systemSymbol
 
-  const waypoints = await systemScan(systemSymbol, agent, api)
+  const waypoints = await getWaypoints(systemSymbol, agent, api)
 
   const {
     data: {

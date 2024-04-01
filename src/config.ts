@@ -29,8 +29,10 @@ export const getConfig = () => ({
     mining: getInt('PURCHASE_MINING_SHIPS', 0),
     shuttles: getInt('PURCHASE_SHUTTLES', 0),
     satelites: getInt('PURCHASE_SATELITES', 0),
+    surveyors: getInt('PURCHASE_SURVEYORS', 0),
   },
   strategy: {
+    scanOnStartup: getBool('SHOULD_SCAN_ON_STARTUP', true),
     mine: getBool('SHOULD_MINE', true),
   },
 })

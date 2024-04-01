@@ -1,4 +1,5 @@
 import { WaypointTraitSymbol } from '../../../api'
+import { getConfig } from '../../config'
 import { invariant } from '../../invariant'
 import { getEntityManager } from '../../orm'
 import { getAgent } from './actions/getAgent'
@@ -52,11 +53,14 @@ export async function updateWaypoint(waypoint: WaypointEntity, agent: AgentEntit
   }
 }
 
-export async function systemScan(
+export async function getWaypoints(
   systemSymbol: string,
   agent: AgentEntity,
   api: Awaited<ReturnType<typeof getAgent>>['api'],
 ): Promise<WaypointEntity[]> {
+  const {
+    strategy: { scanOnStartup },
+  } = getConfig()
   const waypoints = await getAllWaypoints(api, systemSymbol)
   invariant(waypoints?.length, 'Expected to find waypoints')
   const em = getEntityManager()
@@ -81,6 +85,13 @@ export async function systemScan(
 
   const entities = await em.find(WaypointEntity, { resetDate: agent.resetDate, systemSymbol })
 
+  const engineeredAsteroid = entities.find((w) => w.type == 'ENGINEERED_ASTEROID')!
+  entities.forEach((w) => {
+    w.distanceFromEngineeredAsteroid = Math.sqrt((w.x - engineeredAsteroid.x) ** 2 + (w.y - engineeredAsteroid.y) ** 2)
+  })
+
+  if (!scanOnStartup) return entities
+
   await Promise.all(
     entities.map(async (waypoint) => {
       await updateWaypoint(waypoint, agent, api)
@@ -89,11 +100,6 @@ export async function systemScan(
   )
 
   await em.flush()
-
-  const engineeredAsteroid = entities.find((w) => w.type == 'ENGINEERED_ASTEROID')!
-  entities.forEach((w) => {
-    w.distanceFromEngineeredAsteroid = Math.sqrt((w.x - engineeredAsteroid.x) ** 2 + (w.y - engineeredAsteroid.y) ** 2)
-  })
 
   return entities
 }
