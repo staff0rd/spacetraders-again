@@ -391,6 +391,26 @@
           "primary": false,
           "nullable": false,
           "mappedType": "array"
+        },
+        "last_shipyard_scan": {
+          "name": "last_shipyard_scan",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "last_marketplace_scan": {
+          "name": "last_marketplace_scan",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
         }
       },
       "name": "waypoint",

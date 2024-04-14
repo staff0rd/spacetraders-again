@@ -29,6 +29,7 @@ export async function updateWaypoint(waypoint: WaypointEntity, agent: AgentEntit
     waypoint.exports = market.exports.map((e) => e.symbol)
     waypoint.exchange = market.exchange.map((e) => e.symbol)
     if (market.tradeGoods) {
+      waypoint.lastMarketplaceScan = new Date()
       waypoint.tradeGoods = market.tradeGoods
       waypoint.tradeGoods.forEach((tg) => {
         writeMarketTradeGood(tg, waypoint.resetDate, agent.data!.symbol, waypoint.symbol)
@@ -49,7 +50,10 @@ export async function updateWaypoint(waypoint: WaypointEntity, agent: AgentEntit
       modificationsFee: shipyard.modificationsFee,
       shipTypes: shipyard.shipTypes,
     }
-    if (shipyard.ships) waypoint.ships = shipyard.ships
+    if (shipyard.ships) {
+      waypoint.lastShipyardScan = new Date()
+      waypoint.ships = shipyard.ships
+    }
   }
 }
 

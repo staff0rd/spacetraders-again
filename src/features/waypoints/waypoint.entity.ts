@@ -53,6 +53,12 @@ export class WaypointEntity {
   @Property()
   modifiers: string[]
 
+  @Property()
+  lastShipyardScan?: Date
+
+  @Property()
+  lastMarketplaceScan?: Date
+
   distanceFromEngineeredAsteroid: number = 0
 
   get label() {
