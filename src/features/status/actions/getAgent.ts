@@ -14,7 +14,7 @@ export const updateAgentFactory = (token: string, resetDate: string) => async (a
       delete data[key]
     }
   })
-  await getEntityManager().fork().nativeUpdate(AgentEntity, { token, resetDate }, data)
+  await getEntityManager().nativeUpdate(AgentEntity, { token, resetDate }, data)
 
   const entries = Object.entries(data) as Entries<AgentEntity>
 

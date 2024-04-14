@@ -39,7 +39,8 @@ export const getActor = async (
 
     const {
       data: { data: contracts },
-    } = await api.contracts.getContracts()
+      // TODO: get all contracts instead of just first page
+    } = await api.contracts.getContracts(1, 20)
 
     const unfulfilled = contracts.filter((c) => !c.fulfilled)
 
