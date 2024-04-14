@@ -3,6 +3,7 @@ import { program } from 'commander'
 import { DefaultApiFactory } from '../api'
 import { getStatus } from './features/status/get-status'
 import { startup } from './features/status/startup'
+import { routeTest } from './features/waypoints/routeTest'
 import { log } from './logging/configure-logging'
 import { logError } from './logging/log-error'
 import { setupQueues } from './queue/configure-queues'
@@ -46,6 +47,18 @@ program
   .action(async () => {
     try {
       await getStatus()
+    } catch (err) {
+      logError('status', err)
+      throw err
+    }
+  })
+
+program
+  .command('routing')
+  .description('Route testing')
+  .action(async () => {
+    try {
+      await routeTest()
     } catch (err) {
       logError('status', err)
       throw err

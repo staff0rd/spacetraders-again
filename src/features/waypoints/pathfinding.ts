@@ -4,10 +4,23 @@ import { ShipNavFlightMode } from '../../../api'
 import { ShipEntity } from '../ship/ship.entity'
 import { WaypointEntity } from './waypoint.entity'
 
+const addLink = (a: WaypointEntity, b: WaypointEntity, graph: ReturnType<typeof getGraph>['graph']) => {
+  const existingLink = graph.getLink(a.symbol, b.symbol)
+  const aNode = graph.getNode(a.symbol)
+  const bNode = graph.getNode(b.symbol)
+  if (!existingLink && aNode && bNode) graph.addLink(a.symbol, b.symbol)
+}
+
 export const getGraph = (waypoints: WaypointEntity[]) => {
   const graph = createGraph()
   waypoints.forEach((waypoint) => {
     graph.addNode(waypoint.symbol, waypoint)
+  })
+
+  waypoints.forEach((a) => {
+    waypoints.forEach((b) => {
+      if (a !== b) addLink(a, b, graph)
+    })
   })
 
   return { graph }
