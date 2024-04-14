@@ -17,7 +17,6 @@ export const shuttleActorFactory = (
 export const shuttleLogicFactory =
   (act: Awaited<ReturnType<typeof getActor>>, miningLocation: IWaypoint, ships: ShipEntity[], sell: TradeSymbol[]) =>
   async (ship: ShipEntity, agent: AgentEntity) => {
-    await act.refuelShip(ship)
     await act.jettisonUnwanted(ship, sell)
     const currentAction = ship.action?.type
     if (!currentAction) {
@@ -46,7 +45,7 @@ export const shuttleLogicFactory =
         await act.updateShipAction(ship, ShipActionType.FILL)
         return
       } else if (ship.cargo.inventory.find((p) => p.symbol === agent.contractGood.tradeSymbol)?.units) {
-        await act.deliverGoods(ship)
+        await act.deliverContractGoods(ship)
         return
       } else {
         await act.sellGoods(ship, [agent.contractGood.tradeSymbol as TradeSymbol])

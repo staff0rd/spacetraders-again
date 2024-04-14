@@ -42,6 +42,7 @@ export const decisionMaker = async (
       } else {
         log.info('ship', `${ship.label} is not yet in position. Waiting for arrival ${distance}`)
         await act.wait(seconds * 1000)
+        await act.scanMarketIfNeccessary(ship)
       }
     } catch (err) {
       logError(`${ship.label} makeDecision`, err)

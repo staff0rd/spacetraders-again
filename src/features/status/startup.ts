@@ -4,9 +4,11 @@ import { getConfig } from '../../config'
 import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
+import { contractTraderLogicFactory } from '../ship/actors/contract-trading'
 import { miningDroneActorFactory } from '../ship/actors/mining-drone'
 import { probeActorFactory } from '../ship/actors/probe'
 import { shuttleActorFactory, shuttleLogicFactory } from '../ship/actors/shuttle'
+import { systemReconLogicFactory } from '../ship/actors/system-recon'
 import { ShipEntity } from '../ship/ship.entity'
 import { getWaypoints } from '../waypoints/getWaypoints'
 import { getActor } from './actions/getActor'
@@ -42,21 +44,13 @@ export async function startup() {
 
   const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE']
 
-  const act = await getActor(agent, api, waypoints)
+  const act = await getActor(agent, api, waypoints, ships)
 
   const shuttleLogic = shuttleLogicFactory(act, engineeredAsteroid, ships, keep)
+  const contractTraderLogic = contractTraderLogicFactory(act)
+  const systemReconLogic = systemReconLogicFactory(act)
 
   await decisionMaker(commandShip, true, agent, act, async (ship: ShipEntity) => {
-    if (!agent.contract || agent.contract.fulfilled) {
-      await act.getOrAcceptContract(ship)
-      return
-    }
-
-    if (agent.contractGood.unitsFulfilled === agent.contractGood.unitsRequired) {
-      await act.fulfillContract()
-      return
-    }
-
     const probes = ships.filter((s) => s.frame.symbol === 'FRAME_PROBE').toSorted((a, b) => a.label.localeCompare(b.label))
     if (probes.length < config.purchases.satelites) {
       await act.purchaseShip(commandShip, 'SHIP_PROBE', ships)
@@ -95,6 +89,7 @@ export async function startup() {
     }
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
+    // TODO: price check
     if (shuttles.length < config.purchases.shuttles) {
       await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', ships)
       return
@@ -106,6 +101,10 @@ export async function startup() {
         shuttleActorFactory(ship, agent, act, engineeredAsteroid, ships, keep)
       })
     }
+
+    if (await systemReconLogic(commandShip, agent)) return
+
+    if (await contractTraderLogic(commandShip, agent)) return
 
     await shuttleLogic(commandShip, agent)
   })

@@ -17,7 +17,12 @@ import { shipArriving, shipCooldownRemaining } from '../utils/getCurrentFlightTi
 import { getSellLocations } from '../utils/getSellLocations'
 import { updateAgentFactory } from './getAgent'
 
-export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFactory>, waypoints: WaypointEntity[]) => {
+export const getActor = async (
+  agent: AgentEntity,
+  api: ReturnType<typeof apiFactory>,
+  waypoints: WaypointEntity[],
+  ships: ShipEntity[],
+) => {
   const { token, resetDate } = agent
   const updateAgent = updateAgentFactory(token, resetDate)
   async function updateShip(ship: ShipEntity, data: EntityData<ShipEntity>) {
@@ -48,7 +53,10 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
         await updateAgent(agent, { contract: firstContract })
         return
       }
-      log.info('agent', `Accepting contract`)
+      log.info(
+        'agent',
+        `Accepting contract, on accepted: $${firstContract.terms.payment.onAccepted.toLocaleString()}, on fullfillment: $${firstContract.terms.payment.onFulfilled.toLocaleString()}`,
+      )
       const {
         data: {
           data: {
@@ -109,6 +117,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
   }
 
   const navigateShip = async (ship: ShipEntity, target: IWaypoint) => {
+    // TODO: only refuel if necessary
     await refuelShip(ship)
     if (ship.nav.route.destination.symbol !== target.symbol) {
       const distance = lineLength([
@@ -221,7 +230,7 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     await updateShip(to, { cargo: toShipCargo.data.data.cargo })
   }
 
-  const deliverGoods = async (ship: ShipEntity) => {
+  const deliverContractGoods = async (ship: ShipEntity) => {
     log.info('ship', `${ship.label} will deliver goods`)
     invariant(agent.contract, 'Expected agent to have a contract')
     invariant(agent.contract.terms.deliver, 'Expected contract to have deliver terms')
@@ -239,6 +248,8 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
       return
     }
 
+    await dockShip(ship)
+
     const {
       data: {
         data: { cargo, contract },
@@ -247,6 +258,22 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     log.info('ship', `${ship.label} delivered ${units} of ${deliver.tradeSymbol}`)
     await updateShip(ship, { cargo })
     await updateAgent(agent, { contract })
+  }
+
+  const purchaseGoods = async (ship: ShipEntity, tradeSymbol: TradeSymbol, units: number) => {
+    log.info('ship', `${ship.label} will purchase goods`)
+    await dockShip(ship)
+    const {
+      data: {
+        data: { cargo, transaction, agent },
+      },
+    } = await api.fleet.purchaseCargo(ship.symbol, { symbol: tradeSymbol, units })
+    writeMyMarketTransaction(resetDate, transaction, agent)
+    log.info(
+      'ship',
+      `${ship.label} purchased ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
+    )
+    await updateShip(ship, { cargo })
   }
 
   const sellGoods = async (ship: ShipEntity, keep: TradeSymbol[]) => {
@@ -286,6 +313,36 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
   }
 
   const wait = async (delayMs: number) => new Promise((resolve) => setTimeout(resolve, delayMs))
+
+  const findClosestUnvisitedMarket = (ship: ShipEntity) => {
+    const markets = waypoints.filter((x) => x.exchange.filter((e) => e !== 'FUEL').length || x.imports.length || x.exports.length)
+    const unvisitedMarkets = markets.filter((x) => !x.tradeGoods)
+    const shipyards = waypoints.filter((x) => x.shipyard)
+    const unvisitedShipyards = shipyards.filter((x) => !x.ships?.length)
+    const unvisited = [...unvisitedMarkets, ...unvisitedShipyards]
+    log.info('ship', `There are ${unvisited.length} unvisited markets or shipyards`)
+    return getClosest(unvisited, ship.nav.route.destination)
+  }
+
+  const findTradeSymbol = async (ship: ShipEntity, tradeSymbol: TradeSymbol) => {
+    const exports = waypoints.filter((p) => p.exports.includes(tradeSymbol))
+    const exchanges = waypoints.filter((p) => p.exchange.includes(tradeSymbol))
+    invariant(exports.length + exchanges.length > 0, `Expected to a waypoint that exports or exchanges ${tradeSymbol}`)
+    invariant(
+      exports.length + exchanges.length === 1,
+      `Expected exactly one waypoint that exports or exchanges ${tradeSymbol}, do not know how to choose`,
+    )
+
+    return [...exports, ...exchanges][0]
+  }
+
+  const scanMarketIfNeccessary = async (ship: ShipEntity) => {
+    const hasSatelite = ships.find(
+      (x) => x.registration.role === 'SATELLITE' && x.nav.waypointSymbol === ship.nav.waypointSymbol && x.nav.status !== 'IN_TRANSIT',
+    )
+    if (hasSatelite) return
+    await updateCurrentWaypoint(ship)
+  }
 
   const fulfillContract = async () => {
     invariant(agent.contract, 'Expected agent to have a contract')
@@ -359,11 +416,15 @@ export const getActor = async (agent: AgentEntity, api: ReturnType<typeof apiFac
     wait,
     getOrAcceptContract,
     purchaseShip,
-    deliverGoods,
+    deliverContractGoods,
     fulfillContract,
     updateShipAction,
     transferGoods,
     jettisonUnwanted,
     updateCurrentWaypoint,
+    findTradeSymbol,
+    purchaseGoods,
+    scanMarketIfNeccessary,
+    findClosestUnvisitedMarket,
   }
 }

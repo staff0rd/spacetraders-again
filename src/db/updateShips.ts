@@ -4,7 +4,7 @@ import { AgentEntity } from '../features/status/agent.entity'
 import { getEntityManager } from '../orm'
 import { findOrCreateShip } from './findOrCreateShip'
 
-export async function updateShips(resetDate: string, agent: AgentEntity, ships: Ship[]) {
+export async function updateShips(resetDate: string, agent: AgentEntity, ships: Ship[]): Promise<ShipEntity[]> {
   const em = getEntityManager()
   await Promise.all(
     ships.map(async (ship) => {
