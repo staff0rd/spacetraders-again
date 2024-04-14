@@ -4,13 +4,13 @@ import { ShipEntity } from '../../ship/ship.entity'
 import { getActor } from '../../status/actions/getActor'
 import { AgentEntity } from '../../status/agent.entity'
 import { decisionMaker } from '../../status/decisionMaker'
-import { IWaypoint } from '../../waypoints/IWaypoint'
+import { WaypointEntity } from '../../waypoints/waypoint.entity'
 
 export const miningDroneActorFactory = (
   miningDrone: ShipEntity,
   agent: AgentEntity,
   act: Awaited<ReturnType<typeof getActor>>,
-  miningLocation: IWaypoint,
+  miningLocation: WaypointEntity,
   keep: TradeSymbol[],
 ) =>
   decisionMaker(miningDrone, false, agent, act, async (ship: ShipEntity, agent: AgentEntity) => {

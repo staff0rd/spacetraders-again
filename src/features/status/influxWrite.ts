@@ -1,7 +1,7 @@
 import { InfluxDB, Point, WriteApi } from '@influxdata/influxdb-client'
 import lodash from 'lodash'
 import { hostname } from 'os'
-import { Agent, Extraction, MarketTradeGood, MarketTransaction, ShipyardTransaction } from '../../../api'
+import { Agent, Contract, Extraction, MarketTradeGood, MarketTransaction, ShipyardTransaction } from '../../../api'
 import { getConfig } from '../../config'
 import { AgentEntity } from './agent.entity'
 
@@ -114,4 +114,37 @@ export function writeMarketTradeGood(tradeGood: MarketTradeGood, resetDate: stri
       agentSymbol,
     },
   )
+}
+
+export function writeContract(contract: Contract, resetDate: string, agentSymbol: string) {
+  const {
+    factionSymbol,
+    type,
+    terms: {
+      deadline,
+      payment: { onAccepted, onFulfilled },
+      deliver,
+    },
+    deadlineToAccept,
+  } = contract
+
+  const { destinationSymbol, tradeSymbol, unitsRequired } = deliver![0]
+  const payload = {
+    factionSymbol,
+    type,
+    deadline,
+    onAccepted,
+    onFulfilled,
+    deadlineToAccept,
+    destinationSymbol,
+    tradeSymbol,
+    unitsRequired,
+  }
+  writePoint(payload, {
+    measurementName: 'contract',
+    tags: ['factionSymbol', 'type', 'destinationSymbol', 'tradeSymbol'],
+    fields: ['unitsRequired', 'deadline', 'onAccepted', 'onFulfilled', 'deadlineToAccept'],
+    resetDate,
+    agentSymbol,
+  })
 }

@@ -5,7 +5,7 @@ import { AgentEntity } from '../../status/agent.entity'
 import { decisionMaker } from '../../status/decisionMaker'
 import { ShipEntity } from '../ship.entity'
 
-const asteroidResult: TradeSymbol[] = ['IRON_ORE', 'ALUMINUM_ORE', 'COPPER_ORE']
+const asteroidResult: TradeSymbol[] = ['IRON_ORE', 'ALUMINUM_ORE', 'COPPER_ORE', 'SILICON_CRYSTALS']
 
 export const contractTraderActorFactory = (ship: ShipEntity, agent: AgentEntity, act: Awaited<ReturnType<typeof getActor>>) =>
   decisionMaker(ship, true, agent, act, contractTraderLogicFactory(act))
@@ -22,7 +22,7 @@ export const contractTraderLogicFactory =
     invariant(agent.contract.terms.deliver, 'Expected to have a deliver term')
     invariant(agent.contract.terms.deliver.length === 1, 'Expected to have a single deliver term')
 
-    const { destinationSymbol, tradeSymbol, unitsFulfilled, unitsRequired } = agent.contract.terms.deliver[0]
+    const { tradeSymbol, unitsFulfilled, unitsRequired } = agent.contract.terms.deliver[0]
     const unitsToGo = unitsRequired - unitsFulfilled
 
     if (unitsFulfilled === unitsRequired) {
@@ -41,7 +41,7 @@ export const contractTraderLogicFactory =
       return true
     }
 
-    const waypoint = await act.findTradeSymbol(ship, tradeSymbol as TradeSymbol)
+    const waypoint = await act.findTradeSymbol(tradeSymbol as TradeSymbol)
     invariant(waypoint, `Expected to find a waypoint for ${tradeSymbol}`)
 
     if (ship.nav.waypointSymbol !== waypoint.symbol) {

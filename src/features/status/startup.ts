@@ -36,13 +36,10 @@ export async function startup() {
 
   const waypoints = await getWaypoints(systemSymbol, agent, api)
 
-  const {
-    data: {
-      data: [engineeredAsteroid],
-    },
-  } = await api.systems.getSystemWaypoints(commandShip.nav.systemSymbol, undefined, 20, 'ENGINEERED_ASTEROID')
+  const engineeredAsteroid = waypoints.find((x) => x.type === 'ENGINEERED_ASTEROID')
+  invariant(engineeredAsteroid, 'Expected to find an engineered asteroid')
 
-  const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE']
+  const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE', 'SILICON_CRYSTALS']
 
   const act = await getActor(agent, api, waypoints, ships)
 
@@ -68,7 +65,7 @@ export async function startup() {
       const sortedProbes = lodash.orderBy(probes, [(s) => s.label])
       sortedProbes.forEach((probe, ix) => {
         if (probe.isCommanded) return
-        log.warn('command', `Spawning worker for ${probe.label}`)
+        log.info('command', `Spawning worker for ${probe.label}`)
         probe.isCommanded = true
         probeActorFactory(probe, agent, act, sortedProbeLocations[ix])
       })
@@ -82,7 +79,7 @@ export async function startup() {
     } else if (config.strategy.mine) {
       const idleDrones = miningDrones.filter((s) => !s.isCommanded)
       idleDrones.forEach((drone) => {
-        log.warn('command', `Spawning worker for ${drone.label}`)
+        log.info('command', `Spawning worker for ${drone.label}`)
         drone.isCommanded = true
         miningDroneActorFactory(drone, agent, act, engineeredAsteroid, keep)
       })
@@ -96,7 +93,7 @@ export async function startup() {
     } else {
       const idleShuttles = shuttles.filter((s) => !s.isCommanded)
       idleShuttles.forEach((ship) => {
-        log.warn('command', `Spawning worker for ${ship.label}`)
+        log.info('command', `Spawning worker for ${ship.label}`)
         ship.isCommanded = true
         shuttleActorFactory(ship, agent, act, engineeredAsteroid, ships, keep)
       })

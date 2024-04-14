@@ -66,19 +66,24 @@ export const getShortestPath = (graph: ReturnType<typeof getGraph>['graph'], fro
   return route
 }
 
-function getFuelNeeded(from: WaypointEntity, to: WaypointEntity, ship: ShipEntity) {
+export function getFuelNeeded(
+  from: WaypointEntity,
+  to: WaypointEntity,
+  ship: ShipEntity,
+  flightMode: ShipNavFlightMode = ship.nav.flightMode,
+) {
   if (ship.fuel.capacity === 0) return 0 // satelites don't appear to need fuel
   const distance = distanceWaypoint(from, to)
-  switch (ship.nav.flightMode) {
+  switch (flightMode) {
     case ShipNavFlightMode.Cruise:
     case ShipNavFlightMode.Stealth:
       return Math.max(1, Math.round(distance))
     case ShipNavFlightMode.Drift:
       return 1
     case ShipNavFlightMode.Burn:
-      return Math.max(1, 2 * Math.round(distance))
+      return Math.max(2, 2 * Math.round(distance))
     default:
-      throw new Error(`Unknown flight mode: ${ship.nav.flightMode}`)
+      throw new Error(`Unknown flight mode: ${flightMode}`)
   }
 }
 

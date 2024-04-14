@@ -16,8 +16,8 @@ export const probeActorFactory = (
       log.warn('ship', `${ship.label} is not at ${assignedWaypoint.label}, navigating...`)
       await act.navigateShip(ship, assignedWaypoint)
     } else {
-      log.info('ship', `${ship.label} will check ${assignedWaypoint.symbol}`)
-      await act.updateCurrentWaypoint(ship)
+      log.info('ship', `${ship.label} will check ${assignedWaypoint.label}`)
+      await act.scanWaypoint(agent.resetDate, assignedWaypoint.symbol)
       await act.wait(1000 * 60 * 5)
     }
   })

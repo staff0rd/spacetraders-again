@@ -3,21 +3,20 @@ import { ShipActionType, ShipEntity } from '../../ship/ship.entity'
 import { getActor } from '../../status/actions/getActor'
 import { AgentEntity } from '../../status/agent.entity'
 import { decisionMaker } from '../../status/decisionMaker'
-import { IWaypoint } from '../../waypoints/IWaypoint'
+import { WaypointEntity } from '../../waypoints/waypoint.entity'
 
 export const shuttleActorFactory = (
   shuttle: ShipEntity,
   agent: AgentEntity,
   act: Awaited<ReturnType<typeof getActor>>,
-  miningLocation: IWaypoint,
+  miningLocation: WaypointEntity,
   ships: ShipEntity[],
   sell: TradeSymbol[],
 ) => decisionMaker(shuttle, true, agent, act, shuttleLogicFactory(act, miningLocation, ships, sell))
 
 export const shuttleLogicFactory =
-  (act: Awaited<ReturnType<typeof getActor>>, miningLocation: IWaypoint, ships: ShipEntity[], sell: TradeSymbol[]) =>
+  (act: Awaited<ReturnType<typeof getActor>>, miningLocation: WaypointEntity, ships: ShipEntity[], sell: TradeSymbol[]) =>
   async (ship: ShipEntity, agent: AgentEntity) => {
-    await act.jettisonUnwanted(ship, sell)
     const currentAction = ship.action?.type
     if (!currentAction) {
       await act.updateShipAction(ship, ShipActionType.FILL)

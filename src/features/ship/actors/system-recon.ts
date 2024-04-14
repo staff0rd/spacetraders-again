@@ -1,9 +1,6 @@
-import { TradeSymbol } from '../../../../api'
 import { getActor } from '../../status/actions/getActor'
 import { AgentEntity } from '../../status/agent.entity'
 import { ShipEntity } from '../ship.entity'
-
-const asteroidResult: TradeSymbol[] = ['IRON_ORE', 'ALUMINUM_ORE', 'COPPER_ORE']
 
 export const systemReconLogicFactory =
   (act: Awaited<ReturnType<typeof getActor>>) =>
@@ -15,7 +12,7 @@ export const systemReconLogicFactory =
     if (ship.nav.waypointSymbol !== waypoint.symbol) {
       await act.navigateShip(ship, waypoint)
     } else {
-      await act.updateCurrentWaypoint(ship)
+      await act.scanWaypoint(agent.resetDate, waypoint.symbol)
     }
     return true
   }

@@ -17,7 +17,7 @@ export class AgentEntity {
   contract: Contract | undefined
 
   @Property({ columnType: 'json' })
-  data: Agent | undefined // remove undefined after migration
+  data: Agent
 
   constructor(resetDate: string, token: string, agent: Agent) {
     this.resetDate = resetDate

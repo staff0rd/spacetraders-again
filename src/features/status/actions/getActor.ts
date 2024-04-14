@@ -1,17 +1,18 @@
 import { EntityData } from '@mikro-orm/core'
 import { lineLength } from 'geometric'
-import { Ship, ShipType, TradeSymbol } from '../../../../api'
+import lodash from 'lodash'
+import { Ship, ShipNavFlightMode, ShipType, TradeSymbol } from '../../../../api'
 import { findOrCreateShip } from '../../../db/findOrCreateShip'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
 import { ShipActionType, ShipEntity } from '../../ship/ship.entity'
-import { IWaypoint } from '../../waypoints/IWaypoint'
 import { updateWaypoint } from '../../waypoints/getWaypoints'
+import { getFuelNeeded } from '../../waypoints/pathfinding'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
-import { writeCredits, writeExtraction, writeMyMarketTransaction, writeShipyardTransaction } from '../influxWrite'
+import { writeContract, writeCredits, writeExtraction, writeMyMarketTransaction, writeShipyardTransaction } from '../influxWrite'
 import { getClosest } from '../utils/getClosest'
 import { shipArriving, shipCooldownRemaining } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'
@@ -65,6 +66,7 @@ export const getActor = async (
           },
         },
       } = await api.contracts.acceptContract(firstContract.id)
+      writeContract(contract, resetDate, agent.data.symbol)
       writeCredits({ symbol, credits: rest.credits }, resetDate)
       await updateAgent(agent, { contract, ...rest })
     }
@@ -100,11 +102,13 @@ export const getActor = async (
     }
   }
 
-  const updateCurrentWaypoint = async (ship: ShipEntity) => {
+  const scanWaypoint = async (resetDate: string, symbol: string) => {
     const em = getEntityManager()
-    const waypoint = waypoints.find((x) => x.symbol === ship.nav.waypointSymbol)
-    invariant(waypoint, `Expected waypoint ${ship.nav.waypointSymbol} to exist`)
+    const waypoint = await em.getRepository(WaypointEntity).findOneOrFail({ resetDate, symbol })
     await updateWaypoint(waypoint, agent, api)
+    await em.persistAndFlush(waypoint)
+    const index = waypoints.findIndex((w) => w.symbol === symbol)
+    waypoints[index] = waypoint
   }
 
   const orbitShip = async (ship: ShipEntity) => {
@@ -116,19 +120,58 @@ export const getActor = async (
     await updateShip(ship, { nav })
   }
 
-  const navigateShip = async (ship: ShipEntity, target: IWaypoint) => {
-    // TODO: only refuel if necessary
-    await refuelShip(ship)
-    if (ship.nav.route.destination.symbol !== target.symbol) {
-      const distance = lineLength([
-        [ship.nav.route.destination.x, ship.nav.route.destination.y],
-        [target.x, target.y],
-      ])
-      const fuelNeeded = ship.fuel.capacity === 0 ? 0 : Math.round(distance)
-      log.info(
-        'ship',
-        `${ship.label} will navigate to ${target.symbol}, distance: ${distance.toLocaleString()}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
-      )
+  const setFlightMode = async (ship: ShipEntity, flightMode: ShipNavFlightMode) => {
+    if (ship.nav.flightMode === flightMode) return
+    const {
+      data: { data: nav },
+    } = await api.fleet.patchShipNav(ship.symbol, { flightMode })
+    await updateShip(ship, { nav })
+  }
+
+  const navigate = async (ship: ShipEntity, target: WaypointEntity, flightMode: ShipNavFlightMode) => {
+    if (ship.nav.status === 'DOCKED') {
+      await orbitShip(ship)
+    }
+    const {
+      data: {
+        data: { nav, fuel },
+      },
+    } = await api.fleet.navigateShip(ship.symbol, { waypointSymbol: target.symbol })
+    await updateShip(ship, { nav, fuel })
+    const { distance } = shipArriving(ship)
+    log.info('ship', `${ship.label} will arrive at ${target.label} ${distance}`)
+  }
+
+  const navigateShip = async (ship: ShipEntity, target: WaypointEntity, flightMode: ShipNavFlightMode = 'CRUISE') => {
+    if (ship.nav.waypointSymbol !== target.symbol) {
+      setFlightMode(ship, flightMode)
+      const from = waypoints.find((w) => w.symbol === ship.nav.waypointSymbol)!
+      const fuelNeeded = getFuelNeeded(from, target, ship)
+      log.info('ship', `${ship.label} will navigate to ${target.label}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`)
+      if (fuelNeeded > ship.fuel.current) {
+        const hasFuel = waypoints.find((x) => x.symbol === ship.nav.waypointSymbol)!.tradeGoods?.find((x) => x.symbol === 'FUEL')
+        if (!hasFuel) {
+          const closestFuelWaypoint = getClosest(
+            waypoints.filter((x) => x.exchange?.find((x) => x === 'FUEL')),
+            ship.nav.route.destination,
+          )!
+          const closestFuelWaypointFuelNeeded = getFuelNeeded(from, closestFuelWaypoint, ship)
+          log.info(
+            'ship',
+            `${ship.label} does not have enough fuel, will navigate to closest fuel location: ${target.label}, fuel requirement: ${closestFuelWaypointFuelNeeded}, fuel: ${ship.fuel.current}`,
+          )
+          if (closestFuelWaypointFuelNeeded <= ship.fuel.current) {
+            await navigateShip(ship, closestFuelWaypoint)
+            return
+          } else {
+            log.warn('ship', `${ship.label} nas no fuel, will drift to ${closestFuelWaypoint.label}`)
+            await setFlightMode(ship, 'DRIFT')
+            await navigate(ship, closestFuelWaypoint, 'DRIFT')
+            return
+          }
+        }
+        await refuelShip(ship)
+      }
       if (ship.fuel.capacity < fuelNeeded) {
         const reachableWaypoints = waypoints.filter((w) => {
           const distance = lineLength([
@@ -146,27 +189,17 @@ export const getActor = async (
             ]),
           }))
           .sort((a, b) => a.distance - b.distance)
-        log.warn('ship', `${ship.label} cannot reach ${target.symbol}, will navigate to ${byDistanceToTarget[0].w.symbol}`)
+        log.warn('ship', `${ship.label} cannot reach ${target.label}, will navigate to ${byDistanceToTarget[0].w.label}`)
         await navigateShip(ship, byDistanceToTarget[0].w)
       } else {
-        if (ship.nav.status === 'DOCKED') {
-          await orbitShip(ship)
-        }
-        const {
-          data: {
-            data: { nav, fuel },
-          },
-        } = await api.fleet.navigateShip(ship.symbol, { waypointSymbol: target.symbol })
-        await updateShip(ship, { nav, fuel })
-        const { distance } = shipArriving(ship)
-        log.info('ship', `${ship.label} will arrive at ${target.symbol} ${distance}`)
+        await navigate(ship, target, 'CRUISE')
       }
     }
   }
 
   const jettisonUnsellable = async (markets: WaypointEntity[], ship: ShipEntity, keep: TradeSymbol[]) => {
     const locations = await getSellLocations(markets, ship, keep)
-    const unsellable = locations.filter((p) => !p.closestMarket)
+    const unsellable = locations.filter((p) => !p.bestMarket)
     await Promise.all(
       unsellable.map(async ({ symbol, units }) => {
         log.warn('ship', `${ship.label} is jettisoning ${units}x${symbol} because it is unsellable`)
@@ -280,13 +313,13 @@ export const getActor = async (
     log.info('ship', `${ship.label} will sell goods`)
     const locations = await getSellLocations(waypoints, ship, keep)
 
-    const sellableHere = locations.filter((p) => p.closestMarket && p.closestMarket.symbol === ship.nav.waypointSymbol)
+    const sellableHere = locations.filter((p) => p.bestMarket && p.bestMarket.symbol === ship.nav.waypointSymbol)
 
     if (sellableHere.length) {
       await dockShip(ship)
       await Promise.all(
         sellableHere.map(async (p) => {
-          log.info('ship', `${ship.label} is selling ${p.units} of ${p.symbol} at ${p.closestMarket!.symbol}`)
+          log.info('ship', `${ship.label} is selling ${p.units} of ${p.symbol} at ${p.bestMarket!.label}`)
           const {
             data: {
               data: { cargo, transaction, agent },
@@ -305,7 +338,7 @@ export const getActor = async (
       )
     } else {
       const closest = getClosest(
-        locations.filter((p) => p.closestMarket).map((p) => p.closestMarket!),
+        locations.filter((p) => p.bestMarket).map((p) => p.bestMarket!),
         ship.nav.route.destination,
       )
       await navigateShip(ship, closest!)
@@ -320,20 +353,17 @@ export const getActor = async (
     const shipyards = waypoints.filter((x) => x.shipyard)
     const unvisitedShipyards = shipyards.filter((x) => !x.ships?.length)
     const unvisited = [...unvisitedMarkets, ...unvisitedShipyards]
-    log.info('ship', `There are ${unvisited.length} unvisited markets or shipyards`)
+    if (!unvisited.length) return
+    log.info('ship', `${ship.label} There are ${unvisited.length} unvisited markets or shipyards`)
     return getClosest(unvisited, ship.nav.route.destination)
   }
 
-  const findTradeSymbol = async (ship: ShipEntity, tradeSymbol: TradeSymbol) => {
+  const findTradeSymbol = async (tradeSymbol: TradeSymbol) => {
     const exports = waypoints.filter((p) => p.exports.includes(tradeSymbol))
     const exchanges = waypoints.filter((p) => p.exchange.includes(tradeSymbol))
     invariant(exports.length + exchanges.length > 0, `Expected to a waypoint that exports or exchanges ${tradeSymbol}`)
-    invariant(
-      exports.length + exchanges.length === 1,
-      `Expected exactly one waypoint that exports or exchanges ${tradeSymbol}, do not know how to choose`,
-    )
 
-    return [...exports, ...exchanges][0]
+    return lodash.orderBy([...exports, ...exchanges], (x) => x.tradeGoods?.find((g) => g.symbol === tradeSymbol)!.purchasePrice, 'asc')[0]
   }
 
   const scanMarketIfNeccessary = async (ship: ShipEntity) => {
@@ -341,7 +371,7 @@ export const getActor = async (
       (x) => x.registration.role === 'SATELLITE' && x.nav.waypointSymbol === ship.nav.waypointSymbol && x.nav.status !== 'IN_TRANSIT',
     )
     if (hasSatelite) return
-    await updateCurrentWaypoint(ship)
+    await scanWaypoint(resetDate, ship.nav.waypointSymbol)
   }
 
   const fulfillContract = async () => {
@@ -362,7 +392,7 @@ export const getActor = async (
     await orbitShip(ship)
     const { seconds, distance } = shipCooldownRemaining(ship)
     if (seconds > 0) {
-      log.info('ship', `${ship.symbol} is on cooldown and will begin mining ${distance}`)
+      log.info('ship', `${ship.label} is on cooldown and will begin mining ${distance}`)
       await wait(seconds * 1000)
     }
 
@@ -421,7 +451,7 @@ export const getActor = async (
     updateShipAction,
     transferGoods,
     jettisonUnwanted,
-    updateCurrentWaypoint,
+    scanWaypoint,
     findTradeSymbol,
     purchaseGoods,
     scanMarketIfNeccessary,
