@@ -29,5 +29,5 @@ export async function updateShips(resetDate: string, agent: AgentEntity, ships: 
       )
     }),
   )
-  return em.findAll(ShipEntity, { where: { resetDate, symbol: { $ilike: `${agent.data!.symbol}%` } } })
+  return em.findAll(ShipEntity, { where: { resetDate, symbol: { $like: `${agent.data!.symbol}%` } } })
 }

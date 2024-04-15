@@ -84,17 +84,14 @@ services:
     ports:
       - 5341:80
     image: datalust/seq
-  postgres:
-    image: postgres:15
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-preview-ubuntu-22.04
     ports:
-      - '${POSTGRES_PORT}:5432'
+      - '1433:1433'
     restart: unless-stopped
-    volumes:
-      - $PWD/data/postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: '${POSTGRES_USER}'
-      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
-      POSTGRES_DB: '${POSTGRES_DB}'
+      ACCEPT_EULA: 'Y'
+      MSSQL_SA_PASSWORD: 'yourStrong(!)Password'
 
   adminer:
     build:
