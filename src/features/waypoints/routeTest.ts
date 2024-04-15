@@ -11,7 +11,7 @@ export async function routeTest() {
     data: { resetDate },
   } = await DefaultApiFactory().getStatus()
   const { agent } = await getAgent(resetDate)
-  const ships = await em.findAll(ShipEntity, { where: { resetDate, symbol: { $ilike: `${agent.data!.symbol}%` } } })
+  const ships = await em.findAll(ShipEntity, { where: { resetDate, symbol: { $like: `${agent.data!.symbol}%` } } })
   const commandShip = ships.find((s) => s.registration.role === 'COMMAND')!
   const waypoints = await em.findAll(WaypointEntity, { where: { systemSymbol: commandShip.nav.systemSymbol } })
   const route = await getBestTradeRoute(commandShip, waypoints, false)

@@ -84,17 +84,16 @@ services:
     ports:
       - 5341:80
     image: datalust/seq
-  postgres:
-    image: postgres:15
+  mysql:
+    image: mysql
     ports:
-      - '${POSTGRES_PORT}:5432'
+      - '3306:3306'
     restart: unless-stopped
-    volumes:
-      - $PWD/data/postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: '${POSTGRES_USER}'
-      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
-      POSTGRES_DB: '${POSTGRES_DB}'
+      MYSQL_ROOT_PASSWORD: veryt0psecret
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+      MYSQL_DATABASE: spacetraders
 
   adminer:
     build:

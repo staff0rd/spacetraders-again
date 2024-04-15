@@ -1,14 +1,11 @@
 {
-  "namespaces": [
-    "public"
-  ],
-  "name": "public",
+  "namespaces": [],
   "tables": [
     {
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "int",
           "unsigned": true,
           "autoincrement": true,
           "primary": true,
@@ -48,15 +45,14 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "mappedType": "json"
         }
       },
       "name": "agent",
-      "schema": "public",
       "indexes": [
         {
-          "keyName": "agent_pkey",
+          "keyName": "PRIMARY",
           "columnNames": [
             "id"
           ],
@@ -74,12 +70,13 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "varchar(36)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "uuid"
+          "length": 36,
+          "mappedType": "string"
         },
         "reset_date": {
           "name": "reset_date",
@@ -92,22 +89,22 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamptz",
+          "type": "datetime",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamptz",
+          "type": "datetime",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "mappedType": "datetime"
         },
         "symbol": {
@@ -121,7 +118,7 @@
         },
         "registration": {
           "name": "registration",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -130,7 +127,7 @@
         },
         "nav": {
           "name": "nav",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -139,7 +136,7 @@
         },
         "crew": {
           "name": "crew",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -148,7 +145,7 @@
         },
         "frame": {
           "name": "frame",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -157,7 +154,7 @@
         },
         "reactor": {
           "name": "reactor",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -166,7 +163,7 @@
         },
         "engine": {
           "name": "engine",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -175,7 +172,7 @@
         },
         "cooldown": {
           "name": "cooldown",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -184,7 +181,7 @@
         },
         "modules": {
           "name": "modules",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -193,7 +190,7 @@
         },
         "mounts": {
           "name": "mounts",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -202,7 +199,7 @@
         },
         "cargo": {
           "name": "cargo",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -211,7 +208,7 @@
         },
         "fuel": {
           "name": "fuel",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -220,7 +217,7 @@
         },
         "action": {
           "name": "action",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -229,10 +226,9 @@
         }
       },
       "name": "ship",
-      "schema": "public",
       "indexes": [
         {
-          "keyName": "ship_pkey",
+          "keyName": "PRIMARY",
           "columnNames": [
             "id"
           ],
@@ -295,34 +291,34 @@
         },
         "imports": {
           "name": "imports",
-          "type": "text[]",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "array"
+          "mappedType": "text"
         },
         "exports": {
           "name": "exports",
-          "type": "text[]",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "array"
+          "mappedType": "text"
         },
         "exchange": {
           "name": "exchange",
-          "type": "text[]",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "array"
+          "mappedType": "text"
         },
         "trade_goods": {
           "name": "trade_goods",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -331,7 +327,7 @@
         },
         "shipyard": {
           "name": "shipyard",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -340,7 +336,7 @@
         },
         "ships": {
           "name": "ships",
-          "type": "jsonb",
+          "type": "json",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -349,7 +345,7 @@
         },
         "is_under_construction": {
           "name": "is_under_construction",
-          "type": "boolean",
+          "type": "tinyint(1)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -358,12 +354,12 @@
         },
         "traits": {
           "name": "traits",
-          "type": "text[]",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "array"
+          "mappedType": "text"
         },
         "faction": {
           "name": "faction",
@@ -385,39 +381,38 @@
         },
         "modifiers": {
           "name": "modifiers",
-          "type": "text[]",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "array"
+          "mappedType": "text"
         },
         "last_shipyard_scan": {
           "name": "last_shipyard_scan",
-          "type": "timestamptz",
+          "type": "datetime",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "length": 6,
+          "length": 0,
           "mappedType": "datetime"
         },
         "last_marketplace_scan": {
           "name": "last_marketplace_scan",
-          "type": "timestamptz",
+          "type": "datetime",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "length": 6,
+          "length": 0,
           "mappedType": "datetime"
         }
       },
       "name": "waypoint",
-      "schema": "public",
       "indexes": [
         {
-          "keyName": "waypoint_pkey",
+          "keyName": "PRIMARY",
           "columnNames": [
             "reset_date",
             "symbol"
