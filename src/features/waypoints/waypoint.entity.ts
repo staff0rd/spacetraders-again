@@ -65,6 +65,10 @@ export class WaypointEntity {
     return `${this.type} (${this.symbol})`
   }
 
+  toString() {
+    return this.label
+  }
+
   constructor(values: {
     resetDate: string
     symbol: string

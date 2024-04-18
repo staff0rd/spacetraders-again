@@ -1,5 +1,4 @@
 import { TradeSymbol } from '../../../../api'
-import { log } from '../../../logging/configure-logging'
 import { ShipEntity } from '../../ship/ship.entity'
 import { getActor } from '../../status/actions/getActor'
 import { AgentEntity } from '../../status/agent.entity'
@@ -21,7 +20,6 @@ export const miningDroneActorFactory = (
     } else if (ship.cargo.units < ship.cargo.capacity) {
       await act.beginMining(ship, keep)
     } else {
-      log.info('ship', `${ship.label} will wait 1 minutes, cargo hold full`)
       await act.wait(1000 * 60)
     }
   })

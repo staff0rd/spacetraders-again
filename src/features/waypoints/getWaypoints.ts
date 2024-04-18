@@ -1,5 +1,4 @@
 import { WaypointTraitSymbol } from '../../../api'
-import { getConfig } from '../../config'
 import { invariant } from '../../invariant'
 import { getEntityManager } from '../../orm'
 import { getAgent } from '../status/actions/getAgent'
@@ -61,10 +60,8 @@ export async function getWaypoints(
   systemSymbol: string,
   agent: AgentEntity,
   api: Awaited<ReturnType<typeof getAgent>>['api'],
+  performScan: boolean,
 ): Promise<WaypointEntity[]> {
-  const {
-    strategy: { scanOnStartup },
-  } = getConfig()
   const waypoints = await getAllWaypoints(api, systemSymbol)
   invariant(waypoints?.length, 'Expected to find waypoints')
   const em = getEntityManager()
@@ -94,7 +91,7 @@ export async function getWaypoints(
     w.distanceFromEngineeredAsteroid = Math.sqrt((w.x - engineeredAsteroid.x) ** 2 + (w.y - engineeredAsteroid.y) ** 2)
   })
 
-  if (!scanOnStartup) return entities
+  if (!performScan) return entities
 
   await Promise.all(
     entities.map(async (waypoint) => {

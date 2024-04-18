@@ -1,5 +1,4 @@
 import { EntityData } from '@mikro-orm/core'
-import { lineLength } from 'geometric'
 import lodash from 'lodash'
 import { Ship, ShipNavFlightMode, ShipType, TradeSymbol } from '../../../../api'
 import { findOrCreateShip } from '../../../db/findOrCreateShip'
@@ -8,7 +7,7 @@ import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
 import { ShipActionType, ShipEntity } from '../../ship/ship.entity'
 import { updateWaypoint } from '../../waypoints/getWaypoints'
-import { getFuelNeeded } from '../../waypoints/pathfinding'
+import { getGraph, getShortestPath } from '../../waypoints/pathfinding'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
@@ -129,7 +128,7 @@ export const getActor = async (
     await updateShip(ship, { nav })
   }
 
-  const navigate = async (ship: ShipEntity, target: WaypointEntity, flightMode: ShipNavFlightMode) => {
+  const navigate = async (ship: ShipEntity, target: WaypointEntity) => {
     if (ship.nav.status === 'DOCKED') {
       await orbitShip(ship)
     }
@@ -143,57 +142,41 @@ export const getActor = async (
     log.info('ship', `${ship.label} will arrive at ${target.label} ${distance}`)
   }
 
-  const navigateShip = async (ship: ShipEntity, target: WaypointEntity, flightMode: ShipNavFlightMode = 'CRUISE') => {
+  const navigateShip = async (ship: ShipEntity, target: WaypointEntity) => {
     if (ship.nav.waypointSymbol !== target.symbol) {
-      setFlightMode(ship, flightMode)
+      await setFlightMode(ship, 'CRUISE')
+      const { graph } = getGraph(waypoints)
+      const route = getShortestPath(graph, ship.nav.waypointSymbol, target.symbol, ship)
       const from = waypoints.find((w) => w.symbol === ship.nav.waypointSymbol)!
-      const fuelNeeded = getFuelNeeded(from, target, ship)
-      log.info('ship', `${ship.label} will navigate to ${target.label}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`)
+      invariant(route.length, `Expected to find a route from ${from.label} to ${target.label}`)
+      const fuelNeeded = route[0].fuelNeeded
+
+      if (route.length === 1) {
+        log.info('ship', `${ship.label} will navigate to ${target.label}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`)
+      } else {
+        log.info(
+          'ship',
+          `${ship.label} will navigate to ${target.label} via ${route.map((r) => r.to.label).join(' -> ')}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
+        )
+      }
       if (fuelNeeded > ship.fuel.current) {
-        const hasFuel = waypoints.find((x) => x.symbol === ship.nav.waypointSymbol)!.tradeGoods?.find((x) => x.symbol === 'FUEL')
-        if (!hasFuel) {
-          const closestFuelWaypoint = getClosest(
-            waypoints.filter((x) => x.exchange?.find((x) => x === 'FUEL')),
-            ship.nav.route.destination,
-          )!
-          const closestFuelWaypointFuelNeeded = getFuelNeeded(from, closestFuelWaypoint, ship)
-          log.info(
-            'ship',
-            `${ship.label} does not have enough fuel, will navigate to closest fuel location: ${target.label}, fuel requirement: ${closestFuelWaypointFuelNeeded}, fuel: ${ship.fuel.current}`,
-          )
-          if (closestFuelWaypointFuelNeeded <= ship.fuel.current) {
-            await navigateShip(ship, closestFuelWaypoint)
-            return
-          } else {
-            log.warn('ship', `${ship.label} nas no fuel, will drift to ${closestFuelWaypoint.label}`)
-            await setFlightMode(ship, 'DRIFT')
-            await navigate(ship, closestFuelWaypoint, 'DRIFT')
-            return
-          }
+        const currentWaypointHasFuel = waypoints
+          .find((x) => x.symbol === ship.nav.waypointSymbol)!
+          .tradeGoods?.find((x) => x.symbol === 'FUEL')
+        if (!currentWaypointHasFuel) {
+          log.warn('ship', `${ship.label} nas no fuel, will drift to ${route[0].to.label}`)
+          await setFlightMode(ship, 'DRIFT')
+          await navigate(ship, route[0].to)
+          return
         }
         await refuelShip(ship)
       }
       if (ship.fuel.capacity < fuelNeeded) {
-        const reachableWaypoints = waypoints.filter((w) => {
-          const distance = lineLength([
-            [ship.nav.route.destination.x, ship.nav.route.destination.y],
-            [w.x, w.y],
-          ])
-          return ship.fuel.capacity >= distance
-        })
-        const byDistanceToTarget = reachableWaypoints
-          .map((w) => ({
-            w,
-            distance: lineLength([
-              [w.x, w.y],
-              [target.x, target.y],
-            ]),
-          }))
-          .sort((a, b) => a.distance - b.distance)
-        log.warn('ship', `${ship.label} cannot reach ${target.label}, will navigate to ${byDistanceToTarget[0].w.label}`)
-        await navigateShip(ship, byDistanceToTarget[0].w)
+        log.warn('ship', `${ship.label} cannot reach ${route[0].to.label}, will drift`)
+        await setFlightMode(ship, 'DRIFT')
+        await navigateShip(ship, route[0].to)
       } else {
-        await navigate(ship, target, 'CRUISE')
+        await navigate(ship, route[0].to)
       }
     }
   }
@@ -270,7 +253,6 @@ export const getActor = async (
     invariant(agent.contract.terms.deliver, 'Expected contract to have deliver terms')
     invariant(agent.contract.terms.deliver.length === 1, 'Expected contract to have exactly one deliver term')
     const deliver = agent.contract.terms.deliver[0]
-    const waypoints = await getEntityManager().findAll(WaypointEntity, { where: { resetDate } })
     const destination = waypoints.find((w) => w.symbol === deliver.destinationSymbol)
     invariant(destination, `Expected waypoint ${deliver.destinationSymbol} to exist`)
     const contractUnitBalance = deliver.unitsRequired - deliver.unitsFulfilled

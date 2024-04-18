@@ -1,47 +1,27 @@
 import lodash from 'lodash'
-import { DefaultApiFactory, TradeSymbol, WaypointTraitSymbol } from '../../../api'
+import { TradeSymbol, WaypointTraitSymbol } from '../../../api'
 import { getConfig } from '../../config'
-import { updateShips } from '../../db/updateShips'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'
+import { init } from '../init'
 import { contractTraderLogicFactory } from '../ship/actors/contract-trading'
 import { miningDroneActorFactory } from '../ship/actors/mining-drone'
 import { probeActorFactory } from '../ship/actors/probe'
 import { shuttleActorFactory, shuttleLogicFactory } from '../ship/actors/shuttle'
 import { systemReconLogicFactory } from '../ship/actors/system-recon'
 import { ShipEntity } from '../ship/ship.entity'
-import { getWaypoints } from '../waypoints/getWaypoints'
-import { getActor } from './actions/getActor'
-import { getAgent } from './actions/getAgent'
 import { decisionMaker } from './decisionMaker'
 
 export type Position = { x: number; y: number }
 
 export async function startup() {
   const config = getConfig()
-  const {
-    data: { resetDate },
-  } = await DefaultApiFactory().getStatus()
-  const { agent, api } = await getAgent(resetDate)
 
-  const {
-    data: { data: shipsFromApi },
-  } = await api.fleet.getMyShips()
-  const ships = await updateShips(resetDate, agent, shipsFromApi)
-
-  const commandShip = ships.find((s) => s.registration.role === 'COMMAND')
-  invariant(commandShip, 'Expected to find a command ship')
-
-  const systemSymbol = commandShip.nav.systemSymbol
-
-  const waypoints = await getWaypoints(systemSymbol, agent, api)
+  const { act, waypoints, ships, commandShip, agent } = await init(config.strategy.scanOnStartup)
 
   const engineeredAsteroid = waypoints.find((x) => x.type === 'ENGINEERED_ASTEROID')
   invariant(engineeredAsteroid, 'Expected to find an engineered asteroid')
-
   const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE', 'SILICON_CRYSTALS']
-
-  const act = await getActor(agent, api, waypoints, ships)
 
   const shuttleLogic = shuttleLogicFactory(act, engineeredAsteroid, ships, keep)
   const contractTraderLogic = contractTraderLogicFactory(act)
