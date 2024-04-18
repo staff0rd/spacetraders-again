@@ -287,7 +287,7 @@ export const getActor = async (
     writeMyMarketTransaction(resetDate, transaction, agent)
     log.info(
       'ship',
-      `${ship.label} purchased ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
+      `${ship.label} purchased ${transaction.units} x ${transaction.tradeSymbol} @ $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
     )
     await updateShip(ship, { cargo })
   }
@@ -407,7 +407,7 @@ export const getActor = async (
       },
     } = await api.fleet.purchaseShip({ shipType, waypointSymbol: shipyard.symbol })
     updateAgent(agent, { data })
-    log.info('agent', `Purchased ${transaction.shipType} for $${transaction.price.toLocaleString()}`)
+    log.info('agent', `Purchased 1 x ${transaction.shipType} @ $${transaction.price.toLocaleString()}`)
     writeShipyardTransaction(resetDate, transaction, data)
     const entity = await findOrCreateShip(resetDate, ship)
     ships.push(entity)

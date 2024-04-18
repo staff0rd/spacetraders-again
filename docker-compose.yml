@@ -26,6 +26,7 @@ services:
       PURCHASE_SHUTTLES: 0
       PURCHASE_SATELITES: 0
       SHOULD_MINE: true
+      TZ: 'Australia/Sydney'
     ports:
       - 3000:3000
     command: npm start -- start
