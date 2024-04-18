@@ -281,14 +281,15 @@ export const getActor = async (
     await dockShip(ship)
     const {
       data: {
-        data: { cargo, transaction, agent },
+        data: { cargo, transaction, agent: data },
       },
     } = await api.fleet.purchaseCargo(ship.symbol, { symbol: tradeSymbol, units })
-    writeMyMarketTransaction(resetDate, transaction, agent)
+    writeMyMarketTransaction(resetDate, transaction, data)
     log.info(
       'ship',
-      `${ship.label} purchased ${transaction.units} x ${transaction.tradeSymbol} @ $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
+      `${ship.label} purchased ${transaction.units} x ${transaction.tradeSymbol} @ $${transaction.totalPrice.toLocaleString()}, now have $${data.credits.toLocaleString()}`,
     )
+    await updateAgent(agent, { data })
     await updateShip(ship, { cargo })
   }
 
@@ -305,17 +306,18 @@ export const getActor = async (
           log.info('ship', `${ship.label} is selling ${p.units} of ${p.symbol} at ${p.bestMarket!.label}`)
           const {
             data: {
-              data: { cargo, transaction, agent },
+              data: { cargo, transaction, agent: data },
             },
           } = await api.fleet.sellCargo(ship.symbol, {
             symbol: p.symbol,
             units: p.units,
           })
-          writeMyMarketTransaction(resetDate, transaction, agent)
+          writeMyMarketTransaction(resetDate, transaction, data)
           log.info(
             'ship',
-            `${ship.label} sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${agent.credits.toLocaleString()}`,
+            `${ship.label} sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${data.credits.toLocaleString()}`,
           )
+          await updateAgent(agent, { data })
           await updateShip(ship, { cargo })
         }),
       )

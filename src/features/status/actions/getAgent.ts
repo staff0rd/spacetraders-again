@@ -45,7 +45,14 @@ export const getAgent = async (resetDate: string) => {
     const {
       data: { data: agent },
     } = await api.agents.getMyAgent()
+
     await updateAgent(existing, { data: agent })
+    if (existing.contract) {
+      const {
+        data: { data: contract },
+      } = await api.contracts.getContract(existing.contract.id)
+      await updateAgent(existing, { contract })
+    }
     return { agent: existing, api }
   }
 }
