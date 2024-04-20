@@ -1,4 +1,4 @@
-import { WaypointTraitSymbol } from '../../../api'
+import { Meta, WaypointTraitSymbol } from '../../../api'
 import { invariant } from '../../invariant'
 import { getEntityManager } from '../../orm'
 import { getAgent } from '../status/actions/getAgent'
@@ -6,16 +6,16 @@ import { AgentEntity } from '../status/agent.entity'
 import { writeMarketTradeGood, writeMarketTransaction } from '../status/influxWrite'
 import { WaypointEntity } from './waypoint.entity'
 
-async function getAllWaypoints(api: Awaited<ReturnType<typeof getAgent>>['api'], systemSymbol: string) {
+export const getPages = async <T>(endpoint: (page: number, count: number) => Promise<{ data: { data: T[]; meta: Meta } }>) => {
+  const pageSize = 20
   const {
-    data: { data: waypoints, meta },
-  } = await api.systems.getSystemWaypoints(systemSymbol, 1, 20)
+    data: { data, meta },
+  } = await endpoint(1, pageSize)
   if (meta.total > meta.page * meta.limit) {
-    const allWaypoints = await Promise.all(
-      Array.from({ length: Math.ceil(meta.total / meta.limit) - 1 }, (_, i) => api.systems.getSystemWaypoints(systemSymbol, i + 2, 20)),
-    )
-    return waypoints.concat(allWaypoints.flatMap((r) => r.data.data))
+    const all = await Promise.all(Array.from({ length: Math.ceil(meta.total / meta.limit) - 1 }, (_, i) => endpoint(i + 2, pageSize)))
+    return data.concat(all.flatMap((r) => r.data.data))
   }
+  return data
 }
 
 export async function updateWaypoint(waypoint: WaypointEntity, agent: AgentEntity, api: Awaited<ReturnType<typeof getAgent>>['api']) {
@@ -62,7 +62,7 @@ export async function getWaypoints(
   api: Awaited<ReturnType<typeof getAgent>>['api'],
   performScan: boolean,
 ): Promise<WaypointEntity[]> {
-  const waypoints = await getAllWaypoints(api, systemSymbol)
+  const waypoints = await getPages((page, count) => api.systems.getSystemWaypoints(systemSymbol, page, count))
   invariant(waypoints?.length, 'Expected to find waypoints')
   const em = getEntityManager()
   await em.upsertMany(

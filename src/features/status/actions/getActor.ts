@@ -6,7 +6,7 @@ import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
 import { ShipActionType, ShipEntity } from '../../ship/ship.entity'
-import { updateWaypoint } from '../../waypoints/getWaypoints'
+import { getPages, updateWaypoint } from '../../waypoints/getWaypoints'
 import { getGraph, getShortestPath } from '../../waypoints/pathfinding'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { AgentEntity } from '../agent.entity'
@@ -36,10 +36,7 @@ export const getActor = async (
   const getOrAcceptContract = async (commandShip: ShipEntity) => {
     await dockShip(commandShip)
 
-    const {
-      data: { data: contracts },
-      // TODO: get all contracts instead of just first page
-    } = await api.contracts.getContracts(1, 20)
+    const contracts = await getPages((page, count) => api.contracts.getContracts(page, count))
 
     const unfulfilled = contracts.filter((c) => !c.fulfilled)
 
