@@ -148,20 +148,17 @@ export const getActor = async (
       invariant(route.length, `Expected to find a route from ${from.label} to ${target.label}`)
       const fuelNeeded = route[0].fuelNeeded
 
-      if (route.length === 1) {
-        log.info('ship', `${ship.label} will navigate to ${target.label}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`)
-      } else {
-        log.info(
-          'ship',
-          `${ship.label} will navigate to ${target.label} via ${route.map((r) => r.to.label).join(' -> ')}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
-        )
-      }
+      log.info(
+        'ship',
+        `${ship.label} will navigate ${from.label} -> ${route.map((r) => r.to.label).join(' -> ')}, fuel requirement: ${fuelNeeded}, fuel: ${ship.fuel.current}`,
+      )
+
       if (fuelNeeded > ship.fuel.current) {
         const currentWaypointHasFuel = waypoints
           .find((x) => x.symbol === ship.nav.waypointSymbol)!
           .tradeGoods?.find((x) => x.symbol === 'FUEL')
         if (!currentWaypointHasFuel) {
-          log.warn('ship', `${ship.label} nas no fuel, will drift to ${route[0].to.label}`)
+          log.warn('ship', `${ship.label} has no fuel, will drift to ${route[0].to.label}`)
           await setFlightMode(ship, 'DRIFT')
           await navigate(ship, route[0].to)
           return

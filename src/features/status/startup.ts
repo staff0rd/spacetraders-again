@@ -28,8 +28,8 @@ export async function startup() {
   const systemReconLogic = systemReconLogicFactory(act)
 
   await decisionMaker(commandShip, true, agent, act, async (ship: ShipEntity) => {
-    const probes = ships.filter((s) => s.frame.symbol === 'FRAME_PROBE').toSorted((a, b) => a.label.localeCompare(b.label))
-    if (probes.length < config.purchases.satelites) {
+    const probes = ships.filter((s) => s.registration.role === 'SATELLITE').toSorted((a, b) => a.label.localeCompare(b.label))
+    if (probes.length < config.purchases.satelites && (agent.data?.credits ?? 0) > 250_000) {
       await act.purchaseShip(commandShip, 'SHIP_PROBE', ships)
       return
     } else {
@@ -66,7 +66,6 @@ export async function startup() {
     }
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
-    // TODO: price check
     if (shuttles.length < config.purchases.shuttles) {
       await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', ships)
       return
