@@ -42,7 +42,10 @@ export const traderLogicFactory =
     }
 
     const { from, to, tradeSymbol } = current
-    const purchaseLocation = waypoints.find((x) => x.symbol === from)!
+    const purchaseLocation = waypoints.find((x) => x.symbol === from)
+    const sellLocation = waypoints.find((x) => x.symbol === to)
+    invariant(purchaseLocation, `Expected to find a waypoint for ${from}`)
+    invariant(sellLocation, `Expected to find a waypoint for ${to}`)
 
     if (ship.nav.route.destination.symbol === to) {
       if (ship.cargo.inventory.filter((x) => x.symbol === tradeSymbol).length) {
@@ -68,14 +71,19 @@ export const traderLogicFactory =
         await act.navigateShip(ship, purchaseLocation)
         return true
       } else {
-        const tradeVolume = purchaseLocation.tradeGoods?.find((x) => x.symbol === tradeSymbol)?.tradeVolume
-        invariant(tradeVolume, `Expected to find trade volume for ${tradeSymbol}`)
-        await act.purchaseGoods(ship, tradeSymbol, Math.min(ship.cargo.capacity - ship.cargo.units, tradeVolume))
+        const purchaseTradeGood = purchaseLocation.tradeGoods?.find((x) => x.symbol === tradeSymbol)
+        const sellTradeGood = sellLocation.tradeGoods?.find((x) => x.symbol === tradeSymbol)
+        invariant(purchaseTradeGood, `Expected to find a tradeGood for purchase: ${tradeSymbol}`)
+        invariant(sellTradeGood, `Expected to find a tradeGood for sale: ${tradeSymbol}`)
+        if (purchaseTradeGood.purchasePrice < sellTradeGood.sellPrice) {
+          await act.purchaseGoods(ship, tradeSymbol, Math.min(ship.cargo.capacity - ship.cargo.units, purchaseTradeGood.tradeVolume))
+          await act.scanWaypoint(ship.nav.waypointSymbol)
+        } else {
+          await act.navigateShip(ship, waypoints.find((x) => x.symbol === to)!)
+        }
         return true
       }
     } else {
-      // scan before leaving
-      await act.scanWaypoint(ship.nav.waypointSymbol)
       await act.navigateShip(ship, waypoints.find((x) => x.symbol === to)!)
       return true
     }
