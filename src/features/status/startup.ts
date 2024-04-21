@@ -29,16 +29,15 @@ export async function startup() {
 
   await decisionMaker(commandShip, true, agent, act, async (ship: ShipEntity) => {
     const probes = ships.filter((s) => s.registration.role === 'SATELLITE').toSorted((a, b) => a.label.localeCompare(b.label))
-    if (probes.length < config.purchases.satelites && (agent.data?.credits ?? 0) > 250_000) {
+    const locationsToProbe = waypoints
+      .filter((x) => x.type !== 'ENGINEERED_ASTEROID')
+      .filter((x) => x.traits.includes(WaypointTraitSymbol.Marketplace) || x.traits.includes(WaypointTraitSymbol.Shipyard))
+    if (probes.length < locationsToProbe.length && (agent.data?.credits ?? 0) > 250_000) {
       await act.purchaseShip(commandShip, 'SHIP_PROBE', ships)
       return
     } else {
-      const probedLocations = waypoints
-        .filter((x) => x.type !== 'ENGINEERED_ASTEROID')
-        .filter((x) => x.traits.includes(WaypointTraitSymbol.Marketplace) || x.traits.includes(WaypointTraitSymbol.Shipyard))
-
       const sortedProbeLocations = lodash.orderBy(
-        probedLocations,
+        locationsToProbe,
         [(w) => w.imports.length, (w) => w.exports.length, (w) => w.distanceFromEngineeredAsteroid, (w) => w.symbol],
         ['desc', 'desc', 'asc', 'asc'],
       )

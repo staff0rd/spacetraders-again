@@ -24,7 +24,6 @@ services:
       POSTGRES_HOST: postgres
       PURCHASE_MINING_SHIPS: 5
       PURCHASE_SHUTTLES: 0
-      PURCHASE_SATELITES: 20
       SHOULD_MINE: true
       TZ: 'Australia/Sydney'
     ports:

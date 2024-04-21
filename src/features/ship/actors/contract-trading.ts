@@ -1,5 +1,6 @@
 import { TradeSymbol } from '../../../../api'
 import { invariant } from '../../../invariant'
+import { log } from '../../../logging/configure-logging'
 import { getActor } from '../../status/actions/getActor'
 import { AgentEntity } from '../../status/agent.entity'
 import { decisionMaker } from '../../status/decisionMaker'
@@ -42,7 +43,11 @@ export const contractTraderLogicFactory =
     }
 
     const waypoint = await act.findTradeSymbol(tradeSymbol as TradeSymbol)
-    invariant(waypoint, `Expected to find a waypoint for ${tradeSymbol}`)
+
+    if (!waypoint) {
+      log.warn('ship', `${ship.label} could not find a waypoint for ${tradeSymbol}`)
+      return false
+    }
 
     if (ship.nav.waypointSymbol !== waypoint.symbol) {
       await act.navigateShip(ship, waypoint)

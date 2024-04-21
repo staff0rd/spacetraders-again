@@ -3,7 +3,7 @@ import { updateShips } from '../db/updateShips'
 import { invariant } from '../invariant'
 import { getActor } from './status/actions/getActor'
 import { getAgent } from './status/actions/getAgent'
-import { getWaypoints } from './waypoints/getWaypoints'
+import { getPages, getWaypoints } from './waypoints/getWaypoints'
 
 export async function init(performWaypointScan: boolean) {
   const {
@@ -11,9 +11,7 @@ export async function init(performWaypointScan: boolean) {
   } = await DefaultApiFactory().getStatus()
   const { agent, api } = await getAgent(resetDate)
 
-  const {
-    data: { data: shipsFromApi },
-  } = await api.fleet.getMyShips()
+  const shipsFromApi = await getPages((page, count) => api.fleet.getMyShips(page, count))
   const ships = await updateShips(resetDate, agent, shipsFromApi)
 
   const commandShip = ships.find((s) => s.registration.role === 'COMMAND')

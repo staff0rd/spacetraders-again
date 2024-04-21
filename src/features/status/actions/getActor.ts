@@ -297,14 +297,16 @@ export const getActor = async (
       await dockShip(ship)
       await Promise.all(
         sellableHere.map(async (p) => {
-          log.info('ship', `${ship.label} is selling ${p.units} of ${p.symbol} at ${p.bestMarket!.label}`)
+          const market = p.bestMarket.tradeGoods?.find((x) => x.symbol === p.symbol)!
+          const units = Math.min(market.tradeVolume, p.units)
+          log.info('ship', `${ship.label} is selling ${units} of ${p.symbol} at ${p.bestMarket!.label}`)
           const {
             data: {
               data: { cargo, transaction, agent: data },
             },
           } = await api.fleet.sellCargo(ship.symbol, {
             symbol: p.symbol,
-            units: p.units,
+            units: units,
           })
           writeMyMarketTransaction(resetDate, transaction, data)
           log.info(
@@ -340,9 +342,7 @@ export const getActor = async (
   const findTradeSymbol = async (tradeSymbol: TradeSymbol) => {
     const exports = waypoints.filter((p) => p.exports.includes(tradeSymbol))
     const exchanges = waypoints.filter((p) => p.exchange.includes(tradeSymbol))
-    invariant(exports.length + exchanges.length > 0, `Expected to a waypoint that exports or exchanges ${tradeSymbol}`)
-
-    return lodash.orderBy([...exports, ...exchanges], (x) => x.tradeGoods?.find((g) => g.symbol === tradeSymbol)!.purchasePrice, 'asc')[0]
+    return lodash.orderBy([...exports, ...exchanges], (x) => x.tradeGoods?.find((g) => g.symbol === tradeSymbol)?.purchasePrice, 'asc')[0]
   }
 
   const scanMarketIfNeccessary = async (ship: ShipEntity) => {
