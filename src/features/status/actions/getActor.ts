@@ -5,7 +5,8 @@ import { findOrCreateShip } from '../../../db/findOrCreateShip'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
-import { ShipAction, ShipEntity } from '../../ship/ship.entity'
+import { ShipAction, ShipActionType, ShipEntity } from '../../ship/ship.entity'
+import { getBestTradeRoutes } from '../../trade/getBestTradeRoute'
 import { getPages, updateWaypoint } from '../../waypoints/getWaypoints'
 import { getGraph, getShortestPath } from '../../waypoints/pathfinding'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
@@ -99,7 +100,7 @@ export const getActor = async (
     }
   }
 
-  const scanWaypoint = async (resetDate: string, symbol: string) => {
+  const scanWaypoint = async (symbol: string) => {
     const em = getEntityManager()
     const waypoint = await em.getRepository(WaypointEntity).findOneOrFail({ resetDate, symbol })
     await updateWaypoint(waypoint, agent, api)
@@ -279,6 +280,9 @@ export const getActor = async (
       },
     } = await api.fleet.purchaseCargo(ship.symbol, { symbol: tradeSymbol, units })
     writeMyMarketTransaction(resetDate, transaction, data)
+    if (ship.action?.type === ShipActionType.TRADE) {
+      ship.action.totalPurchaseCost += transaction.totalPrice
+    }
     log.info(
       'ship',
       `${ship.label} purchased ${transaction.units} x ${transaction.tradeSymbol} @ $${transaction.totalPrice.toLocaleString()}, now have $${data.credits.toLocaleString()}`,
@@ -287,7 +291,35 @@ export const getActor = async (
     await updateShip(ship, { cargo })
   }
 
-  const sellGoods = async (ship: ShipEntity, keep: TradeSymbol[]) => {
+  const sellGood = async (ship: ShipEntity, tradeSymbol: TradeSymbol, quantity: number) => {
+    if (ship.nav.status !== 'DOCKED') await dockShip(ship)
+    const market = waypoints.find((x) => x.symbol === ship.nav.waypointSymbol)
+    invariant(market, `Expected to find market for ${ship.nav.waypointSymbol}`)
+    const tradeGood = market.tradeGoods?.find((x) => x.symbol === tradeSymbol)
+    invariant(tradeGood, `Expected to find trade good for ${tradeSymbol}`)
+    const units = Math.min(tradeGood.tradeVolume, quantity)
+    log.info('ship', `${ship.label} is selling ${units} of ${tradeGood.symbol} at ${market.label}`)
+    const {
+      data: {
+        data: { cargo, transaction, agent: data },
+      },
+    } = await api.fleet.sellCargo(ship.symbol, {
+      symbol: tradeGood.symbol,
+      units,
+    })
+    writeMyMarketTransaction(resetDate, transaction, data)
+    if (ship.action?.type === ShipActionType.TRADE) {
+      ship.action.totalSellPrice += transaction.totalPrice
+    }
+    log.info(
+      'ship',
+      `${ship.label} sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${data.credits.toLocaleString()}`,
+    )
+    await updateAgent(agent, { data })
+    await updateShip(ship, { cargo })
+  }
+
+  const sellUnwantedGoods = async (ship: ShipEntity, keep: TradeSymbol[]) => {
     log.info('ship', `${ship.label} will sell goods`)
     const locations = await getSellLocations(waypoints, ship, keep)
 
@@ -295,28 +327,7 @@ export const getActor = async (
 
     if (sellableHere.length) {
       await dockShip(ship)
-      await Promise.all(
-        sellableHere.map(async (p) => {
-          const market = p.bestMarket.tradeGoods?.find((x) => x.symbol === p.symbol)!
-          const units = Math.min(market.tradeVolume, p.units)
-          log.info('ship', `${ship.label} is selling ${units} of ${p.symbol} at ${p.bestMarket!.label}`)
-          const {
-            data: {
-              data: { cargo, transaction, agent: data },
-            },
-          } = await api.fleet.sellCargo(ship.symbol, {
-            symbol: p.symbol,
-            units: units,
-          })
-          writeMyMarketTransaction(resetDate, transaction, data)
-          log.info(
-            'ship',
-            `${ship.label} sold ${transaction.units} of ${transaction.tradeSymbol} for $${transaction.totalPrice.toLocaleString()}, now have $${data.credits.toLocaleString()}`,
-          )
-          await updateAgent(agent, { data })
-          await updateShip(ship, { cargo })
-        }),
-      )
+      await Promise.all(sellableHere.map(async (p) => sellGood(ship, p.symbol, p.units)))
     } else {
       const closest = getClosest(
         locations.filter((p) => p.bestMarket).map((p) => p.bestMarket!),
@@ -350,12 +361,28 @@ export const getActor = async (
     )[0]
   }
 
+  const getTradeRoute = async (ship: ShipEntity) => {
+    const bestRoutes = await getBestTradeRoutes(ship, waypoints, true)
+    for (const route of bestRoutes) {
+      const onRoute = ships.find(
+        (s) =>
+          s.action?.type === ShipActionType.TRADE &&
+          s.action.tradeSymbol === route.tradeSymbol &&
+          s.action.from === route.buyLocation.symbol &&
+          s.action.to === route.sellLocation.symbol,
+      )
+      if (!onRoute) {
+        return route
+      }
+    }
+  }
+
   const scanMarketIfNeccessary = async (ship: ShipEntity) => {
     const hasSatelite = ships.find(
       (x) => x.registration.role === 'SATELLITE' && x.nav.waypointSymbol === ship.nav.waypointSymbol && x.nav.status !== 'IN_TRANSIT',
     )
     if (hasSatelite) return
-    await scanWaypoint(resetDate, ship.nav.waypointSymbol)
+    await scanWaypoint(ship.nav.waypointSymbol)
   }
 
   const fulfillContract = async () => {
@@ -415,16 +442,16 @@ export const getActor = async (
   }
 
   const updateShipAction = async (ship: ShipEntity, action: ShipAction) => {
-    ship.action = action
-    log.info('ship', `${ship.label} will now ${ship.action.type}`)
-    await getEntityManager().fork().persistAndFlush(ship)
+    log.info('ship', `${ship.label} will now ${action.type}`)
+    await updateShip(ship, { action })
   }
 
   return {
     dockShip,
     refuelShip,
     navigateShip,
-    sellGoods,
+    sellUnwantedGoods,
+    sellGood,
     beginMining,
     jettisonUnsellable,
     wait,
@@ -440,5 +467,6 @@ export const getActor = async (
     purchaseGoods,
     scanMarketIfNeccessary,
     findClosestUnvisitedMarket,
+    getTradeRoute,
   }
 }

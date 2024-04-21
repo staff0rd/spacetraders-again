@@ -79,7 +79,7 @@ export async function startup() {
     }
 
     const haulers = ships.filter((s) => s.frame.symbol === 'FRAME_LIGHT_FREIGHTER')
-    if (haulers.length < config.purchases.haulers && (agent.data?.credits ?? 0) > 350_000) {
+    if (haulers.length < config.purchases.haulers && (agent.data?.credits ?? 0) > 1_000_000) {
       await act.purchaseShip(commandShip, 'SHIP_LIGHT_HAULER')
       return
     } else {

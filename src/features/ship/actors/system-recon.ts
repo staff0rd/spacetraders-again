@@ -12,7 +12,7 @@ export const systemReconLogicFactory =
     if (ship.nav.waypointSymbol !== waypoint.symbol) {
       await act.navigateShip(ship, waypoint)
     } else {
-      await act.scanWaypoint(agent.resetDate, waypoint.symbol)
+      await act.scanWaypoint(waypoint.symbol)
     }
     return true
   }

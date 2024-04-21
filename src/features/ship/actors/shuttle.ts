@@ -47,7 +47,7 @@ export const shuttleLogicFactory =
         await act.deliverContractGoods(ship)
         return
       } else {
-        await act.sellGoods(ship, [agent.contractGood.tradeSymbol as TradeSymbol])
+        await act.sellUnwantedGoods(ship, [agent.contractGood.tradeSymbol as TradeSymbol])
         return
       }
     } else throw new Error(`Unknown action: ${currentAction}`)

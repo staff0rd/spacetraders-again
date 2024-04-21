@@ -32,6 +32,9 @@ export type ShipAction =
       tradeSymbol: TradeSymbol
       from: string
       to: string
+      expectedProfit: number
+      totalPurchaseCost: number
+      totalSellPrice: number
     }
 
 @Entity({ tableName: 'ship' })

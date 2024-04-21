@@ -20,7 +20,7 @@ type TradeRoute = {
   rank?: number
 }
 
-export async function getBestTradeRoute(ship: ShipEntity, waypoints: WaypointEntity[], excludeLoss = true): Promise<TradeRoute[]> {
+export async function getBestTradeRoutes(ship: ShipEntity, waypoints: WaypointEntity[], excludeLoss = true): Promise<TradeRoute[]> {
   const goodLocation: TradeGoodWaypoint[] = waypoints
     .filter((x) => x.tradeGoods && x.tradeGoods.length)
     .map((x) => ({ waypoint: x, tradeGoods: x.tradeGoods! }))

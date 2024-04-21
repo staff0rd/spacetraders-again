@@ -3,7 +3,6 @@ import { log } from '../../../logging/configure-logging'
 import { getActor } from '../../status/actions/getActor'
 import { AgentEntity } from '../../status/agent.entity'
 import { decisionMaker } from '../../status/decisionMaker'
-import { getBestTradeRoute } from '../../trade/getBestTradeRoute'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { ShipActionType, ShipEntity } from '../ship.entity'
 
@@ -19,18 +18,26 @@ export const traderLogicFactory =
   async (ship: ShipEntity, agent: AgentEntity): Promise<boolean> => {
     const current = ship.action
     if (!current || current.type !== ShipActionType.TRADE) {
-      const bestRoute = await getBestTradeRoute(ship, waypoints, true)
-      if (!bestRoute.length) {
+      const route = await act.getTradeRoute(ship)
+      if (!route) {
         log.warn('ship', `${ship.label} could not find a trade route, will wait`)
         await act.wait(1000 * 60)
         return false
       }
       await act.updateShipAction(ship, {
         type: ShipActionType.TRADE,
-        from: bestRoute[0].buyLocation.symbol,
-        to: bestRoute[0].sellLocation.symbol,
-        tradeSymbol: bestRoute[0].tradeSymbol,
+        from: route.buyLocation.symbol,
+        to: route.sellLocation.symbol,
+        tradeSymbol: route.tradeSymbol,
+        expectedProfit: route.totalProfit,
+        totalPurchaseCost: 0,
+        totalSellPrice: 0,
       })
+      log.info(
+        'ship',
+        `${ship.label} will trade ${route.tradeSymbol} from ${route.buyLocation.symbol} to ${route.sellLocation.symbol} for ${route.totalProfit.toLocaleString()} credits`,
+      )
+      await act.navigateShip(ship, route.buyLocation)
       return true
     }
 
@@ -39,9 +46,20 @@ export const traderLogicFactory =
 
     if (ship.nav.route.destination.symbol === to) {
       if (ship.cargo.inventory.filter((x) => x.symbol === tradeSymbol).length) {
-        await act.sellGoods(ship, [tradeSymbol])
+        await act.sellGood(ship, tradeSymbol, ship.cargo.inventory.find((x) => x.symbol === tradeSymbol)!.units)
         return true
       } else {
+        if (ship.action?.type === ShipActionType.TRADE) {
+          const { expectedProfit, totalPurchaseCost, totalSellPrice, tradeSymbol } = ship.action
+          const actualProfit = totalSellPrice - totalPurchaseCost
+          log.info(
+            'ship',
+            `${ship.label} made ${actualProfit.toLocaleString()} credits trading ${tradeSymbol}, expected ${expectedProfit.toLocaleString()} credits, variance: ${(actualProfit - expectedProfit).toLocaleString()}`,
+          )
+        }
+        // scan before leaving
+        await act.scanWaypoint(ship.nav.waypointSymbol)
+
         await act.updateShipAction(ship, { type: ShipActionType.NONE })
         return true
       }
@@ -56,6 +74,8 @@ export const traderLogicFactory =
         return true
       }
     } else {
+      // scan before leaving
+      await act.scanWaypoint(ship.nav.waypointSymbol)
       await act.navigateShip(ship, waypoints.find((x) => x.symbol === to)!)
       return true
     }
