@@ -49,12 +49,20 @@ export const contractTraderLogicFactory =
       return false
     }
 
+    const tradeGood = waypoint.tradeGoods!.find((x) => x.symbol === tradeSymbol)
+    invariant(tradeGood, `Expected to find a tradeGood for ${tradeSymbol}`)
+    const cost = tradeGood.purchasePrice * unitsRequired
+    const reward = agent.contract.terms.payment.onAccepted + agent.contract.terms.payment.onFulfilled
+    if (cost > reward) {
+      log.warn('ship', `${ship.label} will lose ${Math.abs(reward - cost).toLocaleString()} credits on contract for ${tradeSymbol}`)
+    } else {
+      log.info('ship', `${ship.label} will gain ${Math.abs(reward - cost).toLocaleString()} credits on contract for ${tradeSymbol}`)
+    }
+
     if (ship.nav.waypointSymbol !== waypoint.symbol) {
       await act.navigateShip(ship, waypoint)
       return true
     } else {
-      const tradeGood = waypoint.tradeGoods!.find((x) => x.symbol === tradeSymbol)
-      invariant(tradeGood, `Expected to find a tradeGood for ${tradeSymbol}`)
       await act.purchaseGoods(ship, tradeSymbol as TradeSymbol, Math.min(unitsToGo, ship.cargo.capacity, tradeGood.tradeVolume))
       return true
     }

@@ -12,11 +12,9 @@ type TradeRoute = {
   sellLocation: WaypointEntity
   sellPricePerUnit: number
   distance: number
-  volume: number
   profitPerUnit: number
   totalProfit: number
   costVolumeDistance: number
-  quantityAvailable: number
   quantityToBuy: number
   fuelNeeded: number
   rank?: number
@@ -39,17 +37,16 @@ export async function getBestTradeRoute(ship: ShipEntity, waypoints: WaypointEnt
             g.locations
               .filter((dest) => dest.waypoint !== depart.waypoint)
               .map((dest) => {
-                const volume = depart.tradeGood.tradeVolume
                 const route = getShortestPath(graph, depart.waypoint.symbol, dest.waypoint.symbol, ship)
                 const distance = route.map((p) => distanceWaypoint(p.from, p.to)).reduce((a, b) => a + b)
                 const maxFuelNeeded = Math.max(...route.map((a) => a.fuelNeeded))
 
-                const quantityToBuy = Math.floor(ship.cargo.capacity / volume)
+                const quantityToBuy = ship.cargo.capacity
                 const fuelCost = getFuelPriceForRoute(route, waypoints)
                 const profitPerUnit = dest.tradeGood.sellPrice - depart.tradeGood.purchasePrice - fuelCost / quantityToBuy
                 const flightTime = lodash.sumBy(route, (x) => getTravelTime(x.from, x.to, ship))
 
-                const costVolumeDistance = profitPerUnit / volume / flightTime
+                const costVolumeDistance = profitPerUnit / quantityToBuy / flightTime
                 const totalProfit = quantityToBuy * profitPerUnit
                 const result: TradeRoute = {
                   buyLocation: depart.waypoint,
@@ -59,10 +56,8 @@ export async function getBestTradeRoute(ship: ShipEntity, waypoints: WaypointEnt
                   distance,
                   tradeSymbol: g.tradeSymbol,
                   profitPerUnit,
-                  volume,
                   fuelCost: fuelCost / quantityToBuy,
                   costVolumeDistance,
-                  quantityAvailable: depart.tradeGood.tradeVolume,
                   fuelNeeded: maxFuelNeeded,
                   quantityToBuy,
                   totalProfit,
@@ -93,11 +88,13 @@ function getFuelPriceForRoute(route: ReturnType<typeof getShortestPath>, waypoin
     .filter((w) => w.tradeGoods?.find((g) => g.symbol === TradeSymbol.Fuel))
     .map((x) => ({ waypointSymbol: x.symbol, fuelPrice: x.tradeGoods!.find((g) => g.symbol === TradeSymbol.Fuel)!.purchasePrice }))
 
-  return lodash.sum(
-    route.map((r) => {
-      fuelPrices.find((x) => x.waypointSymbol === r.from.symbol)?.fuelPrice ?? 100 // TODO: need a better fuel price calculation
-    }),
+  const routeFuelPrices = route.map(
+    (r) => fuelPrices.find((x) => x.waypointSymbol === r.from.symbol)?.fuelPrice ?? 100, // TODO: need a better fuel price calculation
   )
+
+  const sum = lodash.sum(routeFuelPrices)
+
+  return sum
 }
 
 function groupByGood(market: TradeGoodWaypoint[] | undefined) {

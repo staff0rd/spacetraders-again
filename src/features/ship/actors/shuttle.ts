@@ -19,11 +19,11 @@ export const shuttleLogicFactory =
   async (ship: ShipEntity, agent: AgentEntity) => {
     const currentAction = ship.action?.type
     if (!currentAction) {
-      await act.updateShipAction(ship, ShipActionType.FILL)
+      await act.updateShipAction(ship, { type: ShipActionType.FILL })
       return
     } else if (currentAction === ShipActionType.FILL) {
       if (ship.cargo.units === ship.cargo.capacity) {
-        await act.updateShipAction(ship, ShipActionType.SELL)
+        await act.updateShipAction(ship, { type: ShipActionType.SELL })
         return
       } else if (ship.nav.waypointSymbol !== miningLocation.symbol) {
         await act.navigateShip(ship, miningLocation)
@@ -41,7 +41,7 @@ export const shuttleLogicFactory =
       }
     } else if (currentAction === ShipActionType.SELL) {
       if (ship.cargo.units === 0) {
-        await act.updateShipAction(ship, ShipActionType.FILL)
+        await act.updateShipAction(ship, { type: ShipActionType.FILL })
         return
       } else if (ship.cargo.inventory.find((p) => p.symbol === agent.contractGood.tradeSymbol)?.units) {
         await act.deliverContractGoods(ship)

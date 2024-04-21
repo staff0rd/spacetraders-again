@@ -9,6 +9,7 @@ import { miningDroneActorFactory } from '../ship/actors/mining-drone'
 import { probeActorFactory } from '../ship/actors/probe'
 import { shuttleActorFactory, shuttleLogicFactory } from '../ship/actors/shuttle'
 import { systemReconLogicFactory } from '../ship/actors/system-recon'
+import { traderActorFactory } from '../ship/actors/trading'
 import { ShipEntity } from '../ship/ship.entity'
 import { decisionMaker } from './decisionMaker'
 
@@ -33,7 +34,7 @@ export async function startup() {
       .filter((x) => x.type !== 'ENGINEERED_ASTEROID')
       .filter((x) => x.traits.includes(WaypointTraitSymbol.Marketplace) || x.traits.includes(WaypointTraitSymbol.Shipyard))
     if (probes.length < locationsToProbe.length && (agent.data?.credits ?? 0) > 250_000) {
-      await act.purchaseShip(commandShip, 'SHIP_PROBE', ships)
+      await act.purchaseShip(commandShip, 'SHIP_PROBE')
       return
     } else {
       const sortedProbeLocations = lodash.orderBy(
@@ -52,8 +53,8 @@ export async function startup() {
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     // TODO: don't hardcode the price
-    if (miningDrones.length < config.purchases.mining && (agent.data?.credits ?? 0) > 50000) {
-      await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE', ships)
+    if (miningDrones.length < config.purchases.mining && (agent.data?.credits ?? 0) > 50_000) {
+      await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE')
       return
     } else if (config.strategy.mine) {
       const idleDrones = miningDrones.filter((s) => !s.isCommanded)
@@ -66,7 +67,7 @@ export async function startup() {
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
     if (shuttles.length < config.purchases.shuttles) {
-      await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE', ships)
+      await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE')
       return
     } else {
       const idleShuttles = shuttles.filter((s) => !s.isCommanded)
@@ -74,6 +75,19 @@ export async function startup() {
         log.info('command', `Spawning worker for ${ship.label}`)
         ship.isCommanded = true
         shuttleActorFactory(ship, agent, act, engineeredAsteroid, ships, keep)
+      })
+    }
+
+    const haulers = ships.filter((s) => s.frame.symbol === 'FRAME_LIGHT_FREIGHTER')
+    if (haulers.length < config.purchases.haulers && (agent.data?.credits ?? 0) > 350_000) {
+      await act.purchaseShip(commandShip, 'SHIP_LIGHT_HAULER')
+      return
+    } else {
+      const idleHaulers = haulers.filter((s) => !s.isCommanded)
+      idleHaulers.forEach((ship) => {
+        log.info('command', `Spawning worker for ${ship.label}`)
+        ship.isCommanded = true
+        traderActorFactory(ship, agent, act, waypoints)
       })
     }
 

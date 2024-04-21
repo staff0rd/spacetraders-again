@@ -5,7 +5,7 @@ import { findOrCreateShip } from '../../../db/findOrCreateShip'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
-import { ShipActionType, ShipEntity } from '../../ship/ship.entity'
+import { ShipAction, ShipEntity } from '../../ship/ship.entity'
 import { getPages, updateWaypoint } from '../../waypoints/getWaypoints'
 import { getGraph, getShortestPath } from '../../waypoints/pathfinding'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
@@ -342,7 +342,12 @@ export const getActor = async (
   const findTradeSymbol = async (tradeSymbol: TradeSymbol) => {
     const exports = waypoints.filter((p) => p.exports.includes(tradeSymbol))
     const exchanges = waypoints.filter((p) => p.exchange.includes(tradeSymbol))
-    return lodash.orderBy([...exports, ...exchanges], (x) => x.tradeGoods?.find((g) => g.symbol === tradeSymbol)?.purchasePrice, 'asc')[0]
+    const imports = waypoints.filter((p) => p.imports.includes(tradeSymbol))
+    return lodash.orderBy(
+      [...exports, ...exchanges, ...imports],
+      (x) => x.tradeGoods?.find((g) => g.symbol === tradeSymbol)?.purchasePrice,
+      'asc',
+    )[0]
   }
 
   const scanMarketIfNeccessary = async (ship: ShipEntity) => {
@@ -389,7 +394,7 @@ export const getActor = async (
     }
   }
 
-  const purchaseShip = async (buyer: ShipEntity, shipType: ShipType, ships: ShipEntity[]) => {
+  const purchaseShip = async (buyer: ShipEntity, shipType: ShipType) => {
     const shipyard = waypoints.find((x) => x.shipyard?.shipTypes.map((s) => s.type).includes(shipType))
     invariant(shipyard, `Expected to find a waypoint for the ${shipType} shipyard`)
     if (buyer.nav.route.destination.symbol !== shipyard.symbol) {
@@ -409,8 +414,8 @@ export const getActor = async (
     ships.push(entity)
   }
 
-  const updateShipAction = async (ship: ShipEntity, action: ShipActionType) => {
-    ship.action = { type: action }
+  const updateShipAction = async (ship: ShipEntity, action: ShipAction) => {
+    ship.action = action
     log.info('ship', `${ship.label} will now ${ship.action.type}`)
     await getEntityManager().fork().persistAndFlush(ship)
   }

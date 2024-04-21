@@ -13,16 +13,26 @@ import {
   ShipNav,
   ShipReactor,
   ShipRegistration,
+  TradeSymbol,
 } from '../../../api'
 
 export enum ShipActionType {
   SELL = 'SELL',
   FILL = 'FILL',
+  TRADE = 'TRADE',
+  NONE = 'NONE',
 }
 
-type ShipAction = {
-  type?: ShipActionType
-}
+export type ShipAction =
+  | {
+      type: ShipActionType.SELL | ShipActionType.FILL | ShipActionType.NONE
+    }
+  | {
+      type: ShipActionType.TRADE
+      tradeSymbol: TradeSymbol
+      from: string
+      to: string
+    }
 
 @Entity({ tableName: 'ship' })
 export class ShipEntity {
