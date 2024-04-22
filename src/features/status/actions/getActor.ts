@@ -5,7 +5,9 @@ import { findOrCreateShip } from '../../../db/findOrCreateShip'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
+import { Supply } from '../../ship/actors/supply'
 import { ShipAction, ShipActionType, ShipEntity } from '../../ship/ship.entity'
+import { SurveyEntity } from '../../survey/survey.entity'
 import { getBestTradeRoutes } from '../../trade/getBestTradeRoute'
 import { getPages, updateWaypoint } from '../../waypoints/getWaypoints'
 import { getGraph, getShortestPath } from '../../waypoints/pathfinding'
@@ -23,6 +25,7 @@ export const getActor = async (
   api: ReturnType<typeof apiFactory>,
   waypoints: WaypointEntity[],
   ships: ShipEntity[],
+  surveys: SurveyEntity[],
 ) => {
   const { token, resetDate } = agent
   const updateAgent = updateAgentFactory(token, resetDate)
@@ -98,6 +101,30 @@ export const getActor = async (
       )
       await updateShip(ship, { fuel })
     }
+  }
+
+  const survey = async (ship: ShipEntity) => {
+    await orbitShip(ship)
+    const waypoint = waypoints.find((x) => x.symbol === ship.nav.waypointSymbol)
+    invariant(waypoint, `Expected to find waypoint for ${ship.nav.waypointSymbol}`)
+    log.info('ship', `${ship.label} will survey ${waypoint.label}`)
+    const {
+      data: {
+        data: { cooldown, surveys: newSurveys },
+      },
+    } = await api.fleet.createSurvey(ship.symbol)
+    await updateShip(ship, { cooldown })
+
+    const entities = newSurveys.map(
+      (data) =>
+        new SurveyEntity({
+          resetDate,
+          data,
+        }),
+    )
+
+    await getEntityManager().fork().persistAndFlush(entities)
+    surveys.push(...entities)
   }
 
   const scanWaypoint = async (symbol: string) => {
@@ -240,6 +267,26 @@ export const getActor = async (
     await updateShip(from, { cargo })
     const toShipCargo = await api.fleet.getMyShip(to.symbol)
     await updateShip(to, { cargo: toShipCargo.data.data.cargo })
+  }
+
+  const deliverySupplyGoods = async (ship: ShipEntity, supply: Supply) => {
+    log.info('ship', `${ship.label} will deliver goods`)
+    const waypoint = waypoints.find(
+      (x) =>
+        x.tradeGoods?.find((g) => g.symbol === supply.import && g.type === 'IMPORT') &&
+        x.tradeGoods.find((g) => g.symbol === supply.export && g.type === 'EXPORT'),
+    )
+    invariant(waypoint, `Expected to find waypoint with import: ${supply.import} and export: ${supply.export}`)
+    if (ship.nav.waypointSymbol !== waypoint.symbol) {
+      await navigateShip(ship, waypoint)
+      return
+    }
+    await dockShip(ship)
+
+    const units = ship.cargo.inventory.find((p) => p.symbol === supply.import)?.units
+    invariant(units, `Expected ${ship.label} to have ${supply.import} to deliver`)
+    await sellGood(ship, supply.import, units)
+    await scanWaypoint(ship.nav.waypointSymbol)
   }
 
   const deliverContractGoods = async (ship: ShipEntity) => {
@@ -407,11 +454,18 @@ export const getActor = async (
       await wait(seconds * 1000)
     }
 
+    const relevantSurveys = surveys.filter((s) => s.data.symbol === ship.nav.waypointSymbol && new Date(s.data.expiration) > new Date())
+    const ordered = lodash.orderBy(
+      relevantSurveys,
+      (x) => x.data.deposits.map((x) => x.symbol).filter((d) => keep.includes(d as TradeSymbol)).length,
+      'desc',
+    )
+
     const {
       data: {
         data: { cooldown, cargo, extraction },
       },
-    } = await api.fleet.extractResources(ship.symbol)
+    } = await api.fleet.extractResources(ship.symbol, { survey: ordered[0]?.data })
     log.info('ship', `${ship.label} mining result: is ${extraction.yield.units}x${extraction.yield.symbol}`)
     writeExtraction(agent, extraction)
     await updateShip(ship, { cargo, cooldown })
@@ -458,6 +512,7 @@ export const getActor = async (
     getOrAcceptContract,
     purchaseShip,
     deliverContractGoods,
+    deliverySupplyGoods,
     fulfillContract,
     updateShipAction,
     transferGoods,
@@ -468,5 +523,6 @@ export const getActor = async (
     scanMarketIfNeccessary,
     findClosestUnvisitedMarket,
     getTradeRoute,
+    survey,
   }
 }

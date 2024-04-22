@@ -8,6 +8,7 @@ import { contractTraderLogicFactory } from '../ship/actors/contract-trading'
 import { miningDroneActorFactory } from '../ship/actors/mining-drone'
 import { probeActorFactory } from '../ship/actors/probe'
 import { shuttleActorFactory, shuttleLogicFactory } from '../ship/actors/shuttle'
+import { supplyLogicFactory } from '../ship/actors/supply'
 import { systemReconLogicFactory } from '../ship/actors/system-recon'
 import { traderActorFactory } from '../ship/actors/trading'
 import { ShipEntity } from '../ship/ship.entity'
@@ -22,7 +23,7 @@ export async function startup() {
 
   const engineeredAsteroid = waypoints.find((x) => x.type === 'ENGINEERED_ASTEROID')
   invariant(engineeredAsteroid, 'Expected to find an engineered asteroid')
-  const keep: TradeSymbol[] = ['IRON_ORE', 'COPPER_ORE', 'ALUMINUM_ORE', 'SILICON_CRYSTALS']
+  const keep: TradeSymbol[] = ['IRON_ORE']
 
   const shuttleLogic = shuttleLogicFactory(act, engineeredAsteroid, ships, keep)
   const contractTraderLogic = contractTraderLogicFactory(act)
@@ -91,9 +92,18 @@ export async function startup() {
       })
     }
 
+    const surveyors = ships.filter((s) => s.registration.role === 'SURVEYOR')
+    if (surveyors.length < config.purchases.surveyors && (agent.data?.credits ?? 0) > 1_000_000) {
+      await act.purchaseShip(commandShip, 'SHIP_SURVEYOR')
+      return
+    }
+
     if (await systemReconLogic(commandShip, agent)) return
 
-    if (await contractTraderLogic(commandShip, agent)) return
+    //if (await contractTraderLogic(commandShip, agent))
+
+    const supplyLogic = supplyLogicFactory(act, engineeredAsteroid, ships, { import: 'IRON_ORE', export: 'IRON' })
+    if (await supplyLogic(commandShip, agent)) return
 
     await shuttleLogic(commandShip, agent)
   })

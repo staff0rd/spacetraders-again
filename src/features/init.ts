@@ -1,8 +1,10 @@
 import { DefaultApiFactory } from '../../api'
 import { updateShips } from '../db/updateShips'
 import { invariant } from '../invariant'
+import { getEntityManager } from '../orm'
 import { getActor } from './status/actions/getActor'
 import { getAgent } from './status/actions/getAgent'
+import { SurveyEntity } from './survey/survey.entity'
 import { getPages, getWaypoints } from './waypoints/getWaypoints'
 
 export async function init(performWaypointScan: boolean) {
@@ -21,7 +23,11 @@ export async function init(performWaypointScan: boolean) {
 
   const waypoints = await getWaypoints(systemSymbol, agent, api, performWaypointScan)
 
-  const act = await getActor(agent, api, waypoints, ships)
+  const surveys = await getEntityManager()
+    .fork()
+    .findAll(SurveyEntity, { where: { resetDate: agent.resetDate } })
+
+  const act = await getActor(agent, api, waypoints, ships, surveys)
   return {
     act,
     waypoints,
@@ -29,5 +35,6 @@ export async function init(performWaypointScan: boolean) {
     commandShip,
     agent,
     api,
+    surveys,
   }
 }
