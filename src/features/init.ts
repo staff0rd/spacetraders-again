@@ -28,5 +28,6 @@ export async function init(performWaypointScan: boolean) {
     ships,
     commandShip,
     agent,
+    api,
   }
 }

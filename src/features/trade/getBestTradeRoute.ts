@@ -1,7 +1,7 @@
 import lodash from 'lodash'
-import { TradeSymbol } from '../../../api'
+import { SupplyLevel, TradeSymbol } from '../../../api'
 import { ShipEntity } from '../ship/ship.entity'
-import { distanceWaypoint, getGraph, getShortestPath, getTravelTime } from '../waypoints/pathfinding'
+import { distancePoint, distanceWaypoint, getGraph, getShortestPath, getTravelTime } from '../waypoints/pathfinding'
 import { WaypointEntity } from '../waypoints/waypoint.entity'
 
 type TradeRoute = {
@@ -20,7 +20,16 @@ type TradeRoute = {
   rank?: number
 }
 
-export async function getBestTradeRoutes(ship: ShipEntity, waypoints: WaypointEntity[], excludeLoss = true): Promise<TradeRoute[]> {
+const highCapacity: SupplyLevel[] = ['ABUNDANT', 'HIGH', 'MODERATE']
+const lowCapacity: SupplyLevel[] = ['LIMITED', 'SCARCE', 'MODERATE']
+
+export async function getBestTradeRoutes(
+  ship: ShipEntity,
+  waypoints: WaypointEntity[],
+  excludeLoss = true,
+  limitToModerate = false,
+  limitToWithin200Radius = false,
+): Promise<TradeRoute[]> {
   const goodLocation: TradeGoodWaypoint[] = waypoints
     .filter((x) => x.tradeGoods && x.tradeGoods.length)
     .map((x) => ({ waypoint: x, tradeGoods: x.tradeGoods! }))
@@ -33,30 +42,34 @@ export async function getBestTradeRoutes(ship: ShipEntity, waypoints: WaypointEn
     grouped
       .map((g) =>
         g.locations
-          .map((depart) =>
+          .filter((x) => !limitToModerate || highCapacity.includes(x.tradeGood.supply))
+          .filter((x) => !limitToWithin200Radius || distancePoint({ x: 0, y: 0 }, { x: x.waypoint.x, y: x.waypoint.y }) < 200)
+          .map((buyLocation) =>
             g.locations
-              .filter((dest) => dest.waypoint !== depart.waypoint)
-              .map((dest) => {
-                const route = getShortestPath(graph, depart.waypoint.symbol, dest.waypoint.symbol, ship)
+              .filter((dest) => dest.waypoint !== buyLocation.waypoint)
+              .filter((x) => !limitToModerate || lowCapacity.includes(x.tradeGood.supply))
+              .filter((x) => !limitToWithin200Radius || distancePoint({ x: 0, y: 0 }, { x: x.waypoint.x, y: x.waypoint.y }) < 200)
+              .map((sellLocation) => {
+                const route = getShortestPath(graph, buyLocation.waypoint.symbol, sellLocation.waypoint.symbol, ship)
                 const distance = route.map((p) => distanceWaypoint(p.from, p.to)).reduce((a, b) => a + b)
                 const maxFuelNeeded = Math.max(...route.map((a) => a.fuelNeeded))
 
                 const quantityToBuy = ship.cargo.capacity
                 const fuelCost = getFuelPriceForRoute(route, waypoints)
-                const profitPerUnit = dest.tradeGood.sellPrice - depart.tradeGood.purchasePrice - fuelCost / quantityToBuy
+                const profitPerUnit = sellLocation.tradeGood.sellPrice - buyLocation.tradeGood.purchasePrice - fuelCost / quantityToBuy
                 const flightTime = lodash.sumBy(route, (x) => getTravelTime(x.from, x.to, ship))
 
                 const costVolumeDistance = profitPerUnit / quantityToBuy / flightTime
-                const totalProfit = quantityToBuy * profitPerUnit
+                const totalProfit = quantityToBuy * profitPerUnit - fuelCost
                 const result: TradeRoute = {
-                  buyLocation: depart.waypoint,
-                  purchasePricePerUnit: depart.tradeGood.purchasePrice,
-                  sellLocation: dest.waypoint,
-                  sellPricePerUnit: dest.tradeGood.sellPrice,
+                  buyLocation: buyLocation.waypoint,
+                  purchasePricePerUnit: buyLocation.tradeGood.purchasePrice,
+                  sellLocation: sellLocation.waypoint,
+                  sellPricePerUnit: sellLocation.tradeGood.sellPrice,
                   distance,
                   tradeSymbol: g.tradeSymbol,
                   profitPerUnit,
-                  fuelCost: fuelCost / quantityToBuy,
+                  fuelCost: fuelCost,
                   costVolumeDistance,
                   fuelNeeded: maxFuelNeeded,
                   quantityToBuy,
