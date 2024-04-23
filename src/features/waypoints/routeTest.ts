@@ -11,7 +11,5 @@ export async function routeTest() {
     data: { data: construction },
   } = await api.systems.getConstruction(commandShip.nav.systemSymbol, jumpGate.symbol)
   const { graph } = getGraph(waypoints)
-  const result = await getBestTradeRoutes(commandShip, waypoints, true)
-  const result2 = await getBestTradeRoutes(commandShip, waypoints, true, true)
-  const result3 = await getBestTradeRoutes(commandShip, waypoints, true, true, true)
+  const result = await getBestTradeRoutes(commandShip, waypoints, { excludeLoss: true })
 }

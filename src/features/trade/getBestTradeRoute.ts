@@ -1,5 +1,6 @@
 import lodash from 'lodash'
 import { SupplyLevel, TradeSymbol } from '../../../api'
+import { Supply } from '../ship/actors/supply'
 import { ShipEntity } from '../ship/ship.entity'
 import { distancePoint, distanceWaypoint, getGraph, getShortestPath, getTravelTime } from '../waypoints/pathfinding'
 import { WaypointEntity } from '../waypoints/waypoint.entity'
@@ -23,17 +24,27 @@ type TradeRoute = {
 const highCapacity: SupplyLevel[] = ['ABUNDANT', 'HIGH', 'MODERATE']
 const lowCapacity: SupplyLevel[] = ['LIMITED', 'SCARCE', 'MODERATE']
 
+type TradeRouteOptions = {
+  excludeLoss?: boolean
+  limitToModerate?: boolean
+  limitToWithin200Radius?: boolean
+  supplyChainIgnore?: Supply[]
+}
+
 export async function getBestTradeRoutes(
   ship: ShipEntity,
   waypoints: WaypointEntity[],
-  excludeLoss = true,
-  limitToModerate = false,
-  limitToWithin200Radius = false,
+  { excludeLoss = true, limitToModerate = false, limitToWithin200Radius = false, supplyChainIgnore = [] }: TradeRouteOptions,
 ): Promise<TradeRoute[]> {
   const goodLocation: TradeGoodWaypoint[] = waypoints
     .filter((x) => x.tradeGoods && x.tradeGoods.length)
     .map((x) => ({ waypoint: x, tradeGoods: x.tradeGoods! }))
-    .flatMap((x) => x.tradeGoods?.map((g): TradeGoodWaypoint => ({ waypoint: x.waypoint, tradeGood: g, tradeSymbol: g.symbol })))
+    .flatMap((x) =>
+      x.tradeGoods
+        ?.filter((g) => !supplyChainIgnore.find((s) => s.import === g.symbol || s.export === g.symbol))
+        .map((g): TradeGoodWaypoint => ({ waypoint: x.waypoint, tradeGood: g, tradeSymbol: g.symbol })),
+    )
+
   const grouped = groupByGood(goodLocation)
   const { graph } = getGraph(waypoints)
   //const { focusTradeRoute } = getDebug()

@@ -408,8 +408,8 @@ export const getActor = async (
     )[0]
   }
 
-  const getTradeRoute = async (ship: ShipEntity) => {
-    const bestRoutes = await getBestTradeRoutes(ship, waypoints, true)
+  const getTradeRoute = async (ship: ShipEntity, supplyChainIgnore: Supply[]) => {
+    const bestRoutes = await getBestTradeRoutes(ship, waypoints, {excludeLoss: true, supplyChainIgnore})
     for (const route of bestRoutes) {
       const onRoute = ships.find(
         (s) =>

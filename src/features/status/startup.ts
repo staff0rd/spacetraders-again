@@ -8,7 +8,7 @@ import { contractTraderLogicFactory } from '../ship/actors/contract-trading'
 import { miningDroneActorFactory } from '../ship/actors/mining-drone'
 import { probeActorFactory } from '../ship/actors/probe'
 import { shuttleActorFactory, shuttleLogicFactory } from '../ship/actors/shuttle'
-import { supplyLogicFactory } from '../ship/actors/supply'
+import { Supply, supplyLogicFactory } from '../ship/actors/supply'
 import { systemReconLogicFactory } from '../ship/actors/system-recon'
 import { traderActorFactory } from '../ship/actors/trading'
 import { ShipEntity } from '../ship/ship.entity'
@@ -24,6 +24,7 @@ export async function startup() {
   const engineeredAsteroid = waypoints.find((x) => x.type === 'ENGINEERED_ASTEROID')
   invariant(engineeredAsteroid, 'Expected to find an engineered asteroid')
   const keep: TradeSymbol[] = ['IRON_ORE']
+  const supplyChainIgnore: Supply[] = [{ import: 'IRON_ORE', export: 'IRON' }]
 
   const shuttleLogic = shuttleLogicFactory(act, engineeredAsteroid, ships, keep)
   const contractTraderLogic = contractTraderLogicFactory(act)
@@ -88,7 +89,7 @@ export async function startup() {
       idleHaulers.forEach((ship) => {
         log.info('command', `Spawning worker for ${ship.label}`)
         ship.isCommanded = true
-        traderActorFactory(ship, agent, act, waypoints)
+        traderActorFactory(ship, agent, act, waypoints, supplyChainIgnore)
       })
     }
 
@@ -102,7 +103,7 @@ export async function startup() {
 
     //if (await contractTraderLogic(commandShip, agent))
 
-    const supplyLogic = supplyLogicFactory(act, engineeredAsteroid, ships, { import: 'IRON_ORE', export: 'IRON' })
+    const supplyLogic = supplyLogicFactory(act, engineeredAsteroid, ships, supplyChainIgnore[0])
     if (await supplyLogic(commandShip, agent)) return
 
     await shuttleLogic(commandShip, agent)

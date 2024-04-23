@@ -5,20 +5,22 @@ import { AgentEntity } from '../../status/agent.entity'
 import { decisionMaker } from '../../status/decisionMaker'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { ShipActionType, ShipEntity } from '../ship.entity'
+import { Supply } from './supply'
 
 export const traderActorFactory = (
   ship: ShipEntity,
   agent: AgentEntity,
   act: Awaited<ReturnType<typeof getActor>>,
   waypoints: WaypointEntity[],
-) => decisionMaker(ship, true, agent, act, traderLogicFactory(act, waypoints))
+  supplyChainIgnore: Supply[],
+) => decisionMaker(ship, true, agent, act, traderLogicFactory(act, waypoints, supplyChainIgnore))
 
 export const traderLogicFactory =
-  (act: Awaited<ReturnType<typeof getActor>>, waypoints: WaypointEntity[]) =>
+  (act: Awaited<ReturnType<typeof getActor>>, waypoints: WaypointEntity[], supplyChainIgnore: Supply[]) =>
   async (ship: ShipEntity, agent: AgentEntity): Promise<boolean> => {
     const current = ship.action
     if (!current || current.type !== ShipActionType.TRADE) {
-      const route = await act.getTradeRoute(ship)
+      const route = await act.getTradeRoute(ship, supplyChainIgnore)
       if (!route) {
         log.warn('ship', `${ship.label} could not find a trade route, will wait`)
         await act.wait(1000 * 60)
