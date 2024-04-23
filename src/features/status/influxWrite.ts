@@ -1,7 +1,16 @@
 import { InfluxDB, Point, WriteApi } from '@influxdata/influxdb-client'
 import lodash from 'lodash'
 import { hostname } from 'os'
-import { Agent, Contract, Extraction, MarketTradeGood, MarketTransaction, ShipyardTransaction } from '../../../api'
+import {
+  ActivityLevel,
+  Agent,
+  Contract,
+  Extraction,
+  MarketTradeGood,
+  MarketTransaction,
+  ShipyardTransaction,
+  SupplyLevel,
+} from '../../../api'
 import { getConfig } from '../../config'
 import { AgentEntity } from './agent.entity'
 
@@ -103,13 +112,31 @@ export function writeMarketTransaction(transaction: MarketTransaction, resetDate
   })
 }
 
+const SupplyLevelMap: Record<SupplyLevel, number> = {
+  [SupplyLevel.Scarce]: 0,
+  [SupplyLevel.Limited]: 1,
+  [SupplyLevel.Moderate]: 2,
+  [SupplyLevel.High]: 3,
+  [SupplyLevel.Abundant]: 4,
+}
+
+const ActivityLevelMap: Record<ActivityLevel | 'NONE', number> = {
+  ['NONE']: 0,
+  [ActivityLevel.Weak]: 1,
+  [ActivityLevel.Restricted]: 2,
+  [ActivityLevel.Growing]: 2,
+  [ActivityLevel.Strong]: 4,
+}
+
 export function writeMarketTradeGood(tradeGood: MarketTradeGood, resetDate: string, agentSymbol: string, waypointSymbol: string) {
+  const activityLevel = ActivityLevelMap[tradeGood.activity ?? 'NONE']
+  const supplyLevel = SupplyLevelMap[tradeGood.supply]
   writePoint(
-    { ...tradeGood, waypointSymbol },
+    { ...tradeGood, waypointSymbol, activityLevel, supplyLevel },
     {
       measurementName: 'trade-good',
       tags: ['symbol', 'type', 'supply', 'waypointSymbol'],
-      fields: ['tradeVolume', 'sellPrice', 'purchasePrice'],
+      fields: ['tradeVolume', 'sellPrice', 'purchasePrice', 'activityLevel', 'supplyLevel'],
       resetDate,
       agentSymbol,
     },
