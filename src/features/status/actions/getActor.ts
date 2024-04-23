@@ -471,6 +471,7 @@ export const getActor = async (
         (s) =>
           s.data.symbol === ship.nav.waypointSymbol &&
           new Date(s.data.expiration) > new Date() &&
+          !s.exhausted &&
           s.data.deposits.find((x) => keep.includes(x.symbol as TradeSymbol)),
       )
       .map((survey) => ({ survey, count: count(survey), ratio: count(survey) / survey.data.deposits.length }))
