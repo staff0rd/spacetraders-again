@@ -274,6 +274,16 @@
           "primary": false,
           "nullable": false,
           "mappedType": "json"
+        },
+        "exhausted": {
+          "name": "exhausted",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
         }
       },
       "name": "survey",

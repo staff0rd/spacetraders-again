@@ -60,7 +60,7 @@ export const supplyLogicFactory =
     if (ship.nav.waypointSymbol === miningLocation.symbol) {
       if (seconds > 0) {
         log.info('ship', `${ship.label} will cooldown, ready ${distance}`)
-        await act.wait(1000 * 10)
+        await act.wait(1000 * seconds)
         return false
       } else {
         await act.survey(ship)

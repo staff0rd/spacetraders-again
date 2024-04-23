@@ -1,4 +1,6 @@
 import { EntityData } from '@mikro-orm/core'
+import { AxiosError } from 'axios'
+import { formatDistance } from 'date-fns'
 import lodash from 'lodash'
 import { Ship, ShipNavFlightMode, ShipType, TradeSymbol } from '../../../../api'
 import { findOrCreateShip } from '../../../db/findOrCreateShip'
@@ -34,6 +36,14 @@ export const getActor = async (
     Object.entries(data).forEach(([key, value]) => {
       // @ts-expect-error bad type
       ship[key as keyof Ship] = value
+    })
+  }
+
+  async function updateSurvey(survey: SurveyEntity, data: EntityData<SurveyEntity>) {
+    await getEntityManager().fork().nativeUpdate(SurveyEntity, { id: survey.id, resetDate }, data)
+    Object.entries(data).forEach(([key, value]) => {
+      // @ts-expect-error bad type
+      survey[key as keyof SurveyEntity] = value
     })
   }
 
@@ -409,7 +419,7 @@ export const getActor = async (
   }
 
   const getTradeRoute = async (ship: ShipEntity, supplyChainIgnore: Supply[]) => {
-    const bestRoutes = await getBestTradeRoutes(ship, waypoints, {excludeLoss: true, supplyChainIgnore})
+    const bestRoutes = await getBestTradeRoutes(ship, waypoints, { excludeLoss: true, supplyChainIgnore })
     for (const route of bestRoutes) {
       const onRoute = ships.find(
         (s) =>
@@ -454,24 +464,45 @@ export const getActor = async (
       await wait(seconds * 1000)
     }
 
-    const relevantSurveys = surveys.filter((s) => s.data.symbol === ship.nav.waypointSymbol && new Date(s.data.expiration) > new Date())
-    const ordered = lodash.orderBy(
-      relevantSurveys,
-      (x) => x.data.deposits.map((x) => x.symbol).filter((d) => keep.includes(d as TradeSymbol)).length,
-      'desc',
-    )
+    const count = (survey: SurveyEntity) => survey.data.deposits.map((x) => x.symbol).filter((d) => keep.includes(d as TradeSymbol)).length
 
-    const {
-      data: {
-        data: { cooldown, cargo, extraction },
-      },
-    } = await api.fleet.extractResources(ship.symbol, { survey: ordered[0]?.data })
-    log.info('ship', `${ship.label} mining result: is ${extraction.yield.units}x${extraction.yield.symbol}`)
-    writeExtraction(agent, extraction)
-    await updateShip(ship, { cargo, cooldown })
-    await jettisonUnwanted(ship, toKeep(keep))
-    if (cargo.units < cargo.capacity) {
-      await beginMining(ship, toKeep(keep))
+    const relevantSurveys = surveys
+      .filter(
+        (s) =>
+          s.data.symbol === ship.nav.waypointSymbol &&
+          new Date(s.data.expiration) > new Date() &&
+          s.data.deposits.find((x) => keep.includes(x.symbol as TradeSymbol)),
+      )
+      .map((survey) => ({ survey, count: count(survey), ratio: count(survey) / survey.data.deposits.length }))
+
+    const ordered = lodash.orderBy(relevantSurveys, (x) => x.ratio, 'desc')
+    const surveyEntity = ordered[0]?.survey
+    const survey = surveyEntity.data
+    try {
+      const {
+        data: {
+          data: { cooldown, cargo, extraction },
+        },
+      } = await api.fleet.extractResources(ship.symbol, { survey })
+      const surveyMessage = survey
+        ? `survey: ${survey.signature}, expiry ${formatDistance(survey.expiration, new Date(), { addSuffix: true })}`
+        : 'none'
+      log.info('ship', `${ship.label} mining result: ${extraction.yield.units}x${extraction.yield.symbol}, ${surveyMessage}`)
+      writeExtraction(agent, extraction)
+      await updateShip(ship, { cargo, cooldown })
+      await jettisonUnwanted(ship, toKeep(keep))
+      if (cargo.units < cargo.capacity) {
+        await beginMining(ship, toKeep(keep))
+      }
+    } catch (e) {
+      if (e instanceof AxiosError) {
+        if (e.response?.data.error.code === 4224) {
+          log.info('ship', `${survey.signature} is exhausted`)
+          await updateSurvey(surveyEntity, { exhausted: true })
+          return
+        }
+      }
+      throw e
     }
   }
 

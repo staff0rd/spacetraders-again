@@ -13,6 +13,9 @@ export class SurveyEntity {
   @Property({ type: 'json' })
   data: Survey
 
+  @Property({ default: false })
+  exhausted: boolean = false
+
   constructor({ resetDate, data }: { resetDate: string; data: Survey }) {
     this.resetDate = resetDate
     this.data = data
