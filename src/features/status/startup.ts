@@ -8,7 +8,7 @@ import { contractTraderLogicFactory } from '../ship/actors/contract-trading'
 import { miningDroneActorFactory } from '../ship/actors/mining-drone'
 import { probeActorFactory } from '../ship/actors/probe'
 import { shuttleActorFactory, shuttleLogicFactory } from '../ship/actors/shuttle'
-import { Supply, supplyLogicFactory } from '../ship/actors/supply'
+import { Supply } from '../ship/actors/supply'
 import { systemReconLogicFactory } from '../ship/actors/system-recon'
 import { traderActorFactory } from '../ship/actors/trading'
 import { ShipEntity } from '../ship/ship.entity'
@@ -23,7 +23,7 @@ export async function startup() {
 
   const engineeredAsteroid = waypoints.find((x) => x.type === 'ENGINEERED_ASTEROID')
   invariant(engineeredAsteroid, 'Expected to find an engineered asteroid')
-  const keep: TradeSymbol[] = ['IRON_ORE']
+  const keep: TradeSymbol[] = ['IRON_ORE', 'ALUMINUM_ORE', 'COPPER_ORE']
   const supplyChainIgnore: Supply[] = [{ import: 'IRON_ORE', export: 'IRON' }]
 
   const shuttleLogic = shuttleLogicFactory(act, engineeredAsteroid, ships, keep)
@@ -41,21 +41,23 @@ export async function startup() {
     } else {
       const sortedProbeLocations = lodash.orderBy(
         locationsToProbe,
-        [(w) => w.imports.length, (w) => w.exports.length, (w) => w.distanceFromEngineeredAsteroid, (w) => w.symbol],
-        ['desc', 'desc', 'asc', 'asc'],
+        [(w) => w.distanceFromEngineeredAsteroid, (w) => w.symbol],
+        ['asc', 'asc'],
       )
       const sortedProbes = lodash.orderBy(probes, [(s) => s.label])
       sortedProbes.forEach((probe, ix) => {
         if (probe.isCommanded) return
         log.info('command', `Spawning worker for ${probe.label}`)
         probe.isCommanded = true
-        probeActorFactory(probe, agent, act, sortedProbeLocations[ix])
+        const monitorWaypoint = probes.length > 1 ? sortedProbeLocations[ix] : waypoints.find((x) => x.symbol === probe.nav.waypointSymbol)
+        invariant(monitorWaypoint, 'Expected to find a monitor waypoint')
+        probeActorFactory(probe, agent, act, monitorWaypoint)
       })
     }
 
     const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
     // TODO: don't hardcode the price
-    if (miningDrones.length < config.purchases.mining && (agent.data?.credits ?? 0) > 50_000) {
+    if (miningDrones.length < config.purchases.mining && (agent.data?.credits ?? 0) > 75_000) {
       await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE')
       return
     } else if (config.strategy.mine) {
@@ -68,6 +70,7 @@ export async function startup() {
     }
 
     const shuttles = ships.filter((s) => s.frame.symbol === 'FRAME_SHUTTLE')
+    // TODO: add price
     if (shuttles.length < config.purchases.shuttles) {
       await act.purchaseShip(commandShip, 'SHIP_LIGHT_SHUTTLE')
       return
@@ -101,10 +104,9 @@ export async function startup() {
 
     if (await systemReconLogic(commandShip, agent)) return
 
-    //if (await contractTraderLogic(commandShip, agent))
-
-    const supplyLogic = supplyLogicFactory(act, engineeredAsteroid, ships, supplyChainIgnore[0])
-    if (await supplyLogic(commandShip, agent)) return
+    if (await contractTraderLogic(commandShip, agent)) return
+    // const supplyLogic = supplyLogicFactory(act, engineeredAsteroid, ships, supplyChainIgnore[0])
+    // if (await supplyLogic(commandShip, agent)) return
 
     await shuttleLogic(commandShip, agent)
   })

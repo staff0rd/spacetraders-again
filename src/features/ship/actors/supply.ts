@@ -56,16 +56,20 @@ export const supplyLogicFactory =
       }
     } else throw new Error(`Unknown action: ${currentAction}`)
 
-    const { seconds, distance } = shipCooldownRemaining(ship)
-    if (ship.nav.waypointSymbol === miningLocation.symbol) {
-      if (seconds > 0) {
-        log.info('ship', `${ship.label} will cooldown, ready ${distance}`)
-        await act.wait(1000 * seconds)
-        return false
-      } else {
-        await act.survey(ship)
-        return true
-      }
-    }
-    return false
+    return await survey(ship, miningLocation, act)
   }
+
+export const survey = async (ship: ShipEntity, waypoint: WaypointEntity, act: Awaited<ReturnType<typeof getActor>>) => {
+  const { seconds, distance } = shipCooldownRemaining(ship)
+  if (ship.nav.waypointSymbol === waypoint.symbol) {
+    if (seconds > 0) {
+      log.info('ship', `${ship.label} will cooldown, ready ${distance}`)
+      await act.wait(1000 * seconds)
+      return true
+    } else {
+      await act.survey(ship)
+      return true
+    }
+  }
+  return false
+}

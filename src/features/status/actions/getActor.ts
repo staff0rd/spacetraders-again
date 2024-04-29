@@ -12,7 +12,7 @@ import { ShipAction, ShipActionType, ShipEntity } from '../../ship/ship.entity'
 import { SurveyEntity } from '../../survey/survey.entity'
 import { getBestTradeRoutes } from '../../trade/getBestTradeRoute'
 import { getPages, updateWaypoint } from '../../waypoints/getWaypoints'
-import { getGraph, getShortestPath } from '../../waypoints/pathfinding'
+import { distancePoint, getGraph, getShortestPath } from '../../waypoints/pathfinding'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { AgentEntity } from '../agent.entity'
 import { apiFactory } from '../apiFactory'
@@ -137,9 +137,10 @@ export const getActor = async (
     surveys.push(...entities)
   }
 
-  const scanWaypoint = async (symbol: string) => {
+  const scanWaypoint = async (symbol: string, shipArrival?: string) => {
     const em = getEntityManager()
     const waypoint = await em.getRepository(WaypointEntity).findOneOrFail({ resetDate, symbol })
+    if (shipArrival && waypoint.lastMarketplaceScan && new Date(waypoint.lastMarketplaceScan) > new Date(shipArrival)) return
     await updateWaypoint(waypoint, agent, api)
     await em.persistAndFlush(waypoint)
     const index = waypoints.findIndex((w) => w.symbol === symbol)
@@ -396,14 +397,17 @@ export const getActor = async (
 
   const wait = async (delayMs: number) => new Promise((resolve) => setTimeout(resolve, delayMs))
 
+  const getCloseMarkets = () =>
+    waypoints.filter((x) => x.imports.length + x.exports.length > 0 && distancePoint({ x: x.x, y: x.y }, { x: 0, y: 0 }) < 200)
+
   const findClosestUnvisitedMarket = (ship: ShipEntity) => {
-    const markets = waypoints.filter((x) => x.exchange.filter((e) => e !== 'FUEL').length || x.imports.length || x.exports.length)
-    const unvisitedMarkets = markets.filter((x) => !x.tradeGoods)
+    const unvisitedMarkets = getCloseMarkets().filter((x) => !x.tradeGoods)
     const shipyards = waypoints.filter((x) => x.shipyard)
     const unvisitedShipyards = shipyards.filter((x) => !x.ships?.length)
     const unvisited = [...unvisitedMarkets, ...unvisitedShipyards]
     if (!unvisited.length) return
-    log.info('ship', `${ship.label} There are ${unvisited.length} unvisited markets or shipyards`)
+    const labelled = unvisited.map((x) => x.label).join(', ')
+    log.info('ship', `${ship.label} There are ${unvisited.length} unvisited markets or shipyards: ${labelled}`)
     return getClosest(unvisited, ship.nav.route.destination)
   }
 
@@ -476,9 +480,21 @@ export const getActor = async (
       )
       .map((survey) => ({ survey, count: count(survey), ratio: count(survey) / survey.data.deposits.length }))
 
-    const ordered = lodash.orderBy(relevantSurveys, (x) => x.ratio, 'desc')
+    invariant(agent.contract, 'Expected agent to have a contract')
+    const {
+      fulfilled,
+      terms: { deliver },
+    } = agent.contract!
+    const [{ tradeSymbol }] = deliver!
+    invariant(tradeSymbol, 'Expected contract to have a deliver term')
+
+    const ordered = lodash.orderBy(
+      relevantSurveys,
+      [(x) => !fulfilled && x.survey.data.deposits.some((d) => d.symbol === tradeSymbol), (x) => x.ratio],
+      ['desc', 'desc'],
+    )
     const surveyEntity = ordered[0]?.survey
-    const survey = surveyEntity.data
+    const survey = surveyEntity?.data
     try {
       const {
         data: {

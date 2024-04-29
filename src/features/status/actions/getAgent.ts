@@ -26,9 +26,10 @@ export const updateAgentFactory = (token: string, resetDate: string) => async (a
 
 export const getAgent = async (resetDate: string) => {
   const em = getEntityManager()
-  const existing = await em.findOne(AgentEntity, { resetDate })
+  const existing = await em.findOne(AgentEntity, { resetDate, isRetired: false })
   if (!existing) {
     const symbol = AgentEntity.generateSymbol()
+    log.warn('agent', `Creating new agent with symbol ${symbol}`)
     const {
       data: {
         data: { agent, token },

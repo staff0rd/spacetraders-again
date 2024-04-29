@@ -35,7 +35,7 @@ export const decisionMaker = async (
       const { seconds, distance } = shipArriving(ship)
       if (seconds <= 0) {
         if (shouldUpdateWaypoint) {
-          await act.scanWaypoint(ship.nav.waypointSymbol)
+          await act.scanWaypoint(ship.nav.waypointSymbol, ship.nav.route.arrival)
         }
 
         await decisions(ship, agent)

@@ -4,6 +4,7 @@ import { getActor } from '../../status/actions/getActor'
 import { AgentEntity } from '../../status/agent.entity'
 import { decisionMaker } from '../../status/decisionMaker'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
+import { survey } from './supply'
 
 export const shuttleActorFactory = (
   shuttle: ShipEntity,
@@ -51,5 +52,8 @@ export const shuttleLogicFactory =
         return
       }
     } else throw new Error(`Unknown action: ${currentAction}`)
-    await act.wait(1000 * 10)
+
+    const performedSurveyAction = await survey(ship, miningLocation, act)
+
+    if (!performedSurveyAction) await act.wait(1000 * 10)
   }

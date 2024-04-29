@@ -19,6 +19,9 @@ export class AgentEntity {
   @Property({ columnType: 'json' })
   data: Agent
 
+  @Property({ default: false })
+  isRetired: boolean = false
+
   constructor(resetDate: string, token: string, agent: Agent) {
     this.resetDate = resetDate
     this.token = token
