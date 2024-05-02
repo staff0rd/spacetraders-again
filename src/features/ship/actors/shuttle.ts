@@ -51,6 +51,8 @@ export const shuttleLogicFactory =
         await act.sellUnwantedGoods(ship, [agent.contractGood.tradeSymbol as TradeSymbol])
         return
       }
+    } else if (currentAction === ShipActionType.TRADE) {
+      await act.updateShipAction(ship, { type: ShipActionType.SELL })
     } else throw new Error(`Unknown action: ${currentAction}`)
 
     const performedSurveyAction = await survey(ship, miningLocation, act)
