@@ -44,7 +44,7 @@ export const shuttleLogicFactory =
       if (ship.cargo.units === 0) {
         await act.updateShipAction(ship, { type: ShipActionType.FILL })
         return
-      } else if (ship.cargo.inventory.find((p) => p.symbol === agent.contractGood.tradeSymbol)?.units) {
+      } else if (ship.cargo.inventory.find((p) => p.symbol === agent.contractGood.tradeSymbol)?.units && agent.contractUnitsRemaining > 0) {
         await act.deliverContractGoods(ship)
         return
       } else {
@@ -55,7 +55,7 @@ export const shuttleLogicFactory =
       await act.updateShipAction(ship, { type: ShipActionType.SELL })
     } else throw new Error(`Unknown action: ${currentAction}`)
 
-    const performedSurveyAction = await survey(ship, miningLocation, act)
+    const performedSurveyAction = ship.mounts.some((x) => x.symbol.includes('SURVEYOR')) && (await survey(ship, miningLocation, act))
 
     if (!performedSurveyAction) await act.wait(1000 * 10)
   }
