@@ -59,11 +59,20 @@ export const contractTraderLogicFactory =
       log.info('ship', `${ship.label} will gain ${Math.abs(reward - cost).toLocaleString()} credits on contract for ${tradeSymbol}`)
     }
 
+    const toBuy = Math.min(unitsToGo, ship.cargo.capacity, tradeGood.tradeVolume)
+    const priceNow = toBuy * tradeGood.purchasePrice
+    if (priceNow > agent.data.credits) {
+      log.warn('ship', `${ship.label} cannot afford ${priceNow.toLocaleString()} credits for ${toBuy} ${tradeSymbol}`)
+      return false
+    }
+
     if (ship.nav.waypointSymbol !== waypoint.symbol) {
       await act.navigateShip(ship, waypoint)
       return true
     } else {
-      await act.purchaseGoods(ship, tradeSymbol as TradeSymbol, Math.min(unitsToGo, ship.cargo.capacity, tradeGood.tradeVolume))
+      await act.scanMarketIfNeccessary(ship)
+
+      await act.purchaseGoods(ship, tradeSymbol as TradeSymbol, toBuy)
       return true
     }
   }
