@@ -295,7 +295,7 @@ export const getActor = async (
     await dockShip(ship)
 
     const units = ship.cargo.inventory.find((p) => p.symbol === supply.import)?.units
-    invariant(units, `Expected ${ship.label} to have ${supply.import} to deliver`)
+    invariant(units, `Expected ${ship.label} to have ${supply.import} to deliver supply goods`)
     await sellGood(ship, supply.import, units)
     await scanWaypoint(ship.nav.waypointSymbol)
   }
@@ -310,7 +310,7 @@ export const getActor = async (
     invariant(destination, `Expected waypoint ${deliver.destinationSymbol} to exist`)
     const contractUnitBalance = deliver.unitsRequired - deliver.unitsFulfilled
     const units = Math.min(contractUnitBalance, ship.cargo.inventory.find((p) => p.symbol === deliver.tradeSymbol)?.units || 0)
-    invariant(units > 0, `Expected ${ship.label} to have ${deliver.tradeSymbol} to deliver`)
+    invariant(units > 0, `Expected ${ship.label} to have ${deliver.tradeSymbol} to deliver contract goods`)
 
     if (ship.nav.waypointSymbol !== destination.symbol) {
       await navigateShip(ship, destination)
@@ -480,17 +480,21 @@ export const getActor = async (
       )
       .map((survey) => ({ survey, count: count(survey), ratio: count(survey) / survey.data.deposits.length }))
 
-    invariant(agent.contract, 'Expected agent to have a contract')
-    const {
-      fulfilled,
-      terms: { deliver },
-    } = agent.contract!
-    const [{ tradeSymbol }] = deliver!
-    invariant(tradeSymbol, 'Expected contract to have a deliver term')
+    const contractTradeSymbol = (() => {
+      if (agent.contract) {
+        const {
+          fulfilled,
+          terms: { deliver },
+        } = agent.contract
+        if (fulfilled) return null
+        const [{ tradeSymbol: contractTradeSymbol }] = deliver!
+        return contractTradeSymbol
+      }
+    })()
 
     const ordered = lodash.orderBy(
       relevantSurveys,
-      [(x) => !fulfilled && x.survey.data.deposits.some((d) => d.symbol === tradeSymbol), (x) => x.ratio],
+      [(x) => !contractTradeSymbol || x.survey.data.deposits.some((d) => d.symbol === contractTradeSymbol), (x) => x.ratio],
       ['desc', 'desc'],
     )
     const surveyEntity = ordered[0]?.survey

@@ -33,9 +33,16 @@ export class AgentEntity {
     return this.contract.terms.deliver[0]
   }
 
+  get contractUnitsRemaining() {
+    const deliveries = this.contract!.terms.deliver![0]
+    const unitsToGo = deliveries?.unitsRequired - deliveries?.unitsFulfilled
+    return unitsToGo ?? 0
+  }
+
   static generateSymbol(): string {
     const result = faker.internet.userName()
     if (result.length < 3 || result.length > 14) return AgentEntity.generateSymbol()
+    if (result.match(/\./)) return AgentEntity.generateSymbol()
     return result
   }
 }

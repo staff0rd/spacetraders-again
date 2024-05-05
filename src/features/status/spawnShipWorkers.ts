@@ -49,12 +49,14 @@ export const spawnShipWorkers = async (
       actual: p.nav.waypointSymbol,
     }))
 
-    actualProbeLocations.forEach((x) => {
-      if (x.actual === x.expected) log.info('probe', `${x.probeLabel}: ✅ ${x.actual}`)
-      else {
-        log.info('probe', `${x.probeLabel}: ❌ expected ${x.expected}, but targeting ${x.actual}`)
-      }
-    })
+    if (actualProbeLocations.length > 1) {
+      actualProbeLocations.forEach((x) => {
+        if (x.actual === x.expected) log.info('probe', `${x.probeLabel}: ✅ ${x.actual}`)
+        else {
+          log.info('probe', `${x.probeLabel}: ❌ expected ${x.expected}, but targeting ${x.actual}`)
+        }
+      })
+    }
 
     sortedProbes.forEach((probe, ix) => {
       if (probe.isCommanded) return
@@ -68,7 +70,7 @@ export const spawnShipWorkers = async (
 
   const miningDrones = ships.filter((s) => s.frame.symbol === 'FRAME_DRONE')
   // TODO: don't hardcode the price
-  if (commandShip && miningDrones.length < config.purchases.mining && (agent.data?.credits ?? 0) > 75_000) {
+  if (commandShip && miningDrones.length < config.purchases.mining && (agent.data?.credits ?? 0) > 100_000) {
     await act.purchaseShip(commandShip, 'SHIP_MINING_DRONE')
     return true
   } else if (config.strategy.mine) {
