@@ -1,6 +1,6 @@
 import createGraph from 'ngraph.graph'
 import { aStar } from 'ngraph.path'
-import { ShipNavFlightMode } from '../../../api'
+import { ShipNavFlightMode } from '../../api'
 import { ShipEntity } from '../ship/ship.entity'
 import { WaypointEntity } from './waypoint.entity'
 

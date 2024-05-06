@@ -1,5 +1,5 @@
 import lodash from 'lodash'
-import { TradeSymbol, WaypointTraitSymbol } from '../../../api'
+import { TradeSymbol, WaypointTraitSymbol } from '../../api'
 import { getConfig } from '../../config'
 import { invariant } from '../../invariant'
 import { log } from '../../logging/configure-logging'

@@ -1,16 +1,7 @@
 import { InfluxDB, Point, WriteApi } from '@influxdata/influxdb-client'
 import lodash from 'lodash'
 import { hostname } from 'os'
-import {
-  ActivityLevel,
-  Agent,
-  Contract,
-  Extraction,
-  MarketTradeGood,
-  MarketTransaction,
-  ShipyardTransaction,
-  SupplyLevel,
-} from '../../../api'
+import { ActivityLevel, Agent, Contract, Extraction, MarketTradeGood, MarketTransaction, ShipyardTransaction, SupplyLevel } from '../../api'
 import { getConfig } from '../../config'
 import { AgentEntity } from './agent.entity'
 

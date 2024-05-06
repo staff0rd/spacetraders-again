@@ -1,4 +1,4 @@
-import { Ship } from '../../api'
+import { Ship } from '../api'
 import { ShipEntity } from '../features/ship/ship.entity'
 import { AgentEntity } from '../features/status/agent.entity'
 import { getEntityManager } from '../orm'

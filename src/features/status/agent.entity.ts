@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core'
-import { Agent, Contract } from '../../../api'
+import { Agent, Contract } from '../../api'
 
 @Entity({ tableName: 'agent' })
 export class AgentEntity {

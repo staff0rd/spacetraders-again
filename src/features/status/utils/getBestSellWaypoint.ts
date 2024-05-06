@@ -1,5 +1,5 @@
 import lodash from 'lodash'
-import { TradeSymbol } from '../../../../api'
+import { TradeSymbol } from '../../../api'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 
 export const getBestSellWaypoint = (waypoints: WaypointEntity[], tradeGood: TradeSymbol) => {

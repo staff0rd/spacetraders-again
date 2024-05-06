@@ -1,6 +1,6 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core'
 import { v4 as uuidv4 } from 'uuid'
-import { Survey } from '../../../api'
+import { Survey } from '../../api'
 
 @Entity({ tableName: 'survey' })
 export class SurveyEntity {

@@ -1,10 +1,10 @@
 import { EntityData } from '@mikro-orm/core'
 import { Entries } from 'type-fest'
-import { DefaultApiFactory } from '../../../../api'
+import { DefaultApiFactory } from '../../../api'
+import { apiFactory } from '../../../apiFactory'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
 import { AgentEntity } from '../agent.entity'
-import { apiFactory } from '../apiFactory'
 
 export const updateAgentFactory = (token: string, resetDate: string) => async (agent: AgentEntity, data: EntityData<AgentEntity>) => {
   const agentKeys = Object.keys(agent)

@@ -1,5 +1,5 @@
 import lodash from 'lodash'
-import { SupplyLevel, TradeSymbol } from '../../../api'
+import { SupplyLevel, TradeSymbol } from '../../api'
 import { Supply } from '../ship/actors/supply'
 import { ShipEntity } from '../ship/ship.entity'
 import { distancePoint, distanceWaypoint, getGraph, getShortestPath, getTravelTime } from '../waypoints/pathfinding'

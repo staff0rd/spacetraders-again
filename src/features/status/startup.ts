@@ -1,4 +1,4 @@
-import { TradeSymbol } from '../../../api'
+import { TradeSymbol } from '../../api'
 import { getConfig } from '../../config'
 import { invariant } from '../../invariant'
 import { init } from '../init'

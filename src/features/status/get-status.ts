@@ -1,5 +1,5 @@
 import { Point } from '@influxdata/influxdb-client'
-import { DefaultApiFactory } from '../../../api'
+import { DefaultApiFactory } from '../../api'
 import { log } from '../../logging/configure-logging'
 import { influxWrite } from './influxWrite'
 

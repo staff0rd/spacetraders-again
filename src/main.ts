@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { program } from 'commander'
-import { DefaultApiFactory } from '../api'
+import { DefaultApiFactory } from './api'
 import { getStatus } from './features/status/get-status'
 import { startup } from './features/status/startup'
 import { routeTest } from './features/waypoints/routeTest'

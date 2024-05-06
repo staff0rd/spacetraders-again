@@ -1,4 +1,4 @@
-import { TradeSymbol } from '../../../../api'
+import { TradeSymbol } from '../../../api'
 import { invariant } from '../../../invariant'
 import { log } from '../../../logging/configure-logging'
 import { getActor } from '../../status/actions/getActor'

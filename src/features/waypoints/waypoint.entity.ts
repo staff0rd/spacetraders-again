@@ -1,5 +1,5 @@
 import { Entity, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core'
-import { MarketTradeGood, Shipyard, TradeSymbol } from '../../../api'
+import { MarketTradeGood, Shipyard, TradeSymbol } from '../../api'
 
 @Entity({ tableName: 'waypoint' })
 export class WaypointEntity {

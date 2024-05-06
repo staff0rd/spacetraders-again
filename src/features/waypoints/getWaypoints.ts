@@ -1,4 +1,4 @@
-import { Meta, WaypointTraitSymbol } from '../../../api'
+import { Meta, WaypointTraitSymbol } from '../../api'
 import { invariant } from '../../invariant'
 import { getEntityManager } from '../../orm'
 import { getAgent } from '../status/actions/getAgent'

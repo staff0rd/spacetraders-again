@@ -26,5 +26,18 @@
       ],
       "env": {}
     },
+    {
+      "name": "Frontend",
+      "type": "node",
+      "console": "integratedTerminal",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "cwd": "${workspaceFolder}/web",
+      "env": {}
+    },
   ]
 }

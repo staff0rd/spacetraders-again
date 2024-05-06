@@ -1,4 +1,4 @@
-import { DefaultApiFactory } from '../../api'
+import { DefaultApiFactory } from '../api'
 import { updateShips } from '../db/updateShips'
 import { invariant } from '../invariant'
 import { getEntityManager } from '../orm'

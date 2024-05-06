@@ -14,7 +14,7 @@ import {
   ShipReactor,
   ShipRegistration,
   TradeSymbol,
-} from '../../../api'
+} from '../../api'
 
 export enum ShipActionType {
   SELL = 'SELL',

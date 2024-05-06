@@ -1,4 +1,4 @@
-import { Ship, TradeSymbol } from '../../../../api'
+import { Ship, TradeSymbol } from '../../../api'
 import { log } from '../../../logging/configure-logging'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { getBestSellWaypoint } from './getBestSellWaypoint'
