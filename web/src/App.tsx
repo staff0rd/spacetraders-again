@@ -1,14 +1,17 @@
 import CssBaseline from '@mui/material/CssBaseline'
 
-import { Agent } from './Agent'
-import { Token } from './Token'
+import { Box } from '@mui/material'
+import { Agent } from './features/agent/Agent'
+import { TokenForm } from './features/agent/TokenForm'
 
 function App() {
   return (
     <>
       <CssBaseline />
-      <Token />
-      <Agent />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', width: '100%' }}>
+        <TokenForm />
+        <Agent />
+      </Box>
     </>
   )
 }
