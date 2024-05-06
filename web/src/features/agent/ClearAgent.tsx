@@ -7,7 +7,6 @@ import { tokenAtom } from '../../data'
 export const ClearAgent = () => {
   const [, persistToken] = useAtom(tokenAtom)
   const [open, setOpen] = useState(false)
-  const handleOpen = () => setOpen(true)
   const handleClose = () => setOpen(false)
 
   return (
@@ -28,7 +27,7 @@ export const ClearAgent = () => {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <Paper sx={{ p: 4, width: '50vh' }}>
+        <Paper sx={{ p: 4, maxWidth: '80%' }}>
           <Typography variant="h6" component="h2">
             Clearing your token will remove it from storage and disconnect this app from the spacetraders api
           </Typography>
