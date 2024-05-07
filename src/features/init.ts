@@ -2,10 +2,11 @@ import { DefaultApiFactory } from '../api'
 import { updateShips } from '../db/updateShips'
 import { invariant } from '../invariant'
 import { getEntityManager } from '../orm'
+import { getPages } from '../util/getPages'
 import { getActor } from './status/actions/getActor'
 import { getAgent } from './status/actions/getAgent'
 import { SurveyEntity } from './survey/survey.entity'
-import { getPages, getWaypoints } from './waypoints/getWaypoints'
+import { getWaypoints } from './waypoints/getWaypoints'
 
 export async function init(performWaypointScan: boolean) {
   const {

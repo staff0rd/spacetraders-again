@@ -39,5 +39,18 @@
       "cwd": "${workspaceFolder}/web",
       "env": {}
     },
+    {
+      "name": "Deploy Frontend",
+      "type": "node",
+      "console": "integratedTerminal",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "deploy"
+      ],
+      "cwd": "${workspaceFolder}/web",
+      "env": {}
+    },
   ]
 }

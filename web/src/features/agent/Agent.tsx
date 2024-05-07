@@ -1,19 +1,39 @@
-import { Alert, Box, CircularProgress, Stack } from '@mui/material'
-import { useAtom } from 'jotai'
-import { getErrorMessage } from '../../backend/util/get-error-message'
-import { agentAtom } from '../../data'
+import HomeIcon from '@mui/icons-material/Home'
+import { Box, IconButton, Stack } from '@mui/material'
+import { useResetAtom } from 'jotai/utils'
+import { agentAtom, getSystem, systemAtom } from '../../data'
 import { ClearAgent } from './ClearAgent'
+import { JumpGate } from './JumpGate'
+import { RenderAtom, RenderLoadableAtom } from './RenderLoadableAtom'
+import { Waypoints } from './Waypoints'
 
 export const Agent = () => {
-  const [value] = useAtom(agentAtom)
-  if (value.state === 'loading') return <CircularProgress />
-  if (value.state === 'hasError') return <Alert severity="error">{getErrorMessage(value.error)}</Alert>
-  if (value.data === undefined) return null
-
+  const resetSystem = useResetAtom(systemAtom)
   return (
-    <Stack direction="row" alignItems="center" spacing={1}>
-      <Box>Agent: {value.data?.data.data.symbol}</Box>
-      <ClearAgent />
-    </Stack>
+    <RenderLoadableAtom
+      atom={agentAtom}
+      render={(agent) => (
+        <Stack spacing={2}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Box>Agent: {agent.symbol}</Box>
+            <ClearAgent />
+          </Stack>
+          <Box>Credits: ${agent.credits.toLocaleString()}</Box>
+          <RenderAtom
+            atom={systemAtom}
+            render={(system) => (
+              <Box>
+                System: {system}{' '}
+                <IconButton disabled={system === getSystem(agent.headquarters)} onClick={resetSystem}>
+                  <HomeIcon />
+                </IconButton>
+              </Box>
+            )}
+          />
+          <Waypoints />
+          <JumpGate />
+        </Stack>
+      )}
+    />
   )
 }

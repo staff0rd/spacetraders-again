@@ -1,5 +1,5 @@
 import DeleteIcon from '@mui/icons-material/Delete'
-import { Box, Button, IconButton, Modal, Paper, Typography } from '@mui/material'
+import { Alert, Box, Button, IconButton, Modal, Stack, Typography } from '@mui/material'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 import { tokenAtom } from '../../data'
@@ -27,26 +27,26 @@ export const ClearAgent = () => {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <Paper sx={{ p: 4, maxWidth: '80%' }}>
-          <Typography variant="h6" component="h2">
-            Clearing your token will remove it from storage and disconnect this app from the spacetraders api
-          </Typography>
+        <Alert severity="warning" sx={{ p: 3, maxWidth: 400 }}>
+          <Stack spacing={3}>
+            <Typography>Clearing your token will remove it from storage and disconnect this app from the spacetraders api.</Typography>
 
-          <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'end', width: '100%', gap: 2 }}>
-            <Button
-              variant="contained"
-              onClick={() => {
-                setOpen(false)
-                persistToken('')
-              }}
-            >
-              Clear
-            </Button>
-            <Button onClick={() => setOpen(false)} variant="outlined">
-              Cancel
-            </Button>
-          </Box>
-        </Paper>
+            <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'end', width: '100%', gap: 2 }}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setOpen(false)
+                  persistToken('')
+                }}
+              >
+                Clear
+              </Button>
+              <Button onClick={() => setOpen(false)} variant="outlined">
+                Cancel
+              </Button>
+            </Box>
+          </Stack>
+        </Alert>
       </Modal>
     </>
   )

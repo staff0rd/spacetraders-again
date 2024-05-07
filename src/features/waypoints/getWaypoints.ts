@@ -1,22 +1,11 @@
-import { Meta, WaypointTraitSymbol } from '../../api'
+import { WaypointTraitSymbol } from '../../api'
 import { invariant } from '../../invariant'
 import { getEntityManager } from '../../orm'
+import { getPages } from '../../util/getPages'
 import { getAgent } from '../status/actions/getAgent'
 import { AgentEntity } from '../status/agent.entity'
 import { writeMarketTradeGood, writeMarketTransaction } from '../status/influxWrite'
 import { WaypointEntity } from './waypoint.entity'
-
-export const getPages = async <T>(endpoint: (page: number, count: number) => Promise<{ data: { data: T[]; meta: Meta } }>) => {
-  const pageSize = 20
-  const {
-    data: { data, meta },
-  } = await endpoint(1, pageSize)
-  if (meta.total > meta.page * meta.limit) {
-    const all = await Promise.all(Array.from({ length: Math.ceil(meta.total / meta.limit) - 1 }, (_, i) => endpoint(i + 2, pageSize)))
-    return data.concat(all.flatMap((r) => r.data.data))
-  }
-  return data
-}
 
 export async function updateWaypoint(waypoint: WaypointEntity, agent: AgentEntity, api: Awaited<ReturnType<typeof getAgent>>['api']) {
   if (waypoint.traits.includes(WaypointTraitSymbol.Marketplace)) {
