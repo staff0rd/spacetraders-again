@@ -8,7 +8,16 @@ function App() {
   return (
     <>
       <CssBaseline />
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', width: '100%' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          width: '100%',
+          height: '100%',
+        }}
+      >
         <TokenForm />
         <Agent />
       </Box>
