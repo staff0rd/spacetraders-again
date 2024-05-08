@@ -25,7 +25,7 @@ export const TokenForm = () => {
   if (persistedToken && agent.state == 'hasData') return null
 
   return (
-    <FormControl>
+    <FormControl sx={{ maxWidth: 300 }}>
       <InputLabel htmlFor="my-input">Token</InputLabel>
       <Input
         id="token"

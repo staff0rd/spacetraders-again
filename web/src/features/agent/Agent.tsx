@@ -4,6 +4,7 @@ import { useResetAtom } from 'jotai/utils'
 import { agentAtom, getSystem, systemAtom } from '../../data'
 import { ClearAgent } from './ClearAgent'
 import { JumpGate } from './JumpGate'
+import { Markets } from './Markets'
 import { RenderAtom, RenderLoadableAtom } from './RenderLoadableAtom'
 import { Waypoints } from './Waypoints'
 
@@ -11,6 +12,7 @@ export const Agent = () => {
   const resetSystem = useResetAtom(systemAtom)
   return (
     <RenderLoadableAtom
+      title="Agent"
       atom={agentAtom}
       render={(agent) => (
         <Stack spacing={2}>
@@ -31,6 +33,7 @@ export const Agent = () => {
             )}
           />
           <Waypoints />
+          <Markets />
           <JumpGate />
         </Stack>
       )}

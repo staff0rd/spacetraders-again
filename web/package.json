@@ -9,7 +9,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
-    "deploy": "npm run build && rm -rf ~/git/blog/spacetraders/dist && cp -r dist ~/git/blog/spacetraders"
+    "deploy": "npm run build && rm -rf ../../blog/spacetraders/assets && mv dist/assets ../../blog/spacetraders/assets && node ./package.cjs ./dist/index.html && mv ./out.html ../../blog/_includes/spacetraders.html"
   },
   "dependencies": {
     "@emotion/styled": "^11.11.5",
@@ -33,6 +33,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
+    "node-html-parser": "^6.1.13",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vite-tsconfig-paths": "^4.3.2"

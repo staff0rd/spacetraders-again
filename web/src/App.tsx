@@ -1,27 +1,22 @@
-import CssBaseline from '@mui/material/CssBaseline'
-
-import { Box } from '@mui/material'
+import { Box, ScopedCssBaseline } from '@mui/material'
 import { Agent } from './features/agent/Agent'
 import { TokenForm } from './features/agent/TokenForm'
 
+document.getElementById('loading')?.remove()
+
 function App() {
   return (
-    <>
-      <CssBaseline />
+    <ScopedCssBaseline>
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
           flexDirection: 'column',
-          width: '100%',
-          height: '100%',
         }}
       >
         <TokenForm />
         <Agent />
       </Box>
-    </>
+    </ScopedCssBaseline>
   )
 }
 
