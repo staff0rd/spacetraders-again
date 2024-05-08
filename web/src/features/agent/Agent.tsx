@@ -33,8 +33,8 @@ export const Agent = () => {
             )}
           />
           <Waypoints />
-          <Markets />
           <JumpGate />
+          <Markets />
         </Stack>
       )}
     />
