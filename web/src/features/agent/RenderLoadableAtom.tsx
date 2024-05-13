@@ -1,17 +1,18 @@
-import { Alert, Box, CircularProgress, Stack } from '@mui/material'
+import { Alert, Box, CircularProgress, LinearProgress, Stack } from '@mui/material'
 import { blueGrey } from '@mui/material/colors'
 import { Atom, useAtom } from 'jotai'
 import { Loadable } from 'jotai/vanilla/utils/loadable'
-import { PropsWithChildren } from 'react'
+import { PropsWithChildren, ReactNode } from 'react'
 import { getErrorMessage } from '../../backend/util/get-error-message'
 
 type RenderLoadableAtomProps<T> = {
   atom: Atom<Loadable<Promise<T | undefined>>>
   render: (data: T) => JSX.Element
-  title: string
+  title: string | ReactNode
+  progress?: 'circular' | 'linear'
 }
 
-function NotLoaded({ title, children }: PropsWithChildren<{ title: string }>) {
+function NotLoaded({ title, children }: PropsWithChildren<{ title: ReactNode }>) {
   return (
     <Stack>
       <Box>{title}</Box>
@@ -20,20 +21,10 @@ function NotLoaded({ title, children }: PropsWithChildren<{ title: string }>) {
   )
 }
 
-export function RenderLoadableAtom<T>({ atom, render, title }: RenderLoadableAtomProps<T>) {
+export function RenderLoadableAtom<T>({ atom, render, title, progress = 'circular' }: RenderLoadableAtomProps<T>) {
   const [value] = useAtom(atom)
   if (value.state === 'loading')
-    return (
-      <NotLoaded title={title}>
-        <CircularProgress
-          sx={{
-            '&.MuiCircularProgress-root': {
-              color: `${blueGrey[800]} !important`,
-            },
-          }}
-        />
-      </NotLoaded>
-    )
+    return <NotLoaded title={title}>{progress === 'circular' ? <CircularProgressLoader /> : <LinearProgressLoader />}</NotLoaded>
   if (value.state === 'hasError')
     return (
       <NotLoaded title={title}>
@@ -48,6 +39,30 @@ export function RenderLoadableAtom<T>({ atom, render, title }: RenderLoadableAto
 type RenderAtomProps<T> = {
   atom: Atom<T>
   render: (data: NonNullable<T>) => JSX.Element
+}
+
+function LinearProgressLoader() {
+  return (
+    <LinearProgress
+      sx={{
+        '&.MuiLinearProgress-root': {
+          color: `${blueGrey[800]} !important`,
+        },
+      }}
+    />
+  )
+}
+
+function CircularProgressLoader() {
+  return (
+    <CircularProgress
+      sx={{
+        '&.MuiCircularProgress-root': {
+          color: `${blueGrey[800]} !important`,
+        },
+      }}
+    />
+  )
 }
 
 export function RenderAtom<T>({ atom, render }: RenderAtomProps<T>) {

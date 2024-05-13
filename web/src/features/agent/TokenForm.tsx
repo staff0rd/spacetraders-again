@@ -22,7 +22,7 @@ export const TokenForm = () => {
     if (!persistedToken) setLocalToken('')
   }, [persistedToken])
 
-  if (persistedToken && agent.state == 'hasData') return null
+  if (persistedToken && (agent.state == 'hasData' || agent.state === 'loading')) return null
 
   return (
     <FormControl sx={{ maxWidth: 300 }}>

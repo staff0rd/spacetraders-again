@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios'
 import { atom } from 'jotai'
-import { atomWithDefault, atomWithStorage, loadable } from 'jotai/utils'
+import { atomFamily, atomWithDefault, atomWithStorage, loadable } from 'jotai/utils'
 import { WaypointTraitSymbol, WaypointType } from './backend/api'
 import { apiFactory } from './backend/apiFactory'
 import { invariant } from './backend/invariant'
@@ -55,18 +55,36 @@ export const waypointsAtom = loadable(
   }),
 )
 
-export const marketsAtom = loadable(
+export const waypointAtomFamily = atomFamily((symbol: string) =>
   atom(async (get) => {
-    const api = get(apiAtom)
-    const systemSymbol = get(systemAtom)
-    const waypoints = get(waypointsAtom)
-    if (!api || !systemSymbol || waypoints.state !== 'hasData') return
-    const promises = waypoints
-      .data!.filter((x) => x.traits.some((t) => t.symbol === WaypointTraitSymbol.Marketplace))
-      .map((market) => handleError(() => api.systems.getMarket(systemSymbol, market.symbol)))
-    return (await Promise.all(promises)).map((x) => x.data.data)
+    const data = get(waypointsAtom)
+    if (data.state !== 'hasData') return
+    return data.data?.find((x) => x.symbol === symbol)
   }),
 )
+
+export const marketAtomFamily = atomFamily((symbol: string) =>
+  loadable(
+    atom(async (get) => {
+      const api = get(apiAtom)
+      const systemSymbol = get(systemAtom)
+      if (!api || !systemSymbol) return
+      const result = await handleError(() => api.systems.getMarket(systemSymbol, symbol))
+      return result.data.data
+    }),
+  ),
+)
+
+export const selectedMarketSymbolAtom = atom<string | null>(null)
+
+export const marketsAtom = atom(async (get) => {
+  const waypoints = get(waypointsAtom)
+  if (waypoints.state !== 'hasData') return
+  return waypoints.data
+    ?.filter((x) => x.traits.some((t) => t.symbol === WaypointTraitSymbol.Marketplace))
+    .toSorted((a, b) => a.symbol.localeCompare(b.symbol))
+    .map((x) => ({ symbol: x.symbol, atom: marketAtomFamily(x.symbol) }))
+})
 
 export const jumpGateAtom = loadable(
   atom(async (get) => {

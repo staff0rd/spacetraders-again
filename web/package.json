@@ -17,11 +17,13 @@
     "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.16",
     "@mui/styled-engine-sc": "^6.0.0-alpha.18",
+    "date-fns": "^3.6.0",
     "jotai": "^2.8.0",
     "lodash": "^4.17.21",
     "module-alias": "^2.2.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react18-json-view": "^0.2.8",
     "styled-components": "^6.1.9"
   },
   "devDependencies": {
