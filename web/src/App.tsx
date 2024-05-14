@@ -13,8 +13,8 @@ function App() {
           flexDirection: 'column',
         }}
       >
-        <TokenForm />
         <Agent />
+        <TokenForm />
       </Box>
     </ScopedCssBaseline>
   )

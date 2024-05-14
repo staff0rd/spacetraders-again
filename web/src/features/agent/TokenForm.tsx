@@ -1,15 +1,11 @@
-import { FormControl, FormHelperText, Input, InputAdornment, InputLabel } from '@mui/material'
-import { useAtom, useAtomValue } from 'jotai'
+import { FormControl, FormHelperText, Input, InputLabel } from '@mui/material'
+import { useAtom } from 'jotai'
 import { debounce } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { agentAtom, systemSymbolAtom, tokenAtom } from '../../data'
-import { Logout } from './Logout'
+import { agentAtom, tokenAtom } from '../../data'
 
 export const TokenForm = () => {
   const [agent] = useAtom(agentAtom)
-  const navigate = useNavigate()
-  const systemSymbol = useAtomValue(systemSymbolAtom)
   const [persistedToken, persistToken] = useAtom(tokenAtom)
   const [token, setLocalToken] = useState(persistedToken)
   const setPersistedToken = useCallback(
@@ -37,13 +33,6 @@ export const TokenForm = () => {
         aria-describedby="my-helper-text"
         placeholder="Enter your token"
         type="password"
-        endAdornment={
-          persistedToken && (
-            <InputAdornment position="end">
-              <Logout />
-            </InputAdornment>
-          )
-        }
       />
       <FormHelperText id="my-helper-text">This value will be persisted to your browser's local storage</FormHelperText>
     </FormControl>

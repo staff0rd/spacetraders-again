@@ -2,13 +2,12 @@ import { Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import ErrorPage from './Error.tsx'
-import { systemAtom } from './data.ts'
+import { agentAtom, systemAtom } from './data.ts'
 import { JumpGate } from './features/agent/JumpGate.tsx'
 import Market from './features/agent/Market.tsx'
 import { Markets } from './features/agent/Markets.tsx'
 import { Raw } from './features/agent/Raw.tsx'
 import { System } from './features/agent/System.tsx'
-import { Waypoints } from './features/agent/Waypoints.tsx'
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +15,14 @@ export const router = createBrowserRouter([
     element: <App />,
     errorElement: <ErrorPage />,
     children: [
+      {
+        path: 'raw',
+        element: (
+          <Suspense>
+            <Raw atom={agentAtom} />
+          </Suspense>
+        ),
+      },
       {
         path: ':systemSymbol',
         element: <System />,
@@ -39,15 +46,7 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            path: 'waypoints',
-            element: (
-              <Suspense>
-                <Waypoints />
-              </Suspense>
-            ),
-          },
-          {
-            path: 'jumpgate',
+            path: 'jump-gate',
             element: (
               <Suspense>
                 <JumpGate />
