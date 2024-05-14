@@ -29,10 +29,20 @@ export const agentAtom = loadable(
 
 export const getSystem = (symbol: string) => symbol.match(/(.+-.+)?-/)![1]
 
-export const systemAtom = atomWithDefault((get) => {
+export const systemSymbolAtom = atomWithDefault((get) => {
   const agent = get(agentAtom)
-  return agent.state === 'hasData' ? getSystem(agent.data!.headquarters) : null
+  return agent.state === 'hasData' && agent.data ? getSystem(agent.data.headquarters) : null
 })
+
+export const systemAtom = loadable(
+  atom(async (get) => {
+    const api = get(apiAtom)
+    const systemSymbol = get(systemSymbolAtom)
+    if (!api || !systemSymbol) return
+    const result = await api.systems.getSystem(systemSymbol)
+    return result.data.data
+  }),
+)
 
 const handleError = async <T>(doWork: () => Promise<T>) => {
   try {
@@ -49,7 +59,7 @@ const handleError = async <T>(doWork: () => Promise<T>) => {
 export const waypointsAtom = loadable(
   atom(async (get) => {
     const api = get(apiAtom)
-    const systemSymbol = get(systemAtom)
+    const systemSymbol = get(systemSymbolAtom)
     if (!api || !systemSymbol) return
     return handleError(() => getPages((page, count) => api.systems.getSystemWaypoints(systemSymbol, page, count)))
   }),
@@ -67,15 +77,13 @@ export const marketAtomFamily = atomFamily((symbol: string) =>
   loadable(
     atom(async (get) => {
       const api = get(apiAtom)
-      const systemSymbol = get(systemAtom)
+      const systemSymbol = get(systemSymbolAtom)
       if (!api || !systemSymbol) return
       const result = await handleError(() => api.systems.getMarket(systemSymbol, symbol))
       return result.data.data
     }),
   ),
 )
-
-export const selectedMarketSymbolAtom = atom<string | null>(null)
 
 export const marketsAtom = atom(async (get) => {
   const waypoints = get(waypointsAtom)
@@ -90,7 +98,7 @@ export const jumpGateAtom = loadable(
   atom(async (get) => {
     const api = get(apiAtom)
     const waypoints = get(waypointsAtom)
-    const systemSymbol = get(systemAtom)
+    const systemSymbol = get(systemSymbolAtom)
     if (!api || !systemSymbol || waypoints.state !== 'hasData') return
     const jumpGate = waypoints.data!.find((x) => x.type === WaypointType.JumpGate)
     invariant(jumpGate, 'Expected to find jump gate')
@@ -102,7 +110,7 @@ export const jumpGateConnectionsAtom = loadable(
   atom(async (get) => {
     const jumpGate = get(jumpGateAtom)
     const api = get(apiAtom)
-    const systemSymbol = get(systemAtom)
+    const systemSymbol = get(systemSymbolAtom)
     if (jumpGate.state !== 'hasData' || !api || !systemSymbol) return
     const result = await handleError(() => api.systems.getJumpGate(systemSymbol, jumpGate.data!.symbol))
     return result.data.data
@@ -113,7 +121,7 @@ export const jumpGateConstructionAtom = loadable(
   atom(async (get) => {
     const jumpGate = get(jumpGateAtom)
     const api = get(apiAtom)
-    const systemSymbol = get(systemAtom)
+    const systemSymbol = get(systemSymbolAtom)
     if (jumpGate.state !== 'hasData' || !api || !systemSymbol) return
     const result = await handleError(() => api.systems.getConstruction(systemSymbol, jumpGate.data!.symbol))
     return result.data.data

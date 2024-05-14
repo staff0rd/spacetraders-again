@@ -1,12 +1,15 @@
 import { FormControl, FormHelperText, Input, InputAdornment, InputLabel } from '@mui/material'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { debounce } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
-import { agentAtom, tokenAtom } from '../../data'
-import { ClearAgent } from './ClearAgent'
+import { useNavigate } from 'react-router-dom'
+import { agentAtom, systemSymbolAtom, tokenAtom } from '../../data'
+import { Logout } from './Logout'
 
 export const TokenForm = () => {
   const [agent] = useAtom(agentAtom)
+  const navigate = useNavigate()
+  const systemSymbol = useAtomValue(systemSymbolAtom)
   const [persistedToken, persistToken] = useAtom(tokenAtom)
   const [token, setLocalToken] = useState(persistedToken)
   const setPersistedToken = useCallback(
@@ -37,7 +40,7 @@ export const TokenForm = () => {
         endAdornment={
           persistedToken && (
             <InputAdornment position="end">
-              <ClearAgent />
+              <Logout />
             </InputAdornment>
           )
         }

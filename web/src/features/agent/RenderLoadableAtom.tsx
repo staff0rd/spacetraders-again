@@ -8,7 +8,7 @@ import { getErrorMessage } from '../../backend/util/get-error-message'
 type RenderLoadableAtomProps<T> = {
   atom: Atom<Loadable<Promise<T | undefined>>>
   render: (data: T) => JSX.Element
-  title: string | ReactNode
+  title?: string | ReactNode
   progress?: 'circular' | 'linear'
 }
 
@@ -57,9 +57,7 @@ function CircularProgressLoader() {
   return (
     <CircularProgress
       sx={{
-        '&.MuiCircularProgress-root': {
-          color: `${blueGrey[800]} !important`,
-        },
+        marginTop: 1,
       }}
     />
   )

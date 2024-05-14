@@ -1,10 +1,10 @@
 import { Box, Link, Stack } from '@mui/material'
 import { useAtom } from 'jotai'
-import { getSystem, jumpGateAtom, jumpGateConnectionsAtom, jumpGateConstructionAtom, systemAtom } from '../../data'
+import { getSystem, jumpGateAtom, jumpGateConnectionsAtom, jumpGateConstructionAtom, systemSymbolAtom } from '../../data'
 import { RenderLoadableAtom } from './RenderLoadableAtom'
 
 export const JumpGate = () => {
-  const [_, setSystemAtom] = useAtom(systemAtom)
+  const [_, setSystemAtom] = useAtom(systemSymbolAtom)
   return (
     <RenderLoadableAtom
       title="Jump Gate"
