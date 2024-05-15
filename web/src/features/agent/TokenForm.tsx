@@ -1,4 +1,4 @@
-import { FormControl, FormHelperText, Input, InputLabel } from '@mui/material'
+import { FormControl, FormHelperText, Input, InputLabel, Stack, Typography } from '@mui/material'
 import { useAtom } from 'jotai'
 import { debounce } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
@@ -24,17 +24,22 @@ export const TokenForm = () => {
   if (persistedToken && (agent.state == 'hasData' || agent.state === 'loading')) return null
 
   return (
-    <FormControl sx={{ maxWidth: 300 }}>
-      <InputLabel htmlFor="my-input">Token</InputLabel>
-      <Input
-        id="token"
-        value={token}
-        onChange={(e) => setToken(e.target.value)}
-        aria-describedby="my-helper-text"
-        placeholder="Enter your token"
-        type="password"
-      />
-      <FormHelperText id="my-helper-text">This value will be persisted to your browser's local storage</FormHelperText>
-    </FormControl>
+    <Stack spacing={1}>
+      <Typography sx={{ paddingLeft: 2 }} variant="h6">
+        Login
+      </Typography>
+      <FormControl sx={{ maxWidth: '50%' }}>
+        <InputLabel htmlFor="my-input">Token</InputLabel>
+        <Input
+          id="token"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          aria-describedby="my-helper-text"
+          placeholder="Enter your token"
+          type="password"
+        />
+        <FormHelperText id="my-helper-text">This value will be persisted to your browser's local storage</FormHelperText>
+      </FormControl>
+    </Stack>
   )
 }

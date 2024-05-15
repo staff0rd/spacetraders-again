@@ -53,7 +53,7 @@ function LinearProgressLoader() {
   )
 }
 
-function CircularProgressLoader() {
+export function CircularProgressLoader() {
   return (
     <CircularProgress
       sx={{

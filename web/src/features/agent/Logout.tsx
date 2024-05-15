@@ -1,12 +1,14 @@
 import { Alert, Box, Button, Modal, Stack, Typography } from '@mui/material'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { tokenAtom } from '../../data'
 
 export const Logout = () => {
   const [, persistToken] = useAtom(tokenAtom)
   const [open, setOpen] = useState(false)
   const handleClose = () => setOpen(false)
+  const navigate = useNavigate()
 
   return (
     <>
@@ -38,6 +40,7 @@ export const Logout = () => {
                 onClick={() => {
                   setOpen(false)
                   persistToken('')
+                  navigate('/')
                 }}
               >
                 Clear

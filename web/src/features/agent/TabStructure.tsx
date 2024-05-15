@@ -3,6 +3,7 @@ import { Loadable } from 'jotai/vanilla/utils/loadable'
 import { ReactNode } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { slugify } from '../../utils/slugify'
+import { CircularProgressLoader } from './RenderLoadableAtom'
 
 type TabStructureProps<T> = {
   regex: string
@@ -16,7 +17,7 @@ export function TabStructure<T>({ regex, value, root, header, tabs }: TabStructu
   const matches = pathname.match(regex) ?? []
   const tab = matches[1] ?? ''
 
-  if (value.state !== 'hasData') return null
+  if (value.state !== 'hasData') return <CircularProgressLoader />
   return (
     <Stack>
       {header(value.data)}
