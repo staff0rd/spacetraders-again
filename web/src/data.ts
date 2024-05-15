@@ -27,11 +27,11 @@ export const agentAtom = loadable(
   }),
 )
 
-export const getSystem = (symbol: string) => symbol.match(/(.+-.+)?-/)![1]
+export const getSystemSymbolFromWaypointSymbol = (waypointSymbol: string) => waypointSymbol.match(/(.+-.+)?-/)![1]
 
 export const systemSymbolAtom = atomWithDefault((get) => {
   const agent = get(agentAtom)
-  return agent.state === 'hasData' && agent.data ? getSystem(agent.data.headquarters) : null
+  return agent.state === 'hasData' && agent.data ? getSystemSymbolFromWaypointSymbol(agent.data.headquarters) : null
 })
 
 export const systemAtom = loadable(

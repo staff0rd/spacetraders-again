@@ -2,10 +2,12 @@ import ExportsIcon from '@mui/icons-material/North'
 import TransactionIcon from '@mui/icons-material/Receipt'
 import ImportsIcon from '@mui/icons-material/South'
 import ExchangeIcon from '@mui/icons-material/SyncAlt'
-import { CircularProgress, Link, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
+import { CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { useAtom } from 'jotai'
 import { marketsAtom } from '../../data'
+import { routes } from '../../router'
 import { RenderLoadableAtom } from './RenderLoadableAtom'
+import { RouterLink } from './RouterLink'
 export const Markets = () => {
   const [marketAtoms] = useAtom(marketsAtom)
   if (!marketAtoms) return <CircularProgress />
@@ -41,9 +43,7 @@ export const Markets = () => {
                 render={(market) => (
                   <TableRow key={market.symbol} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell component="th" scope="row">
-                      <Link sx={{ cursor: 'pointer' }} href={`markets/${market.symbol}`}>
-                        {market.symbol}
-                      </Link>
+                      <RouterLink to={routes.market(market.symbol)}>{market.symbol}!!!!</RouterLink>
                     </TableCell>
                     <TableCell align="center">{market.imports.length}</TableCell>
                     <TableCell align="center">{market.exports.length}</TableCell>

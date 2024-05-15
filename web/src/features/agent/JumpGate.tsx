@@ -1,10 +1,10 @@
-import { Box, Link, Stack } from '@mui/material'
-import { useAtom } from 'jotai'
-import { getSystem, jumpGateAtom, jumpGateConnectionsAtom, jumpGateConstructionAtom, systemSymbolAtom } from '../../data'
+import { Box, Stack } from '@mui/material'
+import { jumpGateAtom, jumpGateConnectionsAtom, jumpGateConstructionAtom } from '../../data'
+import { routes } from '../../router'
 import { RenderLoadableAtom } from './RenderLoadableAtom'
+import { RouterLink } from './RouterLink'
 
 export const JumpGate = () => {
-  const [_, setSystemAtom] = useAtom(systemSymbolAtom)
   return (
     <RenderLoadableAtom
       title="Jump Gate"
@@ -20,9 +20,7 @@ export const JumpGate = () => {
                 <Box>Connections:</Box>
                 {data.connections.map((connection) => (
                   <Box key={connection} sx={{ paddingLeft: 2 }}>
-                    <Link sx={{ cursor: 'pointer' }} onClick={() => setSystemAtom(getSystem(connection))}>
-                      {connection}
-                    </Link>
+                    <RouterLink to={routes.waypoint(connection)}>{connection}</RouterLink>
                   </Box>
                 ))}
               </Stack>

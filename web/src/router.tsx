@@ -2,12 +2,18 @@ import { Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import ErrorPage from './Error.tsx'
-import { agentAtom, systemAtom } from './data.ts'
+import { agentAtom, getSystemSymbolFromWaypointSymbol, systemAtom } from './data.ts'
 import { JumpGate } from './features/agent/JumpGate.tsx'
 import Market from './features/agent/Market.tsx'
 import { Markets } from './features/agent/Markets.tsx'
 import { Raw } from './features/agent/Raw.tsx'
 import { System } from './features/agent/System.tsx'
+
+export const routes = {
+  market: (waypointSymbol: string) => `/${getSystemSymbolFromWaypointSymbol(waypointSymbol)}/waypoint/${waypointSymbol}/market`,
+  system: (systemSymbol: string) => `/${systemSymbol}`,
+  waypoint: (waypointSymbol: string) => `/${getSystemSymbolFromWaypointSymbol(waypointSymbol)}/waypoint/${waypointSymbol}`,
+}
 
 export const router = createBrowserRouter(
   [
@@ -27,9 +33,11 @@ export const router = createBrowserRouter(
         {
           path: ':systemSymbol',
           element: <System />,
+          errorElement: <ErrorPage />,
           children: [
             {
               path: 'markets',
+              errorElement: <ErrorPage />,
               element: (
                 <Suspense>
                   <Markets />
