@@ -43,7 +43,7 @@ export const Markets = () => {
                 render={(market) => (
                   <TableRow key={market.symbol} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell component="th" scope="row">
-                      <RouterLink to={routes.market(market.symbol)}>{market.symbol}!!!!</RouterLink>
+                      <RouterLink to={routes.market(market.symbol)}>{market.symbol}</RouterLink>
                     </TableCell>
                     <TableCell align="center">{market.imports.length}</TableCell>
                     <TableCell align="center">{market.exports.length}</TableCell>
