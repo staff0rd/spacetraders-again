@@ -63,11 +63,13 @@ export const waypointsAtom = loadable(
 )
 
 export const waypointAtomFamily = atomFamily((symbol: string) =>
-  atom(async (get) => {
-    const data = get(waypointsAtom)
-    if (data.state !== 'hasData') return
-    return data.data?.find((x) => x.symbol === symbol)
-  }),
+  loadable(
+    atom(async (get) => {
+      const data = get(waypointsAtom)
+      if (data.state !== 'hasData') return
+      return data.data?.find((x) => x.symbol === symbol)
+    }),
+  ),
 )
 
 export const marketAtomFamily = atomFamily((symbol: string) =>

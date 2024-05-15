@@ -9,6 +9,8 @@ import Market from './features/agent/Market.tsx'
 import { Markets } from './features/agent/Markets.tsx'
 import { Raw } from './features/agent/Raw.tsx'
 import { System } from './features/agent/System.tsx'
+import { Waypoint } from './features/agent/Waypoint.tsx'
+import { WaypointRaw } from './features/agent/WaypointRaw.tsx'
 
 export const routes = {
   market: (waypointSymbol: string) => `/${getSystemSymbolFromWaypointSymbol(waypointSymbol)}/waypoint/${waypointSymbol}/market`,
@@ -40,6 +42,30 @@ export const router = createBrowserRouter(
           element: <System />,
           errorElement: <RouteError />,
           children: [
+            {
+              path: 'waypoint/:waypointSymbol',
+              errorElement: <RouteError />,
+              element: (
+                <Suspense>
+                  <Waypoint />
+                </Suspense>
+              ),
+              children: [
+                {
+                  path: 'market',
+                  errorElement: <RouteError />,
+                  element: (
+                    <Suspense>
+                      <Market />
+                    </Suspense>
+                  ),
+                },
+                {
+                  path: 'raw',
+                  element: <WaypointRaw />,
+                },
+              ],
+            },
             {
               path: 'markets',
               errorElement: <RouteError />,

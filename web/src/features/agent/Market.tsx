@@ -5,8 +5,8 @@ import { marketAtomFamily } from '../../data'
 import { RenderLoadableAtom } from './RenderLoadableAtom'
 
 export default function Render() {
-  const { marketSymbol } = useParams()
-  const marketAtom = marketAtomFamily(marketSymbol!)
+  const { waypointSymbol } = useParams()
+  const marketAtom = marketAtomFamily(waypointSymbol!)
 
   return (
     <RenderLoadableAtom

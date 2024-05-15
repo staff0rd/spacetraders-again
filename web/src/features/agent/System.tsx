@@ -1,6 +1,6 @@
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { Outlet, useParams } from 'react-router-dom'
 import { agentAtom, systemAtom, systemSymbolAtom } from '../../data'
 import { Overview } from './Overview'
 import { RenderLoadableAtom } from './RenderLoadableAtom'
@@ -14,13 +14,16 @@ export const System = () => {
   const agent = useAtomValue(agentAtom)
   const { systemSymbol } = useParams()
   const setSystemSymbol = useSetAtom(systemSymbolAtom)
+  const { waypointSymbol } = useParams()
 
   useEffect(() => {
     if (systemSymbol) setSystemSymbol(systemSymbol)
   }, [systemSymbol, setSystemSymbol])
 
   const regex = `^/${systemSymbol}/(.*)/?.*`
-  return (
+  return waypointSymbol ? (
+    <Outlet />
+  ) : (
     <TabStructure
       regex={regex}
       value={agent}
