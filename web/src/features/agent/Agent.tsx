@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Stack } from '@mui/material'
 import { useAtomValue } from 'jotai'
 import { Outlet, useParams } from 'react-router-dom'
-import { agentAtom, systemSymbolAtom } from '../../data'
+import { agentAtom, getSystemSymbolFromWaypointSymbol } from '../../data'
 import { routes } from '../../router'
 import { Overview } from './Overview'
 import { RouterLink } from './RouterLink'
@@ -9,7 +9,6 @@ import { TabStructure } from './TabStructure'
 
 export const Agent = () => {
   const agent = useAtomValue(agentAtom)
-  const homeSystem = useAtomValue(systemSymbolAtom)
   const { systemSymbol } = useParams()
 
   const regex = `^/(.*)/?.*`
@@ -26,6 +25,7 @@ export const Agent = () => {
             root={<></>}
             header={(agent) => {
               if (!agent) return <CircularProgress />
+              const homeSystem = getSystemSymbolFromWaypointSymbol(agent.headquarters)
               return (
                 <Overview
                   lines={[

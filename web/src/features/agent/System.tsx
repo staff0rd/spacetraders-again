@@ -1,6 +1,7 @@
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { agentAtom, systemAtom } from '../../data'
+import { agentAtom, systemAtom, systemSymbolAtom } from '../../data'
 import { Overview } from './Overview'
 import { RenderLoadableAtom } from './RenderLoadableAtom'
 import { RouterLink } from './RouterLink'
@@ -12,6 +13,11 @@ export type Tabs = 'markets' | 'waypoints'
 export const System = () => {
   const agent = useAtomValue(agentAtom)
   const { systemSymbol } = useParams()
+  const setSystemSymbol = useSetAtom(systemSymbolAtom)
+
+  useEffect(() => {
+    if (systemSymbol) setSystemSymbol(systemSymbol)
+  }, [systemSymbol, setSystemSymbol])
 
   const regex = `^/${systemSymbol}/(.*)/?.*`
   return (

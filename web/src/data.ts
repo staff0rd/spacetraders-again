@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios'
 import { atom } from 'jotai'
-import { atomFamily, atomWithDefault, atomWithStorage, loadable } from 'jotai/utils'
+import { atomFamily, atomWithStorage, loadable } from 'jotai/utils'
 import { WaypointTraitSymbol, WaypointType } from './backend/api'
 import { apiFactory } from './backend/apiFactory'
 import { invariant } from './backend/invariant'
@@ -29,10 +29,7 @@ export const agentAtom = loadable(
 
 export const getSystemSymbolFromWaypointSymbol = (waypointSymbol: string) => waypointSymbol.match(/(.+-.+)?-/)![1]
 
-export const systemSymbolAtom = atomWithDefault((get) => {
-  const agent = get(agentAtom)
-  return agent.state === 'hasData' && agent.data ? getSystemSymbolFromWaypointSymbol(agent.data.headquarters) : null
-})
+export const systemSymbolAtom = atom<string | null>(null)
 
 export const systemAtom = loadable(
   atom(async (get) => {
