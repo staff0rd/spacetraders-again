@@ -30,7 +30,7 @@ export const router = createBrowserRouter(
       ),
       children: [
         {
-          path: 'app',
+          path: 'index.html',
           element: <Navigate to="/" />,
         },
         {
