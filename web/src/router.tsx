@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import RouteError from './RouteError.tsx'
 import { agentAtom, getSystemSymbolFromWaypointSymbol, systemAtom } from './data.ts'
@@ -29,6 +29,10 @@ export const router = createBrowserRouter(
         </RouteError>
       ),
       children: [
+        {
+          path: 'app',
+          element: <Navigate to="/" />,
+        },
         {
           path: 'raw',
           element: (
