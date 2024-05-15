@@ -17,7 +17,7 @@ export const Overview = ({ type, symbol, subtype = '', lines }: OverviewProps) =
         {symbol}
       </Typography>
       <Typography sx={{ mb: 1.5, fontSize: 16 }} color="text.secondary">
-        {subtype.replace('_', ' ')}
+        {subtype.replaceAll('_', ' ')}
       </Typography>
       <Stack>
         {lines.map((line, index) => (
