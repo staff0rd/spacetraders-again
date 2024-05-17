@@ -1,4 +1,6 @@
+import { retryable } from 'async'
 import Bottleneck from 'bottleneck'
+import { promisify } from 'es6-promisify'
 import {
   AgentsApiFactory,
   Configuration,
@@ -14,7 +16,23 @@ const wrapFunctions = (api: any, limiter: Bottleneck) =>
   Object.entries(api).reduce((acc, [key, value]) => {
     if (typeof value === 'function') {
       // @ts-expect-error ignore
-      acc[key] = limiter.wrap(value)
+      const myWrapper = async (...args) => {
+        // @ts-expect-error ignore
+        return limiter.schedule(value, ...args)
+      }
+
+      // @ts-expect-error ignore
+      acc[key] = promisify(
+        retryable(
+          {
+            times: 10,
+            errorFilter(error) {
+              return error.response.status === 429
+            },
+          },
+          myWrapper,
+        ),
+      )
     }
     return acc
   }, {})
