@@ -10,7 +10,7 @@ import { RenderLoadableAtom } from './RenderLoadableAtom'
 import { RouterLink } from './RouterLink'
 export const Markets = () => {
   const [marketAtoms] = useAtom(marketsAtom)
-  if (!marketAtoms) return <CircularProgress />
+  if (!marketAtoms) return <CircularProgress id="markets" />
 
   return (
     <TableContainer component={Paper}>
