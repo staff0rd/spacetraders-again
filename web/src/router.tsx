@@ -4,10 +4,12 @@ import App from './App.tsx'
 import RouteError from './RouteError.tsx'
 import { agentAtom, getSystemSymbolFromWaypointSymbol, systemAtom } from './data.ts'
 import { AppHeader } from './features/agent/AppHeader.tsx'
+import { Contracts } from './features/agent/Contracts.tsx'
 import { JumpGate } from './features/agent/JumpGate.tsx'
 import Market from './features/agent/Market.tsx'
 import { Markets } from './features/agent/Markets.tsx'
 import { Raw } from './features/agent/Raw.tsx'
+import { Ship } from './features/agent/Ship.tsx'
 import { System } from './features/agent/System.tsx'
 import { Waypoint } from './features/agent/Waypoint.tsx'
 import { WaypointRaw } from './features/agent/WaypointRaw.tsx'
@@ -34,10 +36,26 @@ export const router = createBrowserRouter(
           element: <Navigate to="/" />,
         },
         {
+          path: 'contracts',
+          element: (
+            <Suspense>
+              <Contracts />
+            </Suspense>
+          ),
+        },
+        {
           path: 'raw',
           element: (
             <Suspense>
               <Raw atom={agentAtom} />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'ships/:shipSymbol',
+          element: (
+            <Suspense>
+              <Ship />
             </Suspense>
           ),
         },

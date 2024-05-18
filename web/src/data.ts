@@ -36,6 +36,14 @@ export const contractsAtom = loadable(
   }),
 )
 
+export const shipsAtom = loadable(
+  atom(async (get) => {
+    const api = get(apiAtom)
+    if (!api) return
+    return await getPages((page, count) => api.fleet.getMyShips(page, count))
+  }),
+)
+
 export const getSystemSymbolFromWaypointSymbol = (waypointSymbol: string) => waypointSymbol.match(/(.+-.+)?-/)![1]
 
 export const systemSymbolAtom = atom<string | null>(null)
