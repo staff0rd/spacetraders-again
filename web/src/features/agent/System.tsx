@@ -25,12 +25,14 @@ export const System = () => {
     <Outlet />
   ) : (
     <TabStructure
+      id="system"
       regex={regex}
       value={agent}
       tabs={['Waypoints', 'Markets', 'Jump Gate']}
-      root={<Waypoints />}
+      firstTab={<Waypoints />}
       header={() => (
         <RenderLoadableAtom
+          id="system"
           atom={systemAtom}
           render={(system) => (
             <Overview

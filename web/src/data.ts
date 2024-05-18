@@ -27,6 +27,15 @@ export const agentAtom = loadable(
   }),
 )
 
+export const contractsAtom = loadable(
+  atom(async (get) => {
+    const api = get(apiAtom)
+    if (!api) return
+    const contracts = await getPages((page, count) => api.contracts.getContracts(page, count))
+    return contracts.toSorted((a, b) => (a.accepted ? -1 : b.accepted ? 1 : 0))
+  }),
+)
+
 export const getSystemSymbolFromWaypointSymbol = (waypointSymbol: string) => waypointSymbol.match(/(.+-.+)?-/)![1]
 
 export const systemSymbolAtom = atom<string | null>(null)

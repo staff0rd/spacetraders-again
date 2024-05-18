@@ -14,6 +14,7 @@ export const AppHeader = () => {
         <Toolbar>
           <Typography variant="h6" color="white" component="div" sx={{ flexGrow: 1, fontSize: '18px', '& a:visited': { color: 'white' } }}>
             <RenderLoadableAtom
+              id="agent"
               atom={agentAtom}
               render={(agent) => (
                 <RouterLink to="/" color="inherit" sx={{ textDecoration: 'none' }}>

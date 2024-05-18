@@ -9,6 +9,7 @@ export const WaypointTraits = () => {
 
   return (
     <RenderLoadableAtom
+      id="traits"
       atom={waypointAtom}
       render={({ traits }) => {
         return (
