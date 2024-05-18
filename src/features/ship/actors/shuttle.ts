@@ -48,7 +48,7 @@ export const shuttleLogicFactory =
         await act.deliverContractGoods(ship)
         return
       } else {
-        await act.sellUnwantedGoods(ship, [agent.contractGood.tradeSymbol as TradeSymbol])
+        await act.sellUnwantedGoods(ship, [])
         return
       }
     } else if (currentAction === ShipActionType.TRADE) {
