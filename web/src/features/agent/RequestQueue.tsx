@@ -13,7 +13,6 @@ export const RequestQueue = () => {
     const timer = setInterval(() => {
       const count = limiter?.counts().QUEUED ?? 0
       setQueueCount(count)
-      console.log('count', count)
     }, 100)
     return () => clearInterval(timer)
   }, [limiter, setQueueCount])
