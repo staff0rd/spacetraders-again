@@ -27,6 +27,11 @@ export const agentAtom = loadable(
   }),
 )
 
+export const limiterAtom = atom((get) => {
+  const api = get(apiAtom)
+  return api?.limiter
+})
+
 export const contractsAtom = loadable(
   atom(async (get) => {
     const api = get(apiAtom)

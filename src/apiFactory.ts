@@ -45,6 +45,7 @@ export const apiFactory = (
   default: ReturnType<typeof DefaultApiFactory>
   agents: ReturnType<typeof AgentsApiFactory>
   factions: ReturnType<typeof FactionsApiFactory>
+  limiter: Bottleneck
 } => {
   const limiter = new Bottleneck({
     maxConcurrent: 1,
@@ -57,6 +58,7 @@ export const apiFactory = (
   const defaultApi = DefaultApiFactory()
   const factionsApi = FactionsApiFactory(new Configuration({ accessToken }))
   return {
+    limiter,
     // @ts-expect-error ignore
     systems: wrapFunctions(systemsApi, limiter),
     // @ts-expect-error ignore
