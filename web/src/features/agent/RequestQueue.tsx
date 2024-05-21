@@ -21,7 +21,6 @@ export const RequestQueue = () => {
     <Chip
       icon={queueCount ? <CloudDownloadIcon color="inherit" /> : <CloudDoneIcon color="inherit" />}
       label={queueCount}
-      variant="outlined"
       sx={{
         color: queueCount ? orange[600] : 'white',
         borderColor: queueCount ? orange[600] : 'white',

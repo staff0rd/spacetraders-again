@@ -2,10 +2,10 @@ import { FormControl, FormHelperText, Input, InputLabel, Stack, Typography } fro
 import { useAtom } from 'jotai'
 import { debounce } from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
-import { agentAtom, tokenAtom } from '../../data'
+import { useNavigate } from 'react-router-dom'
+import { tokenAtom } from '../../data'
 
 export const TokenForm = () => {
-  const [agent] = useAtom(agentAtom)
   const [persistedToken, persistToken] = useAtom(tokenAtom)
   const [token, setLocalToken] = useState(persistedToken)
   const setPersistedToken = useCallback(
@@ -17,11 +17,12 @@ export const TokenForm = () => {
     setPersistedToken(value)
   }
 
+  const navigate = useNavigate()
+
   useEffect(() => {
     if (!persistedToken) setLocalToken('')
-  }, [persistedToken])
-
-  if (persistedToken && (agent.state == 'hasData' || agent.state === 'loading')) return null
+    else navigate('/agent')
+  }, [persistedToken, navigate])
 
   return (
     <Stack spacing={1}>

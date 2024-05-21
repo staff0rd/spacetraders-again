@@ -1,14 +1,20 @@
 import { Box, Stack } from '@mui/material'
 import { useAtomValue } from 'jotai'
+import { useEffect } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { tokenAtom } from './data'
-import { Agent } from './features/agent/Agent'
 import { AppHeader } from './features/agent/AppHeader'
-import { TokenForm } from './features/agent/TokenForm'
 
 document.getElementById('loading')?.remove()
 
 function App() {
   const isLoggedIn = Boolean(useAtomValue(tokenAtom))
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  console.log('pathname', pathname)
+  useEffect(() => {
+    if (pathname === '/') navigate('/status')
+  }, [isLoggedIn, navigate, pathname])
   return (
     <Box
       sx={{
@@ -18,8 +24,7 @@ function App() {
     >
       <Stack spacing={1}>
         <AppHeader />
-        <TokenForm />
-        {isLoggedIn && <Agent />}
+        <Outlet />
       </Stack>
     </Box>
   )

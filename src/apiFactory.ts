@@ -17,6 +17,7 @@ const wrapFunctions = (api: any, limiter: Bottleneck) =>
     if (typeof value === 'function') {
       // @ts-expect-error ignore
       const myWrapper = async (...args) => {
+        console.log('scheduling', value.name)
         // @ts-expect-error ignore
         return limiter.schedule(value, ...args)
       }
@@ -36,6 +37,25 @@ const wrapFunctions = (api: any, limiter: Bottleneck) =>
     }
     return acc
   }, {})
+
+export const loggedOutApiFactory = (): {
+  default: ReturnType<typeof DefaultApiFactory>
+  limiter: Bottleneck
+  loggedIn: false
+} => {
+  const limiter = new Bottleneck({
+    maxConcurrent: 1,
+    minTime: 500,
+  })
+  const defaultApi = DefaultApiFactory()
+  return {
+    limiter,
+    // @ts-expect-error ignore
+    default: wrapFunctions(defaultApi, limiter),
+    loggedIn: false,
+  }
+}
+
 export const apiFactory = (
   accessToken: string,
 ): {
@@ -46,6 +66,7 @@ export const apiFactory = (
   agents: ReturnType<typeof AgentsApiFactory>
   factions: ReturnType<typeof FactionsApiFactory>
   limiter: Bottleneck
+  loggedIn: true
 } => {
   const limiter = new Bottleneck({
     maxConcurrent: 1,
@@ -71,5 +92,6 @@ export const apiFactory = (
     agents: wrapFunctions(agentsApi, limiter),
     // @ts-expect-error ignore
     factions: wrapFunctions(factionsApi, limiter),
+    loggedIn: true,
   }
 }

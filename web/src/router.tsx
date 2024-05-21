@@ -2,10 +2,12 @@ import { Suspense } from 'react'
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import RouteError from './RouteError.tsx'
-import { agentAtom, getSystemSymbolFromWaypointSymbol, systemAtom } from './data.ts'
+import { agentAtom, getSystemSymbolFromWaypointSymbol, statusAtom, systemAtom } from './data.ts'
+import { Agent } from './features/agent/Agent.tsx'
 import { AppHeader } from './features/agent/AppHeader.tsx'
 import { Contracts } from './features/agent/Contracts.tsx'
 import { JumpGate } from './features/agent/JumpGate.tsx'
+import { TokenForm } from './features/agent/LoginForm.tsx'
 import Market from './features/agent/Market.tsx'
 import { Markets } from './features/agent/Markets.tsx'
 import { Raw } from './features/agent/Raw.tsx'
@@ -13,6 +15,8 @@ import { Ship } from './features/agent/Ship.tsx'
 import { System } from './features/agent/System.tsx'
 import { Waypoint } from './features/agent/Waypoint.tsx'
 import { WaypointRaw } from './features/agent/WaypointRaw.tsx'
+import { Leaderboard } from './features/status/Leaderboard.tsx'
+import { Status } from './features/status/Status.tsx'
 
 export const routes = {
   market: (waypointSymbol: string) => `/${getSystemSymbolFromWaypointSymbol(waypointSymbol)}/waypoint/${waypointSymbol}/market`,
@@ -36,29 +40,55 @@ export const router = createBrowserRouter(
           element: <Navigate to="/" />,
         },
         {
-          path: 'contracts',
-          element: (
-            <Suspense>
-              <Contracts />
-            </Suspense>
-          ),
+          path: 'login',
+          element: <TokenForm />,
         },
         {
-          path: 'raw',
-          element: (
-            <Suspense>
-              <Raw atom={agentAtom} />
-            </Suspense>
-          ),
+          path: 'status',
+          element: <Status />,
+          children: [
+            { path: 'most-credits', element: <Leaderboard /> },
+            {
+              path: 'raw',
+              element: (
+                <Suspense>
+                  <Raw atom={statusAtom} />
+                </Suspense>
+              ),
+            },
+          ],
         },
         {
-          path: 'ships/:shipSymbol',
-          element: (
-            <Suspense>
-              <Ship />
-            </Suspense>
-          ),
+          path: 'agent',
+          element: <Agent />,
+          children: [
+            {
+              path: 'contracts',
+              element: (
+                <Suspense>
+                  <Contracts />
+                </Suspense>
+              ),
+            },
+            {
+              path: 'raw',
+              element: (
+                <Suspense>
+                  <Raw atom={agentAtom} />
+                </Suspense>
+              ),
+            },
+            {
+              path: 'ships/:shipSymbol',
+              element: (
+                <Suspense>
+                  <Ship />
+                </Suspense>
+              ),
+            },
+          ],
         },
+
         {
           path: ':systemSymbol',
           element: <System />,

@@ -7,7 +7,7 @@ import { RouterLink } from './RouterLink'
 export const Waypoints = () => {
   return (
     <RenderLoadableAtom
-      title="Waypoints"
+      id="Waypoints"
       atom={waypointsAtom}
       render={(waypoints) => (
         <DataTable
