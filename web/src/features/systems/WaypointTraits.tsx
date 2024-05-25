@@ -1,7 +1,7 @@
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { useParams } from 'react-router-dom'
 import { waypointAtomFamily } from '../../data'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
+import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
 
 export const WaypointTraits = () => {
   const { waypointSymbol } = useParams()

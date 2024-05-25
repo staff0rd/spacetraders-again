@@ -2,14 +2,14 @@ import { Box, CircularProgress, Stack } from '@mui/material'
 import { useAtomValue } from 'jotai'
 import { agentAtom, getSystemSymbolFromWaypointSymbol } from '../../data'
 import { routes } from '../../router'
+import { Ships } from '../Ship/Ships'
 import { Overview } from './Overview'
 import { RouterLink } from './RouterLink'
-import { Ships } from './Ships'
 import { TabStructure } from './TabStructure'
 
 export const Agent = () => {
   const agent = useAtomValue(agentAtom)
-  const regex = `^/agent/(.*)/?.*`
+  const regex = `^/agent/([a-z]+)/?.*`
   return (
     <Stack spacing={1}>
       <Box sx={{ padding: 1 }}>

@@ -1,4 +1,4 @@
-import { Stack, Tab, Tabs } from '@mui/material'
+import { Box, Stack, Tab, Tabs } from '@mui/material'
 import { Loadable } from 'jotai/vanilla/utils/loadable'
 import { ReactNode } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
@@ -12,8 +12,9 @@ type TabStructureProps<T> = {
   header: (value: Awaited<T> | undefined) => ReactNode
   tabs: string[]
   id: string
+  childTabs?: string[]
 }
-export function TabStructure<T>({ regex, value, firstTab: root, header, tabs, id }: TabStructureProps<T>) {
+export function TabStructure<T>({ regex, value, firstTab: root, header, tabs, id, childTabs = [] }: TabStructureProps<T>) {
   const { pathname } = useLocation()
   const matches = pathname.match(regex) ?? []
   const tab = matches[1] ?? ''
@@ -29,7 +30,7 @@ export function TabStructure<T>({ regex, value, firstTab: root, header, tabs, id
         ))}
         <Tab label="Raw" value="raw" to="raw" component={Link} />
       </Tabs>
-      {!tab ? root : <Outlet />}
+      <Box sx={{ marginTop: childTabs.includes(tab) ? 0 : 2 }}>{!tab ? root : <Outlet />}</Box>
     </Stack>
   )
 }

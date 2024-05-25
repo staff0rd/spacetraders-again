@@ -9,15 +9,14 @@ export const Contracts = () => {
       atom={contractsAtom}
       render={(contracts) => (
         <DataTable
-          headers={['Faction', 'Fulfilled', 'Type', 'On accepted', 'On fulfilled', 'Destination', 'Trade', 'Units']}
+          headers={['Fulfilled', 'On accepted', 'On fulfilled', 'Destination', 'Trade', 'Units']}
           rows={contracts
             .toSorted((a, b) =>
               (b.deadlineToAccept ?? new Date().toISOString()).localeCompare(a.deadlineToAccept ?? new Date().toISOString()),
             )
             .map((contract) => [
-              contract.factionSymbol,
               contract.fulfilled ? '✅' : '➖ ',
-              contract.type,
+
               contract.terms.payment.onAccepted.toLocaleString(),
               contract.terms.payment.onFulfilled.toLocaleString(),
               contract.terms.deliver![0].destinationSymbol,

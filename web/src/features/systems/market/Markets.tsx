@@ -4,10 +4,10 @@ import ImportsIcon from '@mui/icons-material/South'
 import ExchangeIcon from '@mui/icons-material/SyncAlt'
 import { CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { useAtom } from 'jotai'
-import { marketsAtom } from '../../data'
-import { routes } from '../../router'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
-import { RouterLink } from './RouterLink'
+import { marketsAtom } from '../../../data'
+import { routes } from '../../../router'
+import { RenderLoadableAtom } from '../../agent/RenderLoadableAtom'
+import { RouterLink } from '../../agent/RouterLink'
 export const Markets = () => {
   const [marketAtoms] = useAtom(marketsAtom)
   if (!marketAtoms) return <CircularProgress id="markets" />

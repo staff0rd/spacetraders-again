@@ -1,13 +1,14 @@
 import { Box } from '@mui/material'
 import { useAtomValue } from 'jotai'
 import { useParams } from 'react-router-dom'
+import { WaypointTraitSymbol } from '../../backend/api'
 import { waypointAtomFamily } from '../../data'
 import { routes } from '../../router'
-import { CircularProgressLoader } from './CircularProgressLoader'
-import { Overview } from './Overview'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
-import { RouterLink } from './RouterLink'
-import { TabStructure } from './TabStructure'
+import { CircularProgressLoader } from '../agent/CircularProgressLoader'
+import { Overview } from '../agent/Overview'
+import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
+import { RouterLink } from '../agent/RouterLink'
+import { TabStructure } from '../agent/TabStructure'
 import { WaypointTraits } from './WaypointTraits'
 
 export function Waypoint() {
@@ -15,14 +16,16 @@ export function Waypoint() {
   const waypointAtom = waypointAtomFamily(waypointSymbol!)
   const waypoint = useAtomValue(waypointAtom)
   if (!waypoint) return <CircularProgressLoader id="waypoint-component" />
-  const regex = `^.*/waypoint/${waypointSymbol}/(.*)`
+  const regex = `^.*/waypoint/${waypointSymbol}/(.[a-z]+)`
+  const hasMarket = waypoint.state === 'hasData' && waypoint.data?.traits.map((x) => x.symbol).includes(WaypointTraitSymbol.Marketplace)
   return (
     <TabStructure
       regex={regex}
       id="waypoint"
       value={waypoint}
-      tabs={['Traits', 'Market']}
+      tabs={['Traits', ...(hasMarket ? ['Market'] : [])]}
       firstTab={<WaypointTraits />}
+      childTabs={['market']}
       header={() => (
         <RenderLoadableAtom
           id="waypoint"

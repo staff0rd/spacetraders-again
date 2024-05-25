@@ -2,10 +2,10 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
 import { agentAtom, systemAtom, systemSymbolAtom } from '../../data'
-import { Overview } from './Overview'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
-import { RouterLink } from './RouterLink'
-import { TabStructure } from './TabStructure'
+import { Overview } from '../agent/Overview'
+import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
+import { RouterLink } from '../agent/RouterLink'
+import { TabStructure } from '../agent/TabStructure'
 import { Waypoints } from './Waypoints'
 
 export type Tabs = 'markets' | 'waypoints'
@@ -20,7 +20,7 @@ export const System = () => {
     if (systemSymbol) setSystemSymbol(systemSymbol)
   }, [systemSymbol, setSystemSymbol])
 
-  const regex = `^/${systemSymbol}/(.*)/?.*`
+  const regex = `^/system/${systemSymbol}/(.*)/?.*`
   return waypointSymbol ? (
     <Outlet />
   ) : (

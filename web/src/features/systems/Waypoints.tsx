@@ -1,8 +1,8 @@
 import { waypointsAtom } from '../../data'
 import { routes } from '../../router'
-import { DataTable } from './DataTable'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
-import { RouterLink } from './RouterLink'
+import { DataTable } from '../agent/DataTable'
+import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
+import { RouterLink } from '../agent/RouterLink'
 
 export const Waypoints = () => {
   return (

@@ -1,4 +1,5 @@
 import { Alert, Box, Link, Stack, Typography } from '@mui/material'
+import { formatDistanceToNow, formatISO } from 'date-fns'
 import { useAtomValue } from 'jotai'
 import { statusAtom } from '../../data'
 import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
@@ -12,18 +13,22 @@ export function Status() {
     <RenderLoadableAtom
       atom={statusAtom}
       id="status"
-      render={({ status, version, resetDate, description }) => (
+      render={({ status, version, resetDate, description, serverResets }) => (
         <TabStructure
           regex={regex}
-          tabs={['status', 'most-credits']}
+          tabs={['status', 'Most credits', 'Most submitted charts', 'Announcements']}
           value={value}
           firstTab={
-            <Stack spacing={1} sx={{ padding: 2 }}>
+            <Stack spacing={1}>
               <Alert severity="info">
                 <Stack spacing={1}>
                   <Box>{status}</Box>
                   <Box>{version}</Box>
                   <Box>Reset date: {resetDate}</Box>
+                  <Box>
+                    Next reset: {formatISO(new Date(serverResets.next), { representation: 'date' })}{' '}
+                    {formatDistanceToNow(new Date(serverResets.next), { addSuffix: true })}
+                  </Box>
                 </Stack>
               </Alert>
               <Box>
@@ -44,7 +49,7 @@ export function Status() {
               </Box>
             </Stack>
           }
-          header={(status) => <></>}
+          header={() => <></>}
           id="status"
         />
       )}

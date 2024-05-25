@@ -1,10 +1,10 @@
 import { Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { formatDistance } from 'date-fns'
 import { useParams } from 'react-router-dom'
-import { marketAtomFamily } from '../../data'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
+import { marketAtomFamily } from '../../../data'
+import { RenderLoadableAtom } from '../../agent/RenderLoadableAtom'
 
-export default function Render() {
+export default function Transactions() {
   const { waypointSymbol } = useParams()
   const marketAtom = marketAtomFamily(waypointSymbol!)
 

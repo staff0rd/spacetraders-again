@@ -3,7 +3,9 @@ import LeaderboardIcon from '@mui/icons-material/Leaderboard'
 import { AppBar, Box, Button, IconButton, Stack, Toolbar, Typography } from '@mui/material'
 import { useAtomValue } from 'jotai'
 import { Link } from 'react-router-dom'
-import { agentAtom, tokenAtom } from '../../data'
+import { agentAtom, getSystemSymbolFromWaypointSymbol, tokenAtom } from '../../data'
+import { routes } from '../../router'
+import { SystemIcon } from '../systems/SystemIcon'
 import { Logout } from './Logout'
 import { RenderLoadableAtom } from './RenderLoadableAtom'
 import { RequestQueue } from './RequestQueue'
@@ -28,11 +30,28 @@ export const AppHeader = () => {
                 )}
               />
             </Typography>
-            {/*
+            <Stack direction="row" alignItems="center">
+              {/*
             // @ts-expect-error this works at runtime */}
-            <IconButton aria-label="status" to="/status" sx={{ cursor: 'pointer' }} LinkComponent={Link}>
-              <LeaderboardIcon sx={{ color: 'white', fontSize: '28px' }} />
-            </IconButton>
+              <IconButton aria-label="status" to="/status" sx={{ cursor: 'pointer' }} LinkComponent={Link}>
+                <LeaderboardIcon sx={{ color: 'white', fontSize: '28px' }} />
+              </IconButton>
+              <RenderLoadableAtom
+                atom={agentAtom}
+                id="system-button"
+                render={(agent) => (
+                  // @ts-expect-error this works at runtime */
+                  <IconButton
+                    aria-label="status"
+                    to={routes.system(getSystemSymbolFromWaypointSymbol(agent.headquarters))}
+                    sx={{ cursor: 'pointer' }}
+                    LinkComponent={Link}
+                  >
+                    <SystemIcon />
+                  </IconButton>
+                )}
+              />
+            </Stack>
           </Stack>
           <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
             {isLoggedIn ? (

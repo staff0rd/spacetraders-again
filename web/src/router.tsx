@@ -3,25 +3,34 @@ import { Navigate, createBrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import RouteError from './RouteError.tsx'
 import { agentAtom, getSystemSymbolFromWaypointSymbol, statusAtom, systemAtom } from './data.ts'
+import { Ship } from './features/Ship/Ship.tsx'
+import { ShipRaw } from './features/Ship/ShipRaw.tsx'
 import { Agent } from './features/agent/Agent.tsx'
 import { AppHeader } from './features/agent/AppHeader.tsx'
 import { Contracts } from './features/agent/Contracts.tsx'
 import { JumpGate } from './features/agent/JumpGate.tsx'
 import { TokenForm } from './features/agent/LoginForm.tsx'
-import Market from './features/agent/Market.tsx'
-import { Markets } from './features/agent/Markets.tsx'
 import { Raw } from './features/agent/Raw.tsx'
-import { Ship } from './features/agent/Ship.tsx'
-import { System } from './features/agent/System.tsx'
-import { Waypoint } from './features/agent/Waypoint.tsx'
-import { WaypointRaw } from './features/agent/WaypointRaw.tsx'
-import { Leaderboard } from './features/status/Leaderboard.tsx'
+import { Announcements } from './features/status/Announcements.tsx'
+import { MostCredits } from './features/status/MostCredits.tsx'
+import { MostSubmittedCharts } from './features/status/MostSubmittedCharts.tsx'
 import { Status } from './features/status/Status.tsx'
+import { System } from './features/systems/System.tsx'
+import { Waypoint } from './features/systems/Waypoint.tsx'
+import { WaypointRaw } from './features/systems/WaypointRaw.tsx'
+import { Exchange } from './features/systems/market/Exchange.tsx'
+import { Exports } from './features/systems/market/Exports.tsx'
+import { Market } from './features/systems/market/Market.tsx'
+import { MarketRaw } from './features/systems/market/MarketRaw.tsx'
+import { Markets } from './features/systems/market/Markets.tsx'
+import { TradeGoods } from './features/systems/market/TradeGoods.tsx'
+import Transactions from './features/systems/market/Transactions.tsx'
 
 export const routes = {
-  market: (waypointSymbol: string) => `/${getSystemSymbolFromWaypointSymbol(waypointSymbol)}/waypoint/${waypointSymbol}/market`,
-  system: (systemSymbol: string) => `/${systemSymbol}`,
-  waypoint: (waypointSymbol: string) => `/${getSystemSymbolFromWaypointSymbol(waypointSymbol)}/waypoint/${waypointSymbol}`,
+  system: (systemSymbol: string) => `/system/${systemSymbol}`,
+  market: (waypointSymbol: string) =>
+    `${routes.system(getSystemSymbolFromWaypointSymbol(waypointSymbol))}/waypoint/${waypointSymbol}/market`,
+  waypoint: (waypointSymbol: string) => `${routes.system(getSystemSymbolFromWaypointSymbol(waypointSymbol))}/waypoint/${waypointSymbol}`,
 }
 
 export const router = createBrowserRouter(
@@ -47,7 +56,9 @@ export const router = createBrowserRouter(
           path: 'status',
           element: <Status />,
           children: [
-            { path: 'most-credits', element: <Leaderboard /> },
+            { path: 'most-credits', element: <MostCredits /> },
+            { path: 'most-submitted-charts', element: <MostSubmittedCharts /> },
+            { path: 'announcements', element: <Announcements /> },
             {
               path: 'raw',
               element: (
@@ -85,15 +96,49 @@ export const router = createBrowserRouter(
                   <Ship />
                 </Suspense>
               ),
+              children: [
+                {
+                  path: 'raw',
+                  element: (
+                    <Suspense>
+                      <ShipRaw />
+                    </Suspense>
+                  ),
+                },
+              ],
             },
           ],
         },
-
         {
-          path: ':systemSymbol',
+          path: '/system/:systemSymbol',
           element: <System />,
           errorElement: <RouteError />,
           children: [
+            {
+              path: 'markets',
+              errorElement: <RouteError />,
+              element: (
+                <Suspense>
+                  <Markets />
+                </Suspense>
+              ),
+            },
+            {
+              path: 'jump-gate',
+              element: (
+                <Suspense>
+                  <JumpGate />
+                </Suspense>
+              ),
+            },
+            {
+              path: 'raw',
+              element: (
+                <Suspense>
+                  <Raw atom={systemAtom} />
+                </Suspense>
+              ),
+            },
             {
               path: 'waypoint/:waypointSymbol',
               errorElement: <RouteError />,
@@ -111,47 +156,34 @@ export const router = createBrowserRouter(
                       <Market />
                     </Suspense>
                   ),
+                  children: [
+                    {
+                      path: 'transactions',
+                      element: <Transactions />,
+                    },
+                    {
+                      path: 'exchange',
+                      element: <Exchange />,
+                    },
+                    {
+                      path: 'Exports',
+                      element: <Exports />,
+                    },
+                    {
+                      path: 'trade-goods',
+                      element: <TradeGoods />,
+                    },
+                    {
+                      path: 'raw',
+                      element: <MarketRaw />,
+                    },
+                  ],
                 },
                 {
                   path: 'raw',
                   element: <WaypointRaw />,
                 },
               ],
-            },
-            {
-              path: 'markets',
-              errorElement: <RouteError />,
-              element: (
-                <Suspense>
-                  <Markets />
-                </Suspense>
-              ),
-              children: [
-                {
-                  path: ':marketSymbol',
-                  element: (
-                    <Suspense>
-                      <Market />
-                    </Suspense>
-                  ),
-                },
-              ],
-            },
-            {
-              path: 'jump-gate',
-              element: (
-                <Suspense>
-                  <JumpGate />
-                </Suspense>
-              ),
-            },
-            {
-              path: 'raw',
-              element: (
-                <Suspense>
-                  <Raw atom={systemAtom} />
-                </Suspense>
-              ),
             },
           ],
         },
