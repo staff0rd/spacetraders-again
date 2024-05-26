@@ -3,6 +3,11 @@ import { Navigate, createBrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import RouteError from './RouteError.tsx'
 import { agentAtom, getSystemSymbolFromWaypointSymbol, statusAtom, systemAtom } from './data.ts'
+import { Cargo } from './features/Ship/Cargo.tsx'
+import { Cooldown } from './features/Ship/Cooldown.tsx'
+import { Modules } from './features/Ship/Modules.tsx'
+import { Mounts } from './features/Ship/Mounts.tsx'
+import { Nav } from './features/Ship/Nav.tsx'
 import { Ship } from './features/Ship/Ship.tsx'
 import { ShipRaw } from './features/Ship/ShipRaw.tsx'
 import { Agent } from './features/agent/Agent.tsx'
@@ -97,6 +102,46 @@ export const router = createBrowserRouter(
                 </Suspense>
               ),
               children: [
+                {
+                  path: 'nav',
+                  element: (
+                    <Suspense>
+                      <Nav />
+                    </Suspense>
+                  ),
+                },
+                {
+                  path: 'cooldown',
+                  element: (
+                    <Suspense>
+                      <Cooldown />
+                    </Suspense>
+                  ),
+                },
+                {
+                  path: 'cargo',
+                  element: (
+                    <Suspense>
+                      <Cargo />
+                    </Suspense>
+                  ),
+                },
+                {
+                  path: 'mounts',
+                  element: (
+                    <Suspense>
+                      <Mounts />
+                    </Suspense>
+                  ),
+                },
+                {
+                  path: 'modules',
+                  element: (
+                    <Suspense>
+                      <Modules />
+                    </Suspense>
+                  ),
+                },
                 {
                   path: 'raw',
                   element: (

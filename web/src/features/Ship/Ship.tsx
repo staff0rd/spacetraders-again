@@ -5,7 +5,7 @@ import { shipsAtom } from '../../data'
 import { Overview } from '../agent/Overview'
 import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
 import { TabStructure } from '../agent/TabStructure'
-import { Cargo } from './Cargo'
+import { ShipBase } from './ShipBase'
 
 export function Ship() {
   const { shipSymbol } = useParams()
@@ -23,14 +23,18 @@ export function Ship() {
             id={`ship-${shipSymbol}-tabs`}
             regex={regex}
             value={value}
-            tabs={['Cargo']}
-            firstTab={<Cargo />}
+            tabs={[ship.frame.name, 'Cargo', 'Cooldown', 'Nav', 'Modules', 'Mounts']}
+            firstTab={<ShipBase />}
             header={() => (
               <Overview
                 symbol={ship.symbol}
                 type="Ship"
                 subtype={ship.registration.role}
-                lines={[`Fuel: ${ship.fuel.current}/${ship.fuel.current}`, `Cargo: ${ship.cargo.units}/${ship.cargo.capacity}`]}
+                lines={[
+                  `Fuel: ${ship.fuel.current}/${ship.fuel.current}`,
+                  `${ship.nav.status} / ${ship.nav.flightMode}`,
+                  `Cargo: ${ship.cargo.units}/${ship.cargo.capacity}`,
+                ]}
               />
             )}
           />

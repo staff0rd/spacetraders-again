@@ -57,7 +57,7 @@ export const AppHeader = () => {
             {isLoggedIn ? (
               <Logout />
             ) : (
-              <Button aria-label="login" color="inherit" component={Link} to="/login" variant="outlined">
+              <Button aria-label="login" color="inherit" component={Link} to="/login">
                 Login
               </Button>
             )}
