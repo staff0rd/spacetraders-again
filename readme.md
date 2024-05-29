@@ -1,5 +1,9 @@
 # spacetraders-again
 
+This is an 100% automated client that plays the [spacetraders API](https://spacetraders.io) game.
+
+For the data browser, see [here](web/README.md).
+
 ## Getting started
 
 1. Start the containers:
