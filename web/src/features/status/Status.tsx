@@ -45,7 +45,7 @@ export function Status() {
               </Box>
 
               <Box>
-                This tool is <Link href="https://github.com/staff0rd/spacetraders-again/web">open source.</Link>
+                This tool is <Link href="https://github.com/staff0rd/spacetraders-again/tree/main/web">open source.</Link>
               </Box>
             </Stack>
           }
