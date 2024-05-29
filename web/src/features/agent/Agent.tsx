@@ -2,10 +2,10 @@ import { Box, CircularProgress, Stack } from '@mui/material'
 import { useAtomValue } from 'jotai'
 import { agentAtom, getSystemSymbolFromWaypointSymbol } from '../../data'
 import { routes } from '../../router'
+import { Overview } from '../../shared/Overview'
+import { RouterLink } from '../../shared/RouterLink'
+import { TabStructure } from '../../shared/TabStructure'
 import { Ships } from '../Ship/Ships'
-import { Overview } from './Overview'
-import { RouterLink } from './RouterLink'
-import { TabStructure } from './TabStructure'
 
 export const Agent = () => {
   const agent = useAtomValue(agentAtom)

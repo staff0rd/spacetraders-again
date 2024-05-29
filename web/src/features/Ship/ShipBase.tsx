@@ -1,5 +1,5 @@
 import { Card, CardContent, Grid } from '@mui/material'
-import { ObjectValues } from './ObjectValues'
+import { ObjectValues } from '../../shared/ObjectValues'
 import { RenderShipsAtom } from './RenderShipsAtom'
 
 export function ShipBase() {

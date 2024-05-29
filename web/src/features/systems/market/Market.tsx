@@ -1,8 +1,8 @@
 import { useAtomValue } from 'jotai'
 import { useParams } from 'react-router-dom'
 import { marketAtomFamily } from '../../../data'
-import { CircularProgressLoader } from '../../agent/CircularProgressLoader'
-import { TabStructure } from '../../agent/TabStructure'
+import { CircularProgressLoader } from '../../../shared/CircularProgressLoader'
+import { TabStructure } from '../../../shared/TabStructure'
 import { Imports } from './Imports'
 
 export function Market() {

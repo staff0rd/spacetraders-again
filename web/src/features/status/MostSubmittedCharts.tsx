@@ -1,6 +1,6 @@
 import { statusAtom } from '../../data'
-import { DataTable } from '../agent/DataTable'
-import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
+import { DataTable } from '../../shared/DataTable'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 
 export function MostSubmittedCharts() {
   return (

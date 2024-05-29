@@ -3,7 +3,7 @@ import { Alert, Card, CardContent, Stack, Typography } from '@mui/material'
 import { formatDistanceToNow } from 'date-fns'
 import { useParams } from 'react-router-dom'
 import { shipsAtom } from '../../data'
-import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 export function Nav() {
   const { shipSymbol } = useParams()
 

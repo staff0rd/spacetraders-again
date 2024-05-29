@@ -2,9 +2,9 @@ import { Alert } from '@mui/material'
 import { useAtomValue } from 'jotai'
 import { useParams } from 'react-router-dom'
 import { shipsAtom } from '../../data'
-import { Overview } from '../agent/Overview'
-import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
-import { TabStructure } from '../agent/TabStructure'
+import { Overview } from '../../shared/Overview'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
+import { TabStructure } from '../../shared/TabStructure'
 import { ShipBase } from './ShipBase'
 
 export function Ship() {

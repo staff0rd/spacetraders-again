@@ -5,11 +5,11 @@ import { useAtomValue } from 'jotai'
 import { Link } from 'react-router-dom'
 import { agentAtom, getSystemSymbolFromWaypointSymbol, tokenAtom } from '../../data'
 import { routes } from '../../router'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
+import { RouterLink } from '../../shared/RouterLink'
 import { SystemIcon } from '../systems/SystemIcon'
 import { Logout } from './Logout'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
 import { RequestQueue } from './RequestQueue'
-import { RouterLink } from './RouterLink'
 
 export const AppHeader = () => {
   const isLoggedIn = Boolean(useAtomValue(tokenAtom))

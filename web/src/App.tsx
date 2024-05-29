@@ -3,7 +3,7 @@ import { useAtomValue } from 'jotai'
 import { useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { tokenAtom } from './data'
-import { AppHeader } from './features/agent/AppHeader'
+import { AppHeader } from './features/app/AppHeader'
 
 document.getElementById('loading')?.remove()
 

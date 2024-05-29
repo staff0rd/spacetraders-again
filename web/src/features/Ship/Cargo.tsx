@@ -1,5 +1,5 @@
 import { Alert } from '@mui/material'
-import { DataTable } from '../agent/DataTable'
+import { DataTable } from '../../shared/DataTable'
 import { RenderShipsAtom } from './RenderShipsAtom'
 
 export function Cargo() {

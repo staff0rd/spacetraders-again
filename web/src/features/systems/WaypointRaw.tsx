@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { waypointAtomFamily } from '../../data'
-import { Raw } from '../agent/Raw'
+import { Raw } from '../../shared/Raw'
 
 export const WaypointRaw = () => {
   const { waypointSymbol } = useParams()

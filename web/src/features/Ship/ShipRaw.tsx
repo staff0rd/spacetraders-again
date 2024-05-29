@@ -1,8 +1,8 @@
 import { Alert } from '@mui/material'
 import { useParams } from 'react-router-dom'
 import { shipsAtom } from '../../data'
-import { Raw } from '../agent/Raw'
-import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
+import { Raw } from '../../shared/Raw'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 
 export const ShipRaw = () => {
   const shipSymbol = useParams().shipSymbol

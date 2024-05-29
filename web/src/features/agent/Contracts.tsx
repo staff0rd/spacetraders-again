@@ -1,6 +1,6 @@
 import { contractsAtom } from '../../data'
-import { DataTable } from './DataTable'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
+import { DataTable } from '../../shared/DataTable'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 
 export const Contracts = () => {
   return (

@@ -3,7 +3,7 @@ import { blueGrey } from '@mui/material/colors'
 import { Atom, useAtom } from 'jotai'
 import { Loadable } from 'jotai/vanilla/utils/loadable'
 import { PropsWithChildren, ReactNode } from 'react'
-import { getErrorMessage } from '../../backend/util/get-error-message'
+import { getErrorMessage } from '../backend/util/get-error-message'
 import { CircularProgressLoader } from './CircularProgressLoader'
 
 type BaseProps<T> = {

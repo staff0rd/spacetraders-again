@@ -6,8 +6,8 @@ import { CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, T
 import { useAtom } from 'jotai'
 import { marketsAtom } from '../../../data'
 import { routes } from '../../../router'
-import { RenderLoadableAtom } from '../../agent/RenderLoadableAtom'
-import { RouterLink } from '../../agent/RouterLink'
+import { RenderLoadableAtom } from '../../../shared/RenderLoadableAtom'
+import { RouterLink } from '../../../shared/RouterLink'
 export const Markets = () => {
   const [marketAtoms] = useAtom(marketsAtom)
   if (!marketAtoms) return <CircularProgress id="markets" />

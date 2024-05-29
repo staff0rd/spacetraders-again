@@ -1,4 +1,4 @@
-import { ObjectValues } from './ObjectValues'
+import { ObjectValues } from '../../shared/ObjectValues'
 import { RenderShipsAtom } from './RenderShipsAtom'
 
 export function Cooldown() {

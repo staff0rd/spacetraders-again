@@ -2,7 +2,7 @@ import { Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, T
 import { formatDistance } from 'date-fns'
 import { useParams } from 'react-router-dom'
 import { marketAtomFamily } from '../../../data'
-import { RenderLoadableAtom } from '../../agent/RenderLoadableAtom'
+import { RenderLoadableAtom } from '../../../shared/RenderLoadableAtom'
 
 export default function Transactions() {
   const { waypointSymbol } = useParams()

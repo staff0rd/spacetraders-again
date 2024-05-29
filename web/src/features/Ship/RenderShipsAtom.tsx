@@ -2,7 +2,7 @@ import { Alert, Card, CardContent } from '@mui/material'
 import { useParams } from 'react-router-dom'
 import { Ship } from '../../backend/api'
 import { shipsAtom } from '../../data'
-import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 
 type RenderShipsAtomProps = { render: (ship: Ship) => JSX.Element; card?: boolean }
 

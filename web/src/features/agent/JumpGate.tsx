@@ -1,8 +1,8 @@
 import { Box, Stack } from '@mui/material'
 import { jumpGateAtom, jumpGateConnectionsAtom, jumpGateConstructionAtom } from '../../data'
 import { routes } from '../../router'
-import { RenderLoadableAtom } from './RenderLoadableAtom'
-import { RouterLink } from './RouterLink'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
+import { RouterLink } from '../../shared/RouterLink'
 
 export const JumpGate = () => {
   return (

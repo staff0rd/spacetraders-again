@@ -2,9 +2,9 @@ import { Alert, Box, Link, Stack, Typography } from '@mui/material'
 import { formatDistanceToNow, formatISO } from 'date-fns'
 import { useAtomValue } from 'jotai'
 import { statusAtom } from '../../data'
-import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
-import { RouterLink } from '../agent/RouterLink'
-import { TabStructure } from '../agent/TabStructure'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
+import { RouterLink } from '../../shared/RouterLink'
+import { TabStructure } from '../../shared/TabStructure'
 
 export function Status() {
   const value = useAtomValue(statusAtom)

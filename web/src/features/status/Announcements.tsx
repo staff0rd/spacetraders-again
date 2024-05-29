@@ -1,6 +1,6 @@
 import { Card, CardContent, Grid, Typography } from '@mui/material'
 import { statusAtom } from '../../data'
-import { RenderLoadableAtom } from '../agent/RenderLoadableAtom'
+import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 
 export function Announcements() {
   return (

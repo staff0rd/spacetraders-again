@@ -2,7 +2,7 @@ import { Box, Stack, Tab, Tabs } from '@mui/material'
 import { Loadable } from 'jotai/vanilla/utils/loadable'
 import { ReactNode } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { slugify } from '../../utils/slugify'
+import { slugify } from '../utils/slugify'
 import { CircularProgressLoader } from './CircularProgressLoader'
 
 type TabStructureProps<T> = {
