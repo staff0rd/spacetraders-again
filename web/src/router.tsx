@@ -20,6 +20,7 @@ import { MostCredits } from './features/status/MostCredits.tsx'
 import { MostSubmittedCharts } from './features/status/MostSubmittedCharts.tsx'
 import { Status } from './features/status/Status.tsx'
 import { System } from './features/systems/System.tsx'
+import { SystemMap } from './features/systems/SystemMap.tsx'
 import { Waypoint } from './features/systems/Waypoint.tsx'
 import { WaypointRaw } from './features/systems/WaypointRaw.tsx'
 import { Exchange } from './features/systems/market/Exchange.tsx'
@@ -173,6 +174,14 @@ export const router = createBrowserRouter(
               element: (
                 <Suspense>
                   <JumpGate />
+                </Suspense>
+              ),
+            },
+            {
+              path: 'map',
+              element: (
+                <Suspense>
+                  <SystemMap />
                 </Suspense>
               ),
             },

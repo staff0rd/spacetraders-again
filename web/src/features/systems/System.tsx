@@ -28,7 +28,7 @@ export const System = () => {
       id="system"
       regex={regex}
       value={agent}
-      tabs={['Waypoints', 'Markets', 'Jump Gate']}
+      tabs={['Waypoints', 'Markets', 'Jump Gate', 'Map']}
       firstTab={<Waypoints />}
       header={() => (
         <RenderLoadableAtom
