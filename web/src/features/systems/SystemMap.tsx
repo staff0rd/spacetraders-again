@@ -1,13 +1,15 @@
 import { Box } from '@mui/material'
 import { blueGrey } from '@mui/material/colors'
-import { Container, Graphics, Stage } from '@pixi/react'
+import { Container, Graphics, Stage, Text } from '@pixi/react'
 import { gsap } from 'gsap'
 import { PixiPlugin } from 'gsap/PixiPlugin'
-import { Color } from 'pixi.js'
-import { ComponentProps, ElementRef, useCallback, useMemo, useRef, useState } from 'react'
+import * as PIXI from 'pixi.js'
+import { Color, TextStyle } from 'pixi.js'
+import { ComponentProps, ElementRef, useCallback, useRef, useState } from 'react'
 import { Waypoint } from '../../backend/api'
 import { waypointsAtom } from '../../data'
 import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
+import Viewport from '../pixi/Viewport'
 
 gsap.registerPlugin(PixiPlugin)
 
@@ -21,45 +23,46 @@ type SystemMapInnerProps = {
   waypoints: Waypoint[]
 }
 
-const getBoundingScale = (waypoints: Waypoint[]) => {
+const getWorldBounds = (waypoints: Waypoint[]) => {
   const maxY = waypoints.reduce((max, waypoint) => Math.max(max, waypoint.y), 0)
   const minY = waypoints.reduce((min, waypoint) => Math.min(min, waypoint.y), 0)
   const maxX = waypoints.reduce((max, waypoint) => Math.max(max, waypoint.x), 0)
   const minX = waypoints.reduce((min, waypoint) => Math.min(min, waypoint.x), 0)
 
-  const scaleX = 700 / (maxX - minX)
-  const scaleY = 500 / (maxY - minY)
-  const scale = Math.min(scaleX, scaleY)
-  return { x: scale, y: scale }
+  return new PIXI.Rectangle(minX, minY, maxX - minX, maxY - minY)
 }
 
 function SystemMapInner({ waypoints }: SystemMapInnerProps) {
   const container = useRef<ElementRef<typeof Container>>(null)
-  const startScale = useMemo(() => getBoundingScale(waypoints), [waypoints])
-  const [scale, setScale] = useState(startScale)
+  const [hoveredWaypoint, setHoveredWaypoint] = useState<Waypoint | null>(null)
+
+  const screenWidth = 740
+  const screenHeight = 555
+  const { width: worldWidth, height: worldHeight } = getWorldBounds(waypoints)
 
   return (
-    <Box
-      onWheel={(s) => {
-        const newScale = clamp(scale.x * Math.pow(2, -s.deltaY / 300), startScale.x, 10)
-        gsap.killTweensOf(container.current!.scale)
-        gsap.to(container.current!.scale, {
-          x: newScale,
-          y: newScale,
-          duration: 0.25,
-          onUpdate: () => {
-            const { x, y } = container.current!.scale
-            setScale({ x, y })
-          },
-        })
-      }}
-    >
+    <Box>
       <Stage width={740} height={555} options={{ background: new Color(blueGrey['900']).toNumber(), width: 740, height: 370 }}>
-        <Container x={740 / 2} y={555 / 2} ref={container} scale={scale}>
-          {waypoints.map((waypoint) => (
-            <DrawnWaypoint key={waypoint.symbol} x={waypoint.x} y={waypoint.y} scale={scale.x} />
-          ))}
-        </Container>
+        <Viewport screenWidth={screenWidth} screenHeight={screenHeight} worldWidth={worldWidth} worldHeight={worldHeight}>
+          {/* <Graphics
+            draw={(g) => {
+              g.clear()
+              g.beginFill(new Color(purple['900']).toNumber())
+              g.drawRect(0, 0, worldWidth, worldHeight)
+            }}
+          /> */}
+          <Container x={worldWidth / 2} y={worldHeight / 2} ref={container}>
+            {waypoints.map((waypoint) => (
+              <DrawnWaypoint
+                key={waypoint.symbol}
+                waypoint={waypoint}
+                setHoveredWaypoint={setHoveredWaypoint}
+                onOver={() => setHoveredWaypoint(waypoint)}
+                onOut={() => setHoveredWaypoint(null)}
+              />
+            ))}
+          </Container>
+        </Viewport>
       </Stage>
     </Box>
   )
@@ -70,21 +73,36 @@ export function SystemMap() {
 }
 
 type DrawnWaypointProps = {
-  x: number
-  y: number
-  scale: number
+  waypoint: Waypoint
+
+  setHoveredWaypoint: (waypoint: Waypoint | null) => void
+  onOver?: () => void
+  onOut?: () => void
+  onClick?: () => void
 }
 
-const DrawnWaypoint = ({ x, y, scale }: DrawnWaypointProps) => {
+const DrawnWaypoint = ({ onOver, onOut, waypoint }: DrawnWaypointProps) => {
   const draw = useCallback(
     (g: Parameters<NonNullable<ComponentProps<typeof Graphics>['draw']>>[0]) => {
-      const radius = 3 / scale
+      const radius = 3
       g.clear()
       g.beginFill(new Color(blueGrey['400']).toNumber())
-      g.drawCircle(x, y, radius)
+      g.drawCircle(waypoint.x, waypoint.y, radius)
       g.endFill()
     },
-    [scale, x, y],
+    [waypoint],
   )
-  return <Graphics draw={draw} />
+  return (
+    <Container interactive={true} cursor="pointer" onmouseover={onOver} onmouseout={onOut}>
+      <Graphics draw={draw} />
+      <Text
+        text={waypoint.symbol.match(/.*-(.*)$/)![1]}
+        x={waypoint.x}
+        y={waypoint.y}
+        style={new TextStyle({ fill: 'white' })}
+        scale={0.3}
+        anchor={{ x: 0.5, y: 0 }}
+      />
+    </Container>
+  )
 }
