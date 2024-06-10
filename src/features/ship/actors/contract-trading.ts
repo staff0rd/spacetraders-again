@@ -8,6 +8,43 @@ import { ShipEntity } from '../ship.entity'
 
 const asteroidResult: TradeSymbol[] = ['IRON_ORE', 'ALUMINUM_ORE', 'COPPER_ORE', 'SILICON_CRYSTALS']
 
+const findContractGoodLocation = (
+  act: Awaited<ReturnType<typeof getActor>>,
+  tradeSymbol: TradeSymbol,
+  ship: ShipEntity,
+  agent: AgentEntity,
+  unitsToGo: number,
+  unitsRequired: number,
+) => {
+  const waypoint = act.findTradeSymbol(tradeSymbol as TradeSymbol)
+
+  if (!waypoint) {
+    log.warn('ship', `${ship.label} could not find a waypoint for ${tradeSymbol}`)
+    return false
+  }
+
+  const tradeGood = waypoint.tradeGoods?.find((x) => x.symbol === tradeSymbol)
+  if (tradeGood) {
+    invariant(agent.contract, 'Expected to have a contract')
+    const cost = tradeGood.purchasePrice * unitsRequired
+    const reward = agent.contract.terms.payment.onAccepted + agent.contract.terms.payment.onFulfilled
+    if (cost > reward) {
+      log.warn('ship', `${ship.label} will lose ${Math.abs(reward - cost).toLocaleString()} credits on contract for ${tradeSymbol}`)
+    } else {
+      log.info('ship', `${ship.label} will gain ${Math.abs(reward - cost).toLocaleString()} credits on contract for ${tradeSymbol}`)
+    }
+
+    const toBuy = Math.min(unitsToGo, ship.cargo.capacity, tradeGood.tradeVolume)
+    const priceNow = toBuy * tradeGood.purchasePrice
+    if (priceNow > agent.data.credits) {
+      log.warn('ship', `${ship.label} cannot afford ${priceNow.toLocaleString()} credits for ${toBuy} ${tradeSymbol}`)
+      return false
+    }
+    return { waypoint, toBuy }
+  }
+  return { waypoint }
+}
+
 export const contractTraderActorFactory = (ship: ShipEntity, agent: AgentEntity, act: Awaited<ReturnType<typeof getActor>>) =>
   decisionMaker(ship, true, agent, act, contractTraderLogicFactory(act))
 
@@ -42,35 +79,20 @@ export const contractTraderLogicFactory =
       return true
     }
 
-    const waypoint = await act.findTradeSymbol(tradeSymbol as TradeSymbol)
-
-    if (!waypoint) {
-      log.warn('ship', `${ship.label} could not find a waypoint for ${tradeSymbol}`)
-      return false
-    }
-
-    const tradeGood = waypoint.tradeGoods!.find((x) => x.symbol === tradeSymbol)
-    invariant(tradeGood, `Expected to find a tradeGood for ${tradeSymbol}`)
-    const cost = tradeGood.purchasePrice * unitsRequired
-    const reward = agent.contract.terms.payment.onAccepted + agent.contract.terms.payment.onFulfilled
-    if (cost > reward) {
-      log.warn('ship', `${ship.label} will lose ${Math.abs(reward - cost).toLocaleString()} credits on contract for ${tradeSymbol}`)
-    } else {
-      log.info('ship', `${ship.label} will gain ${Math.abs(reward - cost).toLocaleString()} credits on contract for ${tradeSymbol}`)
-    }
-
-    const toBuy = Math.min(unitsToGo, ship.cargo.capacity, tradeGood.tradeVolume)
-    const priceNow = toBuy * tradeGood.purchasePrice
-    if (priceNow > agent.data.credits) {
-      log.warn('ship', `${ship.label} cannot afford ${priceNow.toLocaleString()} credits for ${toBuy} ${tradeSymbol}`)
-      return false
-    }
+    const result = findContractGoodLocation(act, tradeSymbol as TradeSymbol, ship, agent, unitsToGo, unitsRequired)
+    if (!result) return false
+    const { waypoint } = result
 
     if (ship.nav.waypointSymbol !== waypoint.symbol) {
       await act.navigateShip(ship, waypoint)
       return true
     } else {
       await act.scanMarketIfNeccessary(ship)
+
+      const result2 = findContractGoodLocation(act, tradeSymbol as TradeSymbol, ship, agent, unitsToGo, unitsRequired)
+      if (!result2) return false
+      const { toBuy } = result2
+      if (!toBuy) return false
 
       await act.purchaseGoods(ship, tradeSymbol as TradeSymbol, toBuy)
       return true

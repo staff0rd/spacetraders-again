@@ -412,7 +412,7 @@ export const getActor = async (
     return getClosest(unvisited, ship.nav.route.destination)
   }
 
-  const findTradeSymbol = async (tradeSymbol: TradeSymbol) => {
+  const findTradeSymbol = (tradeSymbol: TradeSymbol) => {
     const exports = waypoints.filter((p) => p.exports.includes(tradeSymbol))
     const exchanges = waypoints.filter((p) => p.exchange.includes(tradeSymbol))
     const imports = waypoints.filter((p) => p.imports.includes(tradeSymbol))
