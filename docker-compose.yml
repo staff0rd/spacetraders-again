@@ -78,7 +78,7 @@ services:
     restart: unless-stopped
     environment:
       - ACCEPT_EULA=Y
-      - SEQ_FIRSTRUN_ADMINUSERNAME=stafford
+      - SEQ_FIRSTRUN_ADMINUSERNAME=local
       - SEQ_FIRSTRUN_ADMINPASSWORDHASH=${SEQ_PASSWORD}
     volumes:
       - $PWD/data/seq:/data
