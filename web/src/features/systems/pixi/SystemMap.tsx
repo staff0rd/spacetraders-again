@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { blueGrey } from '@mui/material/colors'
 import { Container, Stage } from '@pixi/react'
 import { gsap } from 'gsap'
@@ -6,6 +6,7 @@ import { PixiPlugin } from 'gsap/PixiPlugin'
 import * as PIXI from 'pixi.js'
 import { Color } from 'pixi.js'
 import { useMemo, useState } from 'react'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { Ship, Waypoint } from '../../../backend/api'
 import { waypointsAtom } from '../../../data'
 import { RenderLoadableAtom } from '../../../shared/RenderLoadableAtom'
@@ -28,10 +29,24 @@ const getWorldBounds = (waypoints: Waypoint[]) => {
   return new PIXI.Rectangle(minX, minY, maxX - minX, maxY - minY)
 }
 
+type SelectedShipProps = {
+  ship: Ship
+}
+
+function SelectedShip({ ship }: SelectedShipProps) {
+  return (
+    <Stack>
+      <Typography variant="h5">{ship.symbol}</Typography>
+      <Typography variant="h6">{ship.registration.role}</Typography>
+    </Stack>
+  )
+}
+
 function SystemMapInner({ waypoints }: SystemMapInnerProps) {
   const waypointsSortedByName = useMemo(() => waypoints.toSorted((a, b) => a.symbol.localeCompare(b.symbol)), [waypoints])
   const [hoveredWaypoint, setHoveredWaypoint] = useState<Waypoint | null>(null)
   const [hoveredShip, setHoveredShip] = useState<Ship | null>(null)
+  const [selectedItem, setSelectedItem] = useState<Waypoint | Ship | null>(null)
 
   const screenWidth = 740
   const screenHeight = 555
@@ -41,19 +56,14 @@ function SystemMapInner({ waypoints }: SystemMapInnerProps) {
     () => (hoveredWaypoint ? waypointsSortedByName.filter((w) => w.x === hoveredWaypoint.x && w.y === hoveredWaypoint.y) : []),
     [hoveredWaypoint, waypointsSortedByName],
   )
-
+  const navigate = useNavigate()
+  const selectShip = (shipSymbol: string) => {
+    navigate(`ships/${shipSymbol}`)
+  }
   return (
     <Box>
       <Stage width={740} height={555} options={{ background: new Color(blueGrey['900']).toNumber(), width: 740, height: 370 }}>
         <Viewport screenWidth={screenWidth} screenHeight={screenHeight} worldWidth={worldWidth} worldHeight={worldHeight}>
-          {/* <Graphics
-            draw={(g) => {
-              g.clear()
-              g.beginFill(new Color(purple['900']).toNumber())
-              g.drawRect(0, 0, worldWidth, worldHeight)
-            }}
-          /> */}
-
           <Container x={worldWidth / 2} y={worldHeight / 2}>
             {waypoints.map((waypoint) => (
               <WaypointMarker
@@ -72,16 +82,24 @@ function SystemMapInner({ waypoints }: SystemMapInnerProps) {
             systemSymbol={waypoints[0].systemSymbol}
             hoveredShip={hoveredShip}
             setHoveredShip={setHoveredShip}
+            onClick={selectShip}
           />
         </Viewport>
       </Stage>
-      {hoveredWaypoints.map((waypoint) => (
+      {selectedItem ? (
         <Box>
-          <Typography>
-            {waypoint.symbol} ({waypoint.type})
-          </Typography>
+          <SelectedShip ship={selectedItem as Ship} />
         </Box>
-      ))}
+      ) : (
+        hoveredWaypoints.map((waypoint) => (
+          <Box>
+            <Typography>
+              {waypoint.symbol} ({waypoint.type})
+            </Typography>
+          </Box>
+        ))
+      )}
+      <Outlet />
     </Box>
   )
 }

@@ -39,6 +39,65 @@ export const routes = {
   waypoint: (waypointSymbol: string) => `${routes.system(getSystemSymbolFromWaypointSymbol(waypointSymbol))}/waypoint/${waypointSymbol}`,
 }
 
+const ships = {
+  path: 'ships/:shipSymbol',
+  element: (
+    <Suspense>
+      <Ship />
+    </Suspense>
+  ),
+  children: [
+    {
+      path: 'nav',
+      element: (
+        <Suspense>
+          <Nav />
+        </Suspense>
+      ),
+    },
+    {
+      path: 'cooldown',
+      element: (
+        <Suspense>
+          <Cooldown />
+        </Suspense>
+      ),
+    },
+    {
+      path: 'cargo',
+      element: (
+        <Suspense>
+          <Cargo />
+        </Suspense>
+      ),
+    },
+    {
+      path: 'mounts',
+      element: (
+        <Suspense>
+          <Mounts />
+        </Suspense>
+      ),
+    },
+    {
+      path: 'modules',
+      element: (
+        <Suspense>
+          <Modules />
+        </Suspense>
+      ),
+    },
+    {
+      path: 'raw',
+      element: (
+        <Suspense>
+          <ShipRaw />
+        </Suspense>
+      ),
+    },
+  ],
+}
+
 export const router = createBrowserRouter(
   [
     {
@@ -95,64 +154,7 @@ export const router = createBrowserRouter(
                 </Suspense>
               ),
             },
-            {
-              path: 'ships/:shipSymbol',
-              element: (
-                <Suspense>
-                  <Ship />
-                </Suspense>
-              ),
-              children: [
-                {
-                  path: 'nav',
-                  element: (
-                    <Suspense>
-                      <Nav />
-                    </Suspense>
-                  ),
-                },
-                {
-                  path: 'cooldown',
-                  element: (
-                    <Suspense>
-                      <Cooldown />
-                    </Suspense>
-                  ),
-                },
-                {
-                  path: 'cargo',
-                  element: (
-                    <Suspense>
-                      <Cargo />
-                    </Suspense>
-                  ),
-                },
-                {
-                  path: 'mounts',
-                  element: (
-                    <Suspense>
-                      <Mounts />
-                    </Suspense>
-                  ),
-                },
-                {
-                  path: 'modules',
-                  element: (
-                    <Suspense>
-                      <Modules />
-                    </Suspense>
-                  ),
-                },
-                {
-                  path: 'raw',
-                  element: (
-                    <Suspense>
-                      <ShipRaw />
-                    </Suspense>
-                  ),
-                },
-              ],
-            },
+            ships,
           ],
         },
         {
@@ -184,6 +186,7 @@ export const router = createBrowserRouter(
                   <SystemMap />
                 </Suspense>
               ),
+              children: [ships],
             },
             {
               path: 'raw',

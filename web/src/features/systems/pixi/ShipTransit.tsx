@@ -11,9 +11,11 @@ type ShipTransitProps = {
   systemSymbol: string
   hoveredShip: Ship | null
   setHoveredShip: (ship: Ship | null) => void
+  onClick: (shipSymbol: string) => void
 }
-export function ShipTransit({ worldWidth, worldHeight, systemSymbol, hoveredShip, setHoveredShip }: ShipTransitProps) {
+export function ShipTransit({ worldWidth, worldHeight, systemSymbol, hoveredShip, setHoveredShip, onClick }: ShipTransitProps) {
   const ships = useAtomValue(shipsAtom)
+
   if (ships.state !== 'hasData' || !ships.data) return null
   const shipsInTransit = ships.data.filter(
     (ship) =>
@@ -36,6 +38,9 @@ export function ShipTransit({ worldWidth, worldHeight, systemSymbol, hoveredShip
             isHovered={hoveredShip?.symbol === ship.symbol}
             onOut={() => setHoveredShip(null)}
             onOver={() => setHoveredShip(ship)}
+            onClick={() => {
+              onClick(ship.symbol)
+            }}
           />
         ))}
       </>

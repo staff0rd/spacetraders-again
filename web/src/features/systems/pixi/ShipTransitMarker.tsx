@@ -14,7 +14,7 @@ type ShipTransitMarkerProps = {
   onClick?: () => void
 }
 
-export const ShipTransitMarker = ({ onOver, onOut, ship, isHovered }: ShipTransitMarkerProps) => {
+export const ShipTransitMarker = ({ onOver, onOut, ship, isHovered, onClick }: ShipTransitMarkerProps) => {
   const markerRef = useRef<React.ElementRef<typeof Graphics>>(null)
   const shipPosition = useMemo(() => {
     const total = differenceInSeconds(ship.nav.route.arrival, ship.nav.route.departureTime)
@@ -76,7 +76,7 @@ export const ShipTransitMarker = ({ onOver, onOut, ship, isHovered }: ShipTransi
   const label = `${ship.symbol}\n${ship.registration.role}`
 
   return (
-    <Container interactive={true} cursor="pointer" onmouseover={onOver} onmouseout={onOut}>
+    <Container interactive={true} cursor="pointer" onmouseover={onOver} onmouseout={onOut} onclick={onClick}>
       {label && (
         <>
           {isHovered && <Graphics draw={drawRoute} />}
