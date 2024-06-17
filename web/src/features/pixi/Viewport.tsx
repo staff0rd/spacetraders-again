@@ -18,6 +18,7 @@ const PixiComponentViewport = PixiComponent('Viewport', {
   create: (props: PixiComponentViewportProps) => {
     console.log(`worldWidth: ${props.worldWidth}, worldHeight: ${props.worldHeight}`)
     const viewport = new PixiViewport({
+      passiveWheel: false,
       screenWidth: props.screenWidth,
       screenHeight: props.screenHeight,
       worldWidth: props.worldWidth,
@@ -28,7 +29,7 @@ const PixiComponentViewport = PixiComponent('Viewport', {
     viewport
       .drag({ underflow: 'center' })
       .pinch()
-      .wheel()
+      .wheel({ interrupt: true })
       .clampZoom({ maxHeight: props.worldHeight + 200, maxWidth: props.worldWidth + 800 })
       .clamp({ underflow: 'center', bottom: true, left: true, right: true, top: true })
 
