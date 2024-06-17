@@ -19,8 +19,7 @@ export const System = () => {
   useEffect(() => {
     if (systemSymbol) setSystemSymbol(systemSymbol)
   }, [systemSymbol, setSystemSymbol])
-
-  const regex = `^/system/${systemSymbol}/(.*)/?.*`
+  const regex = `^/system/${systemSymbol}/(.[a-z]+)`
   return waypointSymbol ? (
     <Outlet />
   ) : (
