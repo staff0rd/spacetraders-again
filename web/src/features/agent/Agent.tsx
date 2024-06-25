@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Stack } from '@mui/material'
 import { useAtomValue } from 'jotai'
 import { agentAtom, getSystemSymbolFromWaypointSymbol } from '../../data'
-import { routes } from '../../router'
+import { routes } from '../../router/router'
 import { Overview } from '../../shared/Overview'
 import { RouterLink } from '../../shared/RouterLink'
 import { TabStructure } from '../../shared/TabStructure'

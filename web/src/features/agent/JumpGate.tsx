@@ -1,6 +1,6 @@
 import { Box, Stack } from '@mui/material'
 import { jumpGateAtom, jumpGateConnectionsAtom, jumpGateConstructionAtom } from '../../data'
-import { routes } from '../../router'
+import { routes } from '../../router/router'
 import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 import { RouterLink } from '../../shared/RouterLink'
 

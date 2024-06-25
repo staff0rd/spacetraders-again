@@ -1,5 +1,5 @@
 import { waypointsAtom } from '../../data'
-import { routes } from '../../router'
+import { routes } from '../../router/router'
 import { DataTable } from '../../shared/DataTable'
 import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 import { RouterLink } from '../../shared/RouterLink'

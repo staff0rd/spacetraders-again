@@ -10,7 +10,7 @@ export function Market() {
   const marketAtom = marketAtomFamily(waypointSymbol!)
   const market = useAtomValue(marketAtom)
   if (!market) return <CircularProgressLoader id="market-component" />
-  const regex = `^.*/waypoint/${waypointSymbol}/market/(.*)`
+  const regex = `^.*/waypoints/${waypointSymbol}/market/(.*)`
   return (
     <TabStructure
       regex={regex}

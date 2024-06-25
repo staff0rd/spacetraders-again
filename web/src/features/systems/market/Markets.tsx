@@ -5,7 +5,7 @@ import ExchangeIcon from '@mui/icons-material/SyncAlt'
 import { CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { useAtom } from 'jotai'
 import { marketsAtom } from '../../../data'
-import { routes } from '../../../router'
+import { routes } from '../../../router/router'
 import { RenderLoadableAtom } from '../../../shared/RenderLoadableAtom'
 import { RouterLink } from '../../../shared/RouterLink'
 export const Markets = () => {

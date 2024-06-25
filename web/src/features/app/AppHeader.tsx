@@ -4,7 +4,7 @@ import { AppBar, Box, Button, IconButton, Stack, Toolbar, Typography } from '@mu
 import { useAtomValue } from 'jotai'
 import { Link } from 'react-router-dom'
 import { agentAtom, getSystemSymbolFromWaypointSymbol, tokenAtom } from '../../data'
-import { routes } from '../../router'
+import { routes } from '../../router/router'
 import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 import { RouterLink } from '../../shared/RouterLink'
 import { SystemIcon } from '../systems/SystemIcon'

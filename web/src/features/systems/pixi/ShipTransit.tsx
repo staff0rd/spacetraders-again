@@ -38,9 +38,7 @@ export function ShipTransit({ worldWidth, worldHeight, systemSymbol, hoveredShip
             isHovered={hoveredShip?.symbol === ship.symbol}
             onOut={() => setHoveredShip(null)}
             onOver={() => setHoveredShip(ship)}
-            onClick={() => {
-              onClick(ship.symbol)
-            }}
+            onClick={() => onClick(ship.symbol)}
           />
         ))}
       </>

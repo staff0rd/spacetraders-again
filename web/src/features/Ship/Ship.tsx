@@ -7,8 +7,13 @@ import { RenderLoadableAtom } from '../../shared/RenderLoadableAtom'
 import { TabStructure } from '../../shared/TabStructure'
 import { ShipBase } from './ShipBase'
 
-export function Ship() {
-  const { shipSymbol } = useParams()
+type ShipProps = {
+  symbol?: string
+}
+
+export function Ship({ symbol: fromProps }: ShipProps) {
+  const { shipSymbol: fromParams } = useParams()
+  const shipSymbol = fromProps ?? fromParams
   const regex = `^.*/ships/${shipSymbol}/(.[a-z]+)`
   const value = useAtomValue(shipsAtom)
   return (
@@ -25,6 +30,7 @@ export function Ship() {
             value={value}
             tabs={[ship.frame.name, 'Cargo', 'Cooldown', 'Nav', 'Modules', 'Mounts']}
             firstTab={<ShipBase />}
+            hideTabs={!!fromProps}
             header={() => (
               <Overview
                 symbol={ship.symbol}

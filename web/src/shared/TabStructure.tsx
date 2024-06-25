@@ -13,8 +13,9 @@ type TabStructureProps<T> = {
   tabs: string[]
   id: string
   childTabs?: string[]
+  hideTabs?: boolean
 }
-export function TabStructure<T>({ regex, value, firstTab: root, header, tabs, id, childTabs = [] }: TabStructureProps<T>) {
+export function TabStructure<T>({ regex, value, firstTab: root, header, tabs, id, childTabs = [], hideTabs }: TabStructureProps<T>) {
   const { pathname } = useLocation()
   const matches = pathname.match(regex) ?? []
   const tab = matches[1] ?? ''
@@ -24,13 +25,17 @@ export function TabStructure<T>({ regex, value, firstTab: root, header, tabs, id
   return (
     <Stack>
       {header(value.data)}
-      <Tabs value={tab}>
-        {tabs.map((t, ix) => (
-          <Tab key={slugify(t)} label={t} value={ix ? slugify(t) : ''} to={ix ? slugify(t) : ''} component={Link} />
-        ))}
-        <Tab label="Raw" value="raw" to="raw" component={Link} />
-      </Tabs>
-      <Box sx={{ marginTop: childTabs.includes(tab) ? 0 : 2 }}>{!tab ? root : <Outlet />}</Box>
+      {!hideTabs && (
+        <>
+          <Tabs value={tab}>
+            {tabs.map((t, ix) => (
+              <Tab key={slugify(t)} label={t} value={ix ? slugify(t) : ''} to={ix ? slugify(t) : ''} component={Link} />
+            ))}
+            <Tab label="Raw" value="raw" to="raw" component={Link} />
+          </Tabs>
+          <Box sx={{ marginTop: childTabs.includes(tab) ? 0 : 2 }}>{!tab ? root : <Outlet />}</Box>
+        </>
+      )}
     </Stack>
   )
 }
