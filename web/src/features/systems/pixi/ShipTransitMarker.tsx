@@ -1,10 +1,10 @@
-import { blueGrey, orange } from '@mui/material/colors'
+import { blueGrey, lightBlue, purple, red, yellow } from '@mui/material/colors'
 import { Container, Graphics, Text } from '@pixi/react'
 import { differenceInSeconds } from 'date-fns'
 import { gsap } from 'gsap'
 import { Color, TextStyle } from 'pixi.js'
 import { ComponentProps, useCallback, useEffect, useMemo, useRef } from 'react'
-import { Ship } from '../../../backend/api'
+import { Ship, ShipNavFlightMode } from '../../../backend/api'
 
 type ShipTransitMarkerProps = {
   ship: Ship
@@ -14,8 +14,16 @@ type ShipTransitMarkerProps = {
   onClick?: () => void
 }
 
+const COLOR = {
+  [ShipNavFlightMode.Burn]: red,
+  [ShipNavFlightMode.Cruise]: yellow,
+  [ShipNavFlightMode.Drift]: lightBlue,
+  [ShipNavFlightMode.Stealth]: purple,
+}
+
 export const ShipTransitMarker = ({ onOver, onOut, ship, isHovered, onClick }: ShipTransitMarkerProps) => {
   const markerRef = useRef<React.ElementRef<typeof Graphics>>(null)
+  const { flightMode } = ship.nav
   const shipPosition = useMemo(() => {
     const total = differenceInSeconds(ship.nav.route.arrival, ship.nav.route.departureTime)
     const left = differenceInSeconds(ship.nav.route.arrival, new Date())
@@ -58,7 +66,7 @@ export const ShipTransitMarker = ({ onOver, onOut, ship, isHovered, onClick }: S
     (g: Parameters<NonNullable<ComponentProps<typeof Graphics>['draw']>>[0]) => {
       g.clear()
       g.lineStyle(0)
-      g.beginFill(new Color(isHovered ? orange['200'] : orange['700']).toNumber())
+      g.beginFill(new Color(isHovered ? COLOR[flightMode]['200'] : COLOR[flightMode]['700']).toNumber())
 
       const angle = Math.atan2(
         ship.nav.route.destination.y - ship.nav.route.origin.y,
@@ -87,7 +95,7 @@ export const ShipTransitMarker = ({ onOver, onOut, ship, isHovered, onClick }: S
                 text={label}
                 x={0}
                 y={0}
-                style={new TextStyle({ fill: orange['200'], align: 'center' })}
+                style={new TextStyle({ fill: COLOR[flightMode]['200'], align: 'center' })}
                 scale={0.3}
                 anchor={{ x: 0.5, y: -0.5 }}
               />

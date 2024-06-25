@@ -56,7 +56,15 @@ function SystemMapInner({ waypoints }: SystemMapInnerProps) {
 
   return (
     <Box>
-      <Stage width={740} height={555} options={{ background: new Color(blueGrey['900']).toNumber(), width: 740, height: 370 }}>
+      <Stage
+        width={740}
+        height={555}
+        options={{ background: new Color(blueGrey['900']).toNumber(), width: 740, height: 370 }}
+        onMouseLeave={() => {
+          setHoveredWaypoint(null)
+          setHoveredShip(null)
+        }}
+      >
         <Viewport screenWidth={screenWidth} screenHeight={screenHeight} worldWidth={worldWidth} worldHeight={worldHeight}>
           <Container x={worldWidth / 2} y={worldHeight / 2}>
             {waypointsGroupedByLocation.map((w) => (
