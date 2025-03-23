@@ -1,7 +1,6 @@
-import { Point } from '@influxdata/influxdb-client'
 import { DefaultApiFactory } from '../../api'
 import { log } from '../../logging/configure-logging'
-import { influxWrite } from './influxWrite'
+import { flushWrites, writeMostCredits, writeMostSubmittedCharts, writeStats } from '../timeseries/postgresWrite'
 
 export async function getStatus() {
   // todo: use rate limited api
@@ -9,28 +8,25 @@ export async function getStatus() {
 
   const resetDate = result.data.resetDate
 
-  influxWrite().writePoint(
-    new Point('stats')
-      .tag('reset-date', resetDate)
-      .floatField('agents', result.data.stats.agents)
-      .floatField('ships', result.data.stats.ships)
-      .floatField('systems', result.data.stats.systems)
-      .floatField('waypoints', result.data.stats.waypoints),
+  writeStats(
+    {
+      agents: result.data.stats.agents,
+      ships: result.data.stats.ships,
+      systems: result.data.stats.systems,
+      waypoints: result.data.stats.waypoints,
+    },
+    resetDate,
   )
 
   result.data.leaderboards.mostCredits.forEach((x) => {
-    influxWrite().writePoint(
-      new Point('most-credits').tag('agent', x.agentSymbol).tag('reset-date', resetDate).floatField('credits', x.credits),
-    )
+    writeMostCredits(x.agentSymbol, x.credits, resetDate)
   })
 
   result.data.leaderboards.mostSubmittedCharts.forEach((x) => {
-    influxWrite().writePoint(
-      new Point('most-submitted-charts').tag('agent', x.agentSymbol).tag('reset-date', resetDate).floatField('chart-count', x.chartCount),
-    )
+    writeMostSubmittedCharts(x.agentSymbol, x.chartCount, resetDate)
   })
 
-  await influxWrite().flush()
+  await flushWrites()
 
   log.info('stats', 'Wrote stats')
 }

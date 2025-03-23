@@ -12,12 +12,18 @@ import { getPages } from '../../../util/getPages'
 import { Supply } from '../../ship/actors/supply'
 import { ShipAction, ShipActionType, ShipEntity } from '../../ship/ship.entity'
 import { SurveyEntity } from '../../survey/survey.entity'
+import {
+  writeContract,
+  writeCredits,
+  writeExtraction,
+  writeMyMarketTransaction,
+  writeShipyardTransaction,
+} from '../../timeseries/postgresWrite'
 import { getBestTradeRoutes } from '../../trade/getBestTradeRoute'
 import { updateWaypoint } from '../../waypoints/getWaypoints'
 import { distancePoint, getGraph, getShortestPath } from '../../waypoints/pathfinding'
 import { WaypointEntity } from '../../waypoints/waypoint.entity'
 import { AgentEntity } from '../agent.entity'
-import { writeContract, writeCredits, writeExtraction, writeMyMarketTransaction, writeShipyardTransaction } from '../influxWrite'
 import { getClosest } from '../utils/getClosest'
 import { shipArriving, shipCooldownRemaining } from '../utils/getCurrentFlightTime'
 import { getSellLocations } from '../utils/getSellLocations'

@@ -4,7 +4,7 @@ import { getEntityManager } from '../../orm'
 import { getPages } from '../../util/getPages'
 import { getAgent } from '../status/actions/getAgent'
 import { AgentEntity } from '../status/agent.entity'
-import { writeMarketTradeGood, writeMarketTransaction } from '../status/influxWrite'
+import { writeMarketTradeGood, writeMarketTransaction } from '../timeseries/postgresWrite'
 import { WaypointEntity } from './waypoint.entity'
 
 export async function updateWaypoint(waypoint: WaypointEntity, agent: AgentEntity, api: Awaited<ReturnType<typeof getAgent>>['api']) {
