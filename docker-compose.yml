@@ -32,20 +32,6 @@ services:
     command: npm start -- start
     profiles: ['prod']
     restart: unless-stopped
-  influxdb:
-    ports:
-      - 8086:8086
-    volumes:
-      - $PWD/data/influx-data:/var/lib/influxdb2
-      - $PWD/data/influx-config:/etc/influxdb2
-    environment:
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=my-user
-      - DOCKER_INFLUXDB_INIT_PASSWORD=my-password
-      - DOCKER_INFLUXDB_INIT_ORG=my-org
-      - DOCKER_INFLUXDB_INIT_BUCKET=my-bucket
-    image: influxdb:2
-    restart: unless-stopped
   grafana:
     image: grafana/grafana-enterprise
     restart: unless-stopped
@@ -56,24 +42,7 @@ services:
       - '3001:3000'
     volumes:
       - 'grafana_storage:/var/lib/grafana'
-  redis:
-    hostname: redis
-    image: redis:alpine
-    restart: unless-stopped
-    ports:
-      - '6379:6379'
-    volumes:
-      - 'redis_storage:/data'
-  redis-commander:
-    depends_on:
-      - redis
-    hostname: redis-commander
-    image: rediscommander/redis-commander:latest
-    restart: always
-    environment:
-      - REDIS_HOSTS=local:redis:6379 # note: this has to be the port the redis container exposes.
-    ports:
-      - '8081:8081'
+
   seq:
     restart: unless-stopped
     environment:
@@ -110,4 +79,3 @@ services:
 
 volumes:
   grafana_storage: {}
-  redis_storage: {}
