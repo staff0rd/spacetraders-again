@@ -27,6 +27,19 @@
       "env": {}
     },
     {
+      "name": "Leaderboards",
+      "type": "node",
+      "console": "integratedTerminal",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "start",
+        "--",
+        "status"
+      ],
+      "env": {}
+    },
+    {
       "name": "Frontend",
       "type": "node",
       "console": "integratedTerminal",
