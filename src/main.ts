@@ -6,7 +6,6 @@ import { startup } from './features/status/startup'
 import { routeTest } from './features/waypoints/routeTest'
 import { log } from './logging/configure-logging'
 import { logError } from './logging/log-error'
-import { setupQueues } from './queue/configure-queues'
 
 log.info('app', 'Startup')
 
@@ -16,7 +15,6 @@ program
   .action(async () => {
     try {
       log.info('app', 'Starting runner')
-      await setupQueues()
       await startup()
     } catch (err) {
       logError('startup', err)
