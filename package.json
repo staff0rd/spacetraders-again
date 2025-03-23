@@ -37,6 +37,7 @@
     "@mikro-orm/migrations": "^6.1.9",
     "@mikro-orm/postgresql": "^6.1.9",
     "@mikro-orm/reflection": "^6.1.9",
+    "@openapitools/openapi-generator-cli": "^2.18.4",
     "async": "^3.2.5",
     "axios": "^1.6.7",
     "bottleneck": "^2.19.5",
