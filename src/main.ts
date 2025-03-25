@@ -8,6 +8,10 @@ import { log } from './logging/configure-logging'
 import { logError } from './logging/log-error'
 import { setupQueues } from './queue/configure-queues'
 
+import net from 'net'
+// fixes ETIMEDOUT errors
+net.setDefaultAutoSelectFamilyAttemptTimeout(500)
+
 log.info('app', 'Startup')
 
 program
