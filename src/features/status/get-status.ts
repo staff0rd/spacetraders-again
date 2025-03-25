@@ -1,10 +1,10 @@
-import { DefaultApiFactory } from '../../api'
+import { GlobalApiFactory } from '../../api/api'
 import { log } from '../../logging/configure-logging'
 import { flushWrites, writeMostCredits, writeMostSubmittedCharts, writeStats } from '../timeseries/postgresWrite'
 
 export async function getStatus() {
   // todo: use rate limited api
-  const result = await DefaultApiFactory().getStatus()
+  const result = await GlobalApiFactory().getStatus()
 
   const resetDate = result.data.resetDate
 

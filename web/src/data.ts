@@ -13,7 +13,7 @@ export const apiAtom = atom((get) => (get(tokenAtom) ? apiFactory(get(tokenAtom)
 export const statusAtom = loadable(
   atom(async (get) => {
     const api = get(apiAtom)
-    const result = await api.default.getStatus()
+    const result = await api.global.getStatus()
     return result.data
   }),
 )

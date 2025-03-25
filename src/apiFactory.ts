@@ -5,9 +5,9 @@ import {
   AgentsApiFactory,
   Configuration,
   ContractsApiFactory,
-  DefaultApiFactory,
   FactionsApiFactory,
   FleetApiFactory,
+  GlobalApiFactory,
   SystemsApiFactory,
 } from './api'
 
@@ -39,7 +39,7 @@ const wrapFunctions = (api: any, limiter: Bottleneck) =>
   }, {})
 
 export const loggedOutApiFactory = (): {
-  default: ReturnType<typeof DefaultApiFactory>
+  global: ReturnType<typeof GlobalApiFactory>
   limiter: Bottleneck
   loggedIn: false
 } => {
@@ -47,11 +47,11 @@ export const loggedOutApiFactory = (): {
     maxConcurrent: 1,
     minTime: 500,
   })
-  const defaultApi = DefaultApiFactory()
+  const globalApi = GlobalApiFactory()
   return {
     limiter,
     // @ts-expect-error ignore
-    default: wrapFunctions(defaultApi, limiter),
+    global: wrapFunctions(globalApi, limiter),
     loggedIn: false,
   }
 }
@@ -62,7 +62,7 @@ export const apiFactory = (
   systems: ReturnType<typeof SystemsApiFactory>
   fleet: ReturnType<typeof FleetApiFactory>
   contracts: ReturnType<typeof ContractsApiFactory>
-  default: ReturnType<typeof DefaultApiFactory>
+  global: ReturnType<typeof GlobalApiFactory>
   agents: ReturnType<typeof AgentsApiFactory>
   factions: ReturnType<typeof FactionsApiFactory>
   limiter: Bottleneck
@@ -76,7 +76,7 @@ export const apiFactory = (
   const fleetApi = FleetApiFactory(new Configuration({ accessToken }))
   const contractsApi = ContractsApiFactory(new Configuration({ accessToken }))
   const agentsApi = AgentsApiFactory(new Configuration({ accessToken }))
-  const defaultApi = DefaultApiFactory()
+  const globalApi = GlobalApiFactory()
   const factionsApi = FactionsApiFactory(new Configuration({ accessToken }))
   return {
     limiter,
@@ -87,7 +87,7 @@ export const apiFactory = (
     // @ts-expect-error ignore
     contracts: wrapFunctions(contractsApi, limiter),
     // @ts-expect-error ignore
-    default: wrapFunctions(defaultApi, limiter),
+    global: wrapFunctions(globalApi, limiter),
     // @ts-expect-error ignore
     agents: wrapFunctions(agentsApi, limiter),
     // @ts-expect-error ignore

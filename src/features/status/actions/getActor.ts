@@ -166,7 +166,9 @@ export const getActor = async (
   const setFlightMode = async (ship: ShipEntity, flightMode: ShipNavFlightMode) => {
     if (ship.nav.flightMode === flightMode) return
     const {
-      data: { data: nav },
+      data: {
+        data: { nav },
+      },
     } = await api.fleet.patchShipNav(ship.symbol, { flightMode })
     await updateShip(ship, { nav })
   }

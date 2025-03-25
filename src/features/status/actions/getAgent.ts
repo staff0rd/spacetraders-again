@@ -1,6 +1,6 @@
 import { EntityData } from '@mikro-orm/core'
 import { Entries } from 'type-fest'
-import { DefaultApiFactory } from '../../../api'
+import { GlobalApiFactory } from '../../../api'
 import { apiFactory } from '../../../apiFactory'
 import { log } from '../../../logging/configure-logging'
 import { getEntityManager } from '../../../orm'
@@ -34,7 +34,7 @@ export const getAgent = async (resetDate: string) => {
       data: {
         data: { agent, token },
       },
-    } = await DefaultApiFactory().register({ faction: 'COSMIC', symbol })
+    } = await GlobalApiFactory().register({ faction: 'COSMIC', symbol })
     const newAgent = new AgentEntity(resetDate, token, agent)
     log.warn('agent', `Created new agent ${symbol}`)
     await em.persistAndFlush(newAgent)

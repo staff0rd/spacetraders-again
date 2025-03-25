@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { program } from 'commander'
-import { DefaultApiFactory } from './api'
+import { GlobalApiFactory } from './api'
 import { getStatus } from './features/status/get-status'
 import { startup } from './features/status/startup'
 import { routeTest } from './features/waypoints/routeTest'
@@ -72,7 +72,7 @@ program
     const label = 'new-agent'
     try {
       log.info(label, 'Registering')
-      const result = await DefaultApiFactory().register({ faction: 'COSMIC', symbol })
+      const result = await GlobalApiFactory().register({ faction: 'COSMIC', symbol })
       log.info(label, JSON.stringify(result.data.data))
     } catch (err) {
       logError(label, err)

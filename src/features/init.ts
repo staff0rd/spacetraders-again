@@ -1,4 +1,4 @@
-import { DefaultApiFactory } from '../api'
+import { GlobalApiFactory } from '../api'
 import { updateShips } from '../db/updateShips'
 import { invariant } from '../invariant'
 import { getEntityManager } from '../orm'
@@ -11,7 +11,7 @@ import { getWaypoints } from './waypoints/getWaypoints'
 export async function init(performWaypointScan: boolean) {
   const {
     data: { resetDate },
-  } = await DefaultApiFactory().getStatus()
+  } = await GlobalApiFactory().getStatus()
   const { agent, api } = await getAgent(resetDate)
 
   const shipsFromApi = await getPages((page, count) => api.fleet.getMyShips(page, count))
